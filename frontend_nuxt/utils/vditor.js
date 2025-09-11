@@ -121,13 +121,14 @@ export function createVditor(editorId, options = {}) {
             vditor.tip('视频压缩中...', 0)
             vditor.disabled()
 
-            // 使用 WebCodecs 压缩视频
+            // 使用 FFmpeg 压缩视频
             processedFile = await compressVideo(file, (progress) => {
               const messages = {
-                initializing: '初始化编解码器',
+                initializing: '初始化 FFmpeg',
                 preparing: '准备压缩',
+                analyzing: '分析视频',
                 compressing: '压缩中',
-                packaging: '封装中',
+                finalizing: '完成压缩',
                 completed: '压缩完成',
               }
               const message = messages[progress.stage] || progress.stage
