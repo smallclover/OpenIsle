@@ -118,7 +118,7 @@ export function createVditor(editorId, options = {}) {
         // 如果是视频文件且需要压缩
         if (isVideo && sizeCheck.needsCompression) {
           try {
-            vditor.tip('视频压缩中...', 0)
+            vditor.tip('开始部署ffmpeg环境... 请稍等', 0)
             vditor.disabled()
 
             // 使用 FFmpeg 压缩视频
