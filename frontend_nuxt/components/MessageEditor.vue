@@ -25,7 +25,7 @@ import {
   getPreviewTheme as getPreviewThemeUtil,
 } from '~/utils/vditor'
 import { useIsMobile } from '~/utils/screen'
-import { isMac } from '~/utils/is'
+import { isMac } from '~/utils/device'
 import '~/assets/global.css'
 
 export default {
