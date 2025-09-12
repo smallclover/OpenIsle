@@ -463,7 +463,11 @@ function minimize() {
 
 function handleContentClick(e) {
   handleMarkdownClick(e)
-  if (e.target.tagName === 'IMG') {
+  if (
+    e.target.tagName === 'IMG' &&
+    !e.target.classList.contains('emoji') &&
+    !e.target.closest('.reactions-container')
+  ) {
     const container = e.target.parentNode
     const imgs = [...container.querySelectorAll('img')].map((i) => i.src)
     lightboxImgs.value = imgs
