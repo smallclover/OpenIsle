@@ -594,13 +594,6 @@ const sanitizeDescription = (text) => stripMarkdown(text)
   margin-bottom: 10px;
 }
 
-.article-tags-container {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-}
-
 .article-tag-item {
   display: flex;
   flex-direction: row;
