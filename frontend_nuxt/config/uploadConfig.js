@@ -1,21 +1,15 @@
 /**
- * 文件上传配置 - 简化版
- * 专注于 FFmpeg.wasm 视频压缩，支持 Chrome/Safari
+ * 文件上传配置
  */
 
 export const UPLOAD_CONFIG = {
-  // 视频文件配置 - 专为 FFmpeg.wasm 优化
+  // 视频文件配置
   VIDEO: {
     // 文件大小限制 (字节)
     MAX_SIZE: 20 * 1024 * 1024,
-    TARGET_SIZE: 5 * 1024 * 1024, // 5MB
 
-    // 支持的输入格式 (FFmpeg.wasm 支持更多格式)
+    // 支持的输入格式
     SUPPORTED_FORMATS: ['mp4', 'webm', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'm4v', 'ogv'],
-
-    // 输出格式 - MP4 (兼容性最好)
-    OUTPUT_FORMAT: 'mp4',
-    OUTPUT_CODEC: 'h264',
   },
 
   // 图片文件配置

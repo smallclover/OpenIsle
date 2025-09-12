@@ -97,9 +97,7 @@ export default defineNuxtConfig({
     },
   },
   vite: {
-    optimizeDeps: {
-      exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util'],
-    },
+    optimizeDeps: {},
     build: {},
   },
 })
