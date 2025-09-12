@@ -20,7 +20,7 @@
       </div>
     </div>
 
-    <div class="messages-list" ref="messagesListEl" @click="handleContentClick">
+    <div class="messages-list" ref="messagesListEl">
       <div v-if="loading" class="loading-container">
         <l-hatch size="28" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
       </div>
@@ -50,7 +50,11 @@
               <div class="reply-content" v-html="renderMarkdown(item.replyTo.content)"></div>
             </div>
             <div class="message-content">
-              <div class="info-content-text" v-html="renderMarkdown(item.content)"></div>
+              <div
+                class="info-content-text"
+                v-html="renderMarkdown(item.content)"
+                @click="handleContentClick"
+              ></div>
             </div>
             <ReactionsGroup
               :model-value="item.reactions"
@@ -463,11 +467,7 @@ function minimize() {
 
 function handleContentClick(e) {
   handleMarkdownClick(e)
-  if (
-    e.target.tagName === 'IMG' &&
-    !e.target.classList.contains('emoji') &&
-    !e.target.closest('.reactions-container')
-  ) {
+  if (e.target.tagName === 'IMG' && !e.target.classList.contains('emoji')) {
     const container = e.target.parentNode
     const imgs = [...container.querySelectorAll('img')].map((i) => i.src)
     lightboxImgs.value = imgs
