@@ -356,7 +356,7 @@ body {
   }
 
   .d2h-file-name {
-    font-size: 12px !important;
+    font-size: 14px !important;
   }
 
   .d2h-file-header {
@@ -371,14 +371,14 @@ body {
     padding-left: 10px !important;
   }
 
-  .d2h-diff-table {
+  /* .d2h-diff-table {
     font-size: 6px !important;
   }
 
   .d2h-code-line ins {
     height: 100%;
     font-size: 13px !important;
-  }
+  } */
 
   /* .d2h-code-line {
     height: 12px;
