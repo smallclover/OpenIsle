@@ -320,6 +320,7 @@ const mapComment = (
   level = 0,
 ) => ({
   id: c.id,
+  kind: 'comment',
   userName: c.author.username,
   medal: c.author.displayMedal,
   userId: c.author.id,
@@ -374,6 +375,7 @@ const changeLogIcon = (l) => {
 
 const mapChangeLog = (l) => ({
   id: l.id,
+  kind: 'log',
   username: l.username,
   userAvatar: l.userAvatar,
   type: l.type,
@@ -788,9 +790,9 @@ const fetchCommentSorts = () => {
   ])
 }
 
-const fetchComments = async () => {
+const fetchCommentsAndChangeLog = async () => {
   isFetchingComments.value = true
-  console.debug('Fetching comments', { postId, sort: commentSort.value })
+  console.info('Fetching comments and chang log', { postId, sort: commentSort.value })
   try {
     const token = getToken()
     const res = await fetch(
@@ -799,11 +801,34 @@ const fetchComments = async () => {
         headers: { Authorization: token ? `Bearer ${token}` : '' },
       },
     )
-    console.debug('Fetch comments response status', res.status)
+    console.info('Fetch comments response status', res.status)
     if (res.ok) {
       const data = await res.json()
-      console.debug('Fetched comments count', data.length)
-      comments.value = data.map(mapComment)
+      console.info('Fetched comments data', data)
+
+      const commentList = []
+      const changeLogList = []
+      // 时间线列表，包含评论和日志
+      const newTimelineItemList = []
+
+      for (const item of data) {
+        const mappedPayload =
+          item.kind === 'comment'
+            ? mapComment(item.payload)
+            : mapChangeLog(item.payload)
+        newTimelineItemList.push(mappedPayload)
+
+        if (item.kind === 'comment') {
+          commentList.push(mappedPayload)
+        } else {
+          changeLogList.push(mappedPayload)
+        }
+      }
+
+      comments.value = commentList
+      changeLogs.value = changeLogList
+      timelineItems.value = newTimelineItemList
+
       isFetchingComments.value = false
       await nextTick()
       gatherPostItems()
@@ -815,37 +840,8 @@ const fetchComments = async () => {
   }
 }
 
-const fetchChangeLogs = async () => {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/posts/${postId}/change-logs`)
-    if (res.ok) {
-      const data = await res.json()
-      changeLogs.value = data.map(mapChangeLog)
-      await nextTick()
-      gatherPostItems()
-    }
-  } catch (e) {
-    console.debug('Fetch change logs error', e)
-  }
-}
-
-//
-// todo(tim): fetchComments, fetchChangeLogs 整合到一个请求，并且取消前端排序
-//
 const fetchTimeline = async () => {
-  await Promise.all([fetchComments(), fetchChangeLogs()])
-  const cs = comments.value.map((c) => ({ ...c, kind: 'comment' }))
-  const ls = changeLogs.value.map((l) => ({ ...l, kind: 'log' }))
-
-  if (commentSort.value === 'NEWEST') {
-    timelineItems.value = [...cs, ...ls].sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-    )
-  } else {
-    timelineItems.value = [...cs, ...ls].sort(
-      (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-    )
-  }
+  await fetchCommentsAndChangeLog()
 }
 
 watch(commentSort, async () => {

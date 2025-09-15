@@ -1,13 +1,14 @@
 package com.openisle.controller;
 
+import com.openisle.dto.PostChangeLogDto;
+import com.openisle.dto.TimelineItemDto;
+import com.openisle.mapper.PostChangeLogMapper;
 import com.openisle.model.Comment;
 import com.openisle.dto.CommentDto;
 import com.openisle.dto.CommentRequest;
 import com.openisle.mapper.CommentMapper;
-import com.openisle.service.CaptchaService;
-import com.openisle.service.CommentService;
-import com.openisle.service.LevelService;
-import com.openisle.service.PointService;
+import com.openisle.model.CommentSort;
+import com.openisle.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +37,8 @@ public class CommentController {
     private final CaptchaService captchaService;
     private final CommentMapper commentMapper;
     private final PointService pointService;
+    private final PostChangeLogService changeLogService;
+    private final PostChangeLogMapper postChangeLogMapper;
 
     @Value("${app.captcha.enabled:false}")
     private boolean captchaEnabled;
@@ -85,15 +90,43 @@ public class CommentController {
     @GetMapping("/posts/{postId}/comments")
     @Operation(summary = "List comments", description = "List comments for a post")
     @ApiResponse(responseCode = "200", description = "Comments",
-            content = @Content(array = @ArraySchema(schema = @Schema(implementation = CommentDto.class))))
-    public List<CommentDto> listComments(@PathVariable Long postId,
-                                         @RequestParam(value = "sort", required = false, defaultValue = "OLDEST") com.openisle.model.CommentSort sort) {
+            content = @Content(array = @ArraySchema(schema = @Schema(implementation = TimelineItemDto.class))))
+    public List<TimelineItemDto<?>> listComments(@PathVariable Long postId,
+                                         @RequestParam(value = "sort", required = false, defaultValue = "OLDEST") CommentSort sort) {
         log.debug("listComments called for post {} with sort {}", postId, sort);
-        List<CommentDto> list = commentService.getCommentsForPost(postId, sort).stream()
+        List<CommentDto> commentDtoList = commentService.getCommentsForPost(postId, sort).stream()
                 .map(commentMapper::toDtoWithReplies)
                 .collect(Collectors.toList());
-        log.debug("listComments returning {} comments", list.size());
-        return list;
+        List<PostChangeLogDto> postChangeLogDtoList = changeLogService.listLogs(postId).stream()
+                .map(postChangeLogMapper::toDto)
+                .collect(Collectors.toList());
+        List<TimelineItemDto<?>> itemDtoList = new ArrayList<>();
+
+        itemDtoList.addAll(commentDtoList.stream()
+                .map(c -> new TimelineItemDto<>(
+                        c.getId(),
+                        "comment",
+                        c.getCreatedAt(),
+                        c // payload 是 CommentDto
+                ))
+                .toList());
+
+        itemDtoList.addAll(postChangeLogDtoList.stream()
+                .map(l -> new TimelineItemDto<>(
+                        l.getId(),
+                        "log",
+                        l.getTime(), // 注意字段名不一样
+                        l // payload 是 PostChangeLogDto
+                ))
+                .toList());
+        // 排序
+        Comparator<TimelineItemDto<?>> comparator = Comparator.comparing(TimelineItemDto::getCreatedAt);
+        if (CommentSort.NEWEST.equals(sort)) {
+            comparator = comparator.reversed();
+        }
+        itemDtoList.sort(comparator);
+        log.debug("listComments returning {} comments", itemDtoList.size());
+        return itemDtoList;
     }
 
     @DeleteMapping("/comments/{id}")

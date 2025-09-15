@@ -29,7 +29,7 @@
               <reduce-user />
               取消关注
             </div>
-            <div v-if="!isMine" class="profile-page-header-subscribe-button" @click="sendMessage">
+            <div v-if="!isMine" class="profile-page-header-send-mail-button" @click="sendMessage">
               <message-one />
               发私信
             </div>
@@ -701,6 +701,26 @@ watch(selectedTab, async (val) => {
   margin-top: 15px;
   width: fit-content;
   cursor: pointer;
+}
+
+.profile-page-header-send-mail-button {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  align-items: center;
+  font-size: 14px;
+  border-radius: 8px;
+  padding: 5px 10px;
+  color: var(--primary-color);
+  background-color: var(--secondary-color);
+  border: 1px solid var(--primary-color);
+  margin-top: 15px;
+  width: fit-content;
+  cursor: pointer;
+}
+
+.profile-page-header-send-mail-button:hover {
+  background-color: var(--secondary-color-hover);
 }
 
 .profile-level-container {
