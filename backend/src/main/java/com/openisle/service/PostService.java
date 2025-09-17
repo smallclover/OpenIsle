@@ -9,14 +9,12 @@ import com.openisle.repository.PollPostRepository;
 import com.openisle.repository.UserRepository;
 import com.openisle.repository.CategoryRepository;
 import com.openisle.repository.TagRepository;
-import com.openisle.service.SubscriptionService;
-import com.openisle.service.CommentService;
-import com.openisle.service.PostChangeLogService;
 import com.openisle.repository.CommentRepository;
 import com.openisle.repository.ReactionRepository;
 import com.openisle.repository.PostSubscriptionRepository;
 import com.openisle.repository.NotificationRepository;
 import com.openisle.repository.PollVoteRepository;
+import com.openisle.repository.PointHistoryRepository;
 import com.openisle.exception.RateLimitException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -74,6 +72,7 @@ public class PostService {
     private final ApplicationContext applicationContext;
     private final PointService pointService;
     private final PostChangeLogService postChangeLogService;
+    private final PointHistoryRepository pointHistoryRepository;
     private final ConcurrentMap<Long, ScheduledFuture<?>> scheduledFinalizations = new ConcurrentHashMap<>();
     @Value("${app.website-url:https://www.open-isle.com}")
     private String websiteUrl;
@@ -102,6 +101,7 @@ public class PostService {
                        ApplicationContext applicationContext,
                        PointService pointService,
                        PostChangeLogService postChangeLogService,
+                       PointHistoryRepository pointHistoryRepository,
                        @Value("${app.post.publish-mode:DIRECT}") PublishMode publishMode,
                        RedisTemplate redisTemplate) {
         this.postRepository = postRepository;
@@ -125,6 +125,7 @@ public class PostService {
         this.applicationContext = applicationContext;
         this.pointService = pointService;
         this.postChangeLogService = postChangeLogService;
+        this.pointHistoryRepository = pointHistoryRepository;
         this.publishMode = publishMode;
 
         this.redisTemplate = redisTemplate;
@@ -861,6 +862,25 @@ public class PostService {
         notificationRepository.deleteAll(notificationRepository.findByPost(post));
         postReadService.deleteByPost(post);
         imageUploader.removeReferences(imageUploader.extractUrls(post.getContent()));
+        List<PointHistory> pointHistories = pointHistoryRepository.findByPost(post);
+        Set<User> usersToRecalculate = pointHistories.stream()
+                .map(PointHistory::getUser)
+                .collect(Collectors.toSet());
+        if (!pointHistories.isEmpty()) {
+            LocalDateTime deletedAt = LocalDateTime.now();
+            for (PointHistory history : pointHistories) {
+                history.setDeletedAt(deletedAt);
+                history.setPost(null);
+            }
+            pointHistoryRepository.saveAll(pointHistories);
+        }
+        if (!usersToRecalculate.isEmpty()) {
+            for (User affected : usersToRecalculate) {
+                int newPoints = pointService.recalculateUserPoints(affected);
+                affected.setPoint(newPoints);
+            }
+            userRepository.saveAll(usersToRecalculate);
+        }
         if (post instanceof LotteryPost lp) {
             ScheduledFuture<?> future = scheduledFinalizations.remove(lp.getId());
             if (future != null) {
