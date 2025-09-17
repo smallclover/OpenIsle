@@ -122,7 +122,8 @@
         <l-hatch size="28" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
       </div>
       <div v-else class="comments-container">
-        <BaseTimeline :items="timelineItems">
+        <BasePlaceholder v-if="timelineItems.length === 0" text="暂无评论" icon="inbox" />
+        <BaseTimeline v-else :items="timelineItems">
           <template #item="{ item }">
             <CommentItem
               v-if="item.kind === 'comment'"
@@ -184,6 +185,7 @@ import { useRoute } from 'vue-router'
 import CommentItem from '~/components/CommentItem.vue'
 import CommentEditor from '~/components/CommentEditor.vue'
 import BaseTimeline from '~/components/BaseTimeline.vue'
+import BasePlaceholder from '~/components/BasePlaceholder.vue'
 import PostChangeLogItem from '~/components/PostChangeLogItem.vue'
 import ArticleTags from '~/components/ArticleTags.vue'
 import ArticleCategory from '~/components/ArticleCategory.vue'
@@ -813,9 +815,7 @@ const fetchCommentsAndChangeLog = async () => {
 
       for (const item of data) {
         const mappedPayload =
-          item.kind === 'comment'
-            ? mapComment(item.payload)
-            : mapChangeLog(item.payload)
+          item.kind === 'comment' ? mapComment(item.payload) : mapChangeLog(item.payload)
         newTimelineItemList.push(mappedPayload)
 
         if (item.kind === 'comment') {
