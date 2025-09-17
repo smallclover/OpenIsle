@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface PostChangeLogRepository extends JpaRepository<PostChangeLog, Long> {
     List<PostChangeLog> findByPostOrderByCreatedAtAsc(Post post);
+
+    void deleteByPost(Post post);
 }

@@ -71,6 +71,7 @@ class PostServiceTest {
 
         verify(postReadService).deleteByPost(post);
         verify(postRepo).delete(post);
+        verify(postChangeLogService).deleteLogsForPost(post);
     }
 
     @Test
