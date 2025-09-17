@@ -1,36 +1,26 @@
 package com.openisle.service;
 
 import com.openisle.config.CachingConfig;
-import com.openisle.model.Post;
-import com.openisle.model.PostStatus;
-import com.openisle.model.PostType;
-import com.openisle.model.PublishMode;
-import com.openisle.model.User;
-import com.openisle.model.Category;
-import com.openisle.model.Comment;
-import com.openisle.model.NotificationType;
-import com.openisle.model.LotteryPost;
-import com.openisle.model.PollPost;
-import com.openisle.model.PollVote;
+import com.openisle.mapper.PostMapper;
+import com.openisle.model.*;
 import com.openisle.repository.PostRepository;
 import com.openisle.repository.LotteryPostRepository;
 import com.openisle.repository.PollPostRepository;
 import com.openisle.repository.UserRepository;
 import com.openisle.repository.CategoryRepository;
 import com.openisle.repository.TagRepository;
-import com.openisle.service.SubscriptionService;
-import com.openisle.service.CommentService;
-import com.openisle.service.PostChangeLogService;
 import com.openisle.repository.CommentRepository;
 import com.openisle.repository.ReactionRepository;
 import com.openisle.repository.PostSubscriptionRepository;
 import com.openisle.repository.NotificationRepository;
 import com.openisle.repository.PollVoteRepository;
-import com.openisle.model.Role;
+import com.openisle.repository.PointHistoryRepository;
 import com.openisle.exception.RateLimitException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -52,6 +42,8 @@ import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledFuture;
+import java.util.stream.Collectors;
+
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 
@@ -80,6 +72,7 @@ public class PostService {
     private final ApplicationContext applicationContext;
     private final PointService pointService;
     private final PostChangeLogService postChangeLogService;
+    private final PointHistoryRepository pointHistoryRepository;
     private final ConcurrentMap<Long, ScheduledFuture<?>> scheduledFinalizations = new ConcurrentHashMap<>();
     @Value("${app.website-url:https://www.open-isle.com}")
     private String websiteUrl;
@@ -108,6 +101,7 @@ public class PostService {
                        ApplicationContext applicationContext,
                        PointService pointService,
                        PostChangeLogService postChangeLogService,
+                       PointHistoryRepository pointHistoryRepository,
                        @Value("${app.post.publish-mode:DIRECT}") PublishMode publishMode,
                        RedisTemplate redisTemplate) {
         this.postRepository = postRepository;
@@ -131,6 +125,7 @@ public class PostService {
         this.applicationContext = applicationContext;
         this.pointService = pointService;
         this.postChangeLogService = postChangeLogService;
+        this.pointHistoryRepository = pointHistoryRepository;
         this.publishMode = publishMode;
 
         this.redisTemplate = redisTemplate;
@@ -195,12 +190,14 @@ public class PostService {
         pointService.awardForFeatured(saved.getAuthor().getUsername(), saved.getId());
         return saved;
     }
-
+    @CacheEvict(
+        value = CachingConfig.POST_CACHE_NAME, allEntries = true
+    )
     public Post createPost(String username,
                            Long categoryId,
                            String title,
                            String content,
-                           java.util.List<Long> tagIds,
+                           List<Long> tagIds,
                            PostType type,
                            String prizeDescription,
                            String prizeIcon,
@@ -511,6 +508,10 @@ public class PostService {
         return listPostsByLatestReply(null, null, page, pageSize);
     }
 
+    @Cacheable(
+            value = CachingConfig.POST_CACHE_NAME,
+            key = "new org.springframework.cache.interceptor.SimpleKey('latest_reply', #categoryIds, #tagIds, #page, #pageSize)"
+    )
     public List<Post> listPostsByLatestReply(java.util.List<Long> categoryIds,
                                              java.util.List<Long> tagIds,
                                              Integer page,
@@ -538,9 +539,9 @@ public class PostService {
                 posts = postRepository.findByCategoryInAndStatusOrderByCreatedAtDesc(categories, PostStatus.PUBLISHED);
             }
         } else {
-            java.util.List<com.openisle.model.Tag> tags = tagRepository.findAllById(tagIds);
+            List<Tag> tags = tagRepository.findAllById(tagIds);
             if (tags.isEmpty()) {
-                return java.util.List.of();
+                return new ArrayList<>();
             }
             posts = postRepository.findByAllTagsOrderByCreatedAtDesc(tags, PostStatus.PUBLISHED, tags.size());
         }
@@ -638,11 +639,43 @@ public class PostService {
         return paginate(sortByPinnedAndCreated(posts), page, pageSize);
     }
 
+    /**
+     * 默认的文章列表
+     * @param ids
+     * @param tids
+     * @param page
+     * @param pageSize
+     * @return
+     */
+    @Cacheable(
+            value = CachingConfig.POST_CACHE_NAME,
+            key = "new org.springframework.cache.interceptor.SimpleKey('default', #ids, #tids, #page, #pageSize)"
+    )
+    public List<Post> defaultListPosts(List<Long> ids, List<Long> tids, Integer page, Integer pageSize){
+        boolean hasCategories = !CollectionUtils.isEmpty(ids);
+        boolean hasTags = !CollectionUtils.isEmpty(tids);
+
+        if (hasCategories && hasTags) {
+            return listPostsByCategoriesAndTags(ids, tids, page, pageSize)
+                    .stream().collect(Collectors.toList());
+        }
+        if (hasTags) {
+            return listPostsByTags(tids, page, pageSize)
+                    .stream().collect(Collectors.toList());
+        }
+
+        return listPostsByCategories(ids, page, pageSize)
+                .stream().collect(Collectors.toList());
+    }
 
     public List<Post> listPendingPosts() {
         return postRepository.findByStatus(PostStatus.PENDING);
     }
 
+    @CacheEvict(
+            value = CachingConfig.POST_CACHE_NAME,
+            allEntries = true
+    )
     public Post approvePost(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new com.openisle.exception.NotFoundException("Post not found"));
@@ -679,6 +712,10 @@ public class PostService {
         return post;
     }
 
+    @CacheEvict(
+            value = CachingConfig.POST_CACHE_NAME,
+            allEntries = true
+    )
     public Post pinPost(Long id, String username) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new com.openisle.exception.NotFoundException("Post not found"));
@@ -691,6 +728,10 @@ public class PostService {
         return saved;
     }
 
+    @CacheEvict(
+            value = CachingConfig.POST_CACHE_NAME,
+            allEntries = true
+    )
     public Post unpinPost(Long id, String username) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new com.openisle.exception.NotFoundException("Post not found"));
@@ -703,6 +744,10 @@ public class PostService {
         return saved;
     }
 
+    @CacheEvict(
+            value = CachingConfig.POST_CACHE_NAME,
+            allEntries = true
+    )
     public Post closePost(Long id, String username) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new com.openisle.exception.NotFoundException("Post not found"));
@@ -718,6 +763,10 @@ public class PostService {
         return saved;
     }
 
+    @CacheEvict(
+            value = CachingConfig.POST_CACHE_NAME,
+            allEntries = true
+    )
     public Post reopenPost(Long id, String username) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new com.openisle.exception.NotFoundException("Post not found"));
@@ -733,7 +782,11 @@ public class PostService {
         return saved;
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @CacheEvict(
+            value = CachingConfig.POST_CACHE_NAME,
+            allEntries = true
+    )
+    @Transactional
     public Post updatePost(Long id,
                            String username,
                            Long categoryId,
@@ -786,7 +839,11 @@ public class PostService {
         return updated;
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @CacheEvict(
+            value = CachingConfig.POST_CACHE_NAME,
+            allEntries = true
+    )
+    @Transactional
     public void deletePost(Long id, String username) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new com.openisle.exception.NotFoundException("Post not found"));
@@ -805,6 +862,25 @@ public class PostService {
         notificationRepository.deleteAll(notificationRepository.findByPost(post));
         postReadService.deleteByPost(post);
         imageUploader.removeReferences(imageUploader.extractUrls(post.getContent()));
+        List<PointHistory> pointHistories = pointHistoryRepository.findByPost(post);
+        Set<User> usersToRecalculate = pointHistories.stream()
+                .map(PointHistory::getUser)
+                .collect(Collectors.toSet());
+        if (!pointHistories.isEmpty()) {
+            LocalDateTime deletedAt = LocalDateTime.now();
+            for (PointHistory history : pointHistories) {
+                history.setDeletedAt(deletedAt);
+                history.setPost(null);
+            }
+            pointHistoryRepository.saveAll(pointHistories);
+        }
+        if (!usersToRecalculate.isEmpty()) {
+            for (User affected : usersToRecalculate) {
+                int newPoints = pointService.recalculateUserPoints(affected);
+                affected.setPoint(newPoints);
+            }
+            userRepository.saveAll(usersToRecalculate);
+        }
         if (post instanceof LotteryPost lp) {
             ScheduledFuture<?> future = scheduledFinalizations.remove(lp.getId());
             if (future != null) {
@@ -812,6 +888,7 @@ public class PostService {
             }
         }
         String title = post.getTitle();
+        postChangeLogService.deleteLogsForPost(post);
         postRepository.delete(post);
         if (adminDeleting) {
             notificationService.createNotification(author, NotificationType.POST_DELETED,
@@ -879,15 +956,17 @@ public class PostService {
                 .toList();
     }
 
-    private java.util.List<Post> paginate(java.util.List<Post> posts, Integer page, Integer pageSize) {
+    private List<Post> paginate(List<Post> posts, Integer page, Integer pageSize) {
         if (page == null || pageSize == null) {
             return posts;
         }
         int from = page * pageSize;
         if (from >= posts.size()) {
-            return java.util.List.of();
+            return new ArrayList<>();
         }
         int to = Math.min(from + pageSize, posts.size());
-        return posts.subList(from, to);
+        // 这里必须将list包装为arrayList类型，否则序列化会有问题
+        // list.sublist返回的是内部类
+        return new ArrayList<>(posts.subList(from, to));
     }
 }

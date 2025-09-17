@@ -44,6 +44,7 @@ const isImageIcon = (icon) => {
   display: flex;
   flex-direction: row;
   gap: 10px;
+  min-height: 25px;
 }
 
 .article-info-item {
@@ -71,6 +72,10 @@ const isImageIcon = (icon) => {
 
   .article-info-item {
     font-size: 10px;
+  }
+
+  .article-tags-container {
+    min-height: 20px;
   }
 }
 </style>

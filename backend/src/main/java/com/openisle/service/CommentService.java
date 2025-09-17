@@ -1,5 +1,6 @@
 package com.openisle.service;
 
+import com.openisle.config.CachingConfig;
 import com.openisle.model.Comment;
 import com.openisle.model.Post;
 import com.openisle.model.User;
@@ -20,6 +21,8 @@ import com.openisle.model.Role;
 import com.openisle.exception.RateLimitException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -47,6 +50,10 @@ public class CommentService {
     private final PointService pointService;
     private final ImageUploader imageUploader;
 
+    @CacheEvict(
+            value = CachingConfig.POST_CACHE_NAME,
+            allEntries = true
+    )
     @Transactional
     public Comment addComment(String username, Long postId, String content) {
         log.debug("addComment called by user {} for post {}", username, postId);
@@ -99,6 +106,10 @@ public class CommentService {
         return commentRepository.findLastCommentTimeOfUserByUserId(userId);
     }
 
+    @CacheEvict(
+            value = CachingConfig.POST_CACHE_NAME,
+            allEntries = true
+    )
     @Transactional
     public Comment addReply(String username, Long parentId, String content) {
         log.debug("addReply called by user {} for parent comment {}", username, parentId);
@@ -236,6 +247,10 @@ public class CommentService {
         return count;
     }
 
+    @CacheEvict(
+            value = CachingConfig.POST_CACHE_NAME,
+            allEntries = true
+    )
     @Transactional
     public void deleteComment(String username, Long id) {
         log.debug("deleteComment called by user {} for comment {}", username, id);
@@ -251,6 +266,10 @@ public class CommentService {
         log.debug("deleteComment completed for comment {}", id);
     }
 
+    @CacheEvict(
+            value = CachingConfig.POST_CACHE_NAME,
+            allEntries = true
+    )
     @Transactional
     public void deleteCommentCascade(Comment comment) {
         log.debug("deleteCommentCascade called for comment {}", comment.getId());

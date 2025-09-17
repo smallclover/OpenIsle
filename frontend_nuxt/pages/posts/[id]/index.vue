@@ -320,6 +320,7 @@ const mapComment = (
   level = 0,
 ) => ({
   id: c.id,
+  kind: 'comment',
   userName: c.author.username,
   medal: c.author.displayMedal,
   userId: c.author.id,
@@ -374,6 +375,7 @@ const changeLogIcon = (l) => {
 
 const mapChangeLog = (l) => ({
   id: l.id,
+  kind: 'log',
   username: l.username,
   userAvatar: l.userAvatar,
   type: l.type,
@@ -434,7 +436,7 @@ const removeCommentFromList = (id, list) => {
 
 const handleContentClick = (e) => {
   handleMarkdownClick(e)
-  if (e.target.tagName === 'IMG') {
+  if (e.target.tagName === 'IMG' && !e.target.classList.contains('emoji')) {
     const container = e.target.parentNode
     const imgs = [...container.querySelectorAll('img')].map((i) => i.src)
     lightboxImgs.value = imgs
@@ -445,7 +447,7 @@ const handleContentClick = (e) => {
 
 const onCommentDeleted = (id) => {
   removeCommentFromList(Number(id), comments.value)
-  fetchComments()
+  fetchTimeline()
 }
 
 const {
@@ -557,7 +559,7 @@ const postComment = async (parentUserName, text, clear) => {
     if (res.ok) {
       const data = await res.json()
       console.debug('Post comment response data', data)
-      await fetchComments()
+      await fetchTimeline()
       clear()
       if (data.reward && data.reward > 0) {
         toast.success(`评论成功，获得 ${data.reward} 经验值`)
@@ -612,7 +614,7 @@ const approvePost = async () => {
     status.value = 'PUBLISHED'
     toast.success('已通过审核')
     await refreshPost()
-    await fetchChangeLogs()
+    await fetchTimeline()
   } else {
     toast.error('操作失败')
   }
@@ -628,7 +630,7 @@ const pinPost = async () => {
   if (res.ok) {
     toast.success('已置顶')
     await refreshPost()
-    await fetchChangeLogs()
+    await fetchTimeline()
   } else {
     toast.error('操作失败')
   }
@@ -644,7 +646,7 @@ const unpinPost = async () => {
   if (res.ok) {
     toast.success('已取消置顶')
     await refreshPost()
-    await fetchChangeLogs()
+    await fetchTimeline()
   } else {
     toast.error('操作失败')
   }
@@ -660,7 +662,7 @@ const excludeRss = async () => {
   if (res.ok) {
     rssExcluded.value = true
     toast.success('已标记为rss不推荐')
-    await fetchChangeLogs()
+    await fetchTimeline()
   } else {
     toast.error('操作失败')
   }
@@ -676,7 +678,8 @@ const includeRss = async () => {
   if (res.ok) {
     rssExcluded.value = false
     toast.success('已标记为rss推荐')
-    await fetchChangeLogs()
+    await refreshPost()
+    await fetchTimeline()
   } else {
     toast.error('操作失败')
   }
@@ -693,7 +696,7 @@ const closePost = async () => {
     closed.value = true
     toast.success('已关闭')
     await refreshPost()
-    await fetchChangeLogs()
+    await fetchTimeline()
   } else {
     toast.error('操作失败')
   }
@@ -710,7 +713,7 @@ const reopenPost = async () => {
     closed.value = false
     toast.success('已重新打开')
     await refreshPost()
-    await fetchChangeLogs()
+    await fetchTimeline()
   } else {
     toast.error('操作失败')
   }
@@ -755,7 +758,7 @@ const rejectPost = async () => {
     status.value = 'REJECTED'
     toast.success('已驳回')
     await refreshPost()
-    await fetchChangeLogs()
+    await fetchTimeline()
   } else {
     toast.error('操作失败')
   }
@@ -787,9 +790,9 @@ const fetchCommentSorts = () => {
   ])
 }
 
-const fetchComments = async () => {
+const fetchCommentsAndChangeLog = async () => {
   isFetchingComments.value = true
-  console.debug('Fetching comments', { postId, sort: commentSort.value })
+  console.info('Fetching comments and chang log', { postId, sort: commentSort.value })
   try {
     const token = getToken()
     const res = await fetch(
@@ -798,11 +801,34 @@ const fetchComments = async () => {
         headers: { Authorization: token ? `Bearer ${token}` : '' },
       },
     )
-    console.debug('Fetch comments response status', res.status)
+    console.info('Fetch comments response status', res.status)
     if (res.ok) {
       const data = await res.json()
-      console.debug('Fetched comments count', data.length)
-      comments.value = data.map(mapComment)
+      console.info('Fetched comments data', data)
+
+      const commentList = []
+      const changeLogList = []
+      // 时间线列表，包含评论和日志
+      const newTimelineItemList = []
+
+      for (const item of data) {
+        const mappedPayload =
+          item.kind === 'comment'
+            ? mapComment(item.payload)
+            : mapChangeLog(item.payload)
+        newTimelineItemList.push(mappedPayload)
+
+        if (item.kind === 'comment') {
+          commentList.push(mappedPayload)
+        } else {
+          changeLogList.push(mappedPayload)
+        }
+      }
+
+      comments.value = commentList
+      changeLogs.value = changeLogList
+      timelineItems.value = newTimelineItemList
+
       isFetchingComments.value = false
       await nextTick()
       gatherPostItems()
@@ -814,37 +840,8 @@ const fetchComments = async () => {
   }
 }
 
-const fetchChangeLogs = async () => {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/posts/${postId}/change-logs`)
-    if (res.ok) {
-      const data = await res.json()
-      changeLogs.value = data.map(mapChangeLog)
-      await nextTick()
-      gatherPostItems()
-    }
-  } catch (e) {
-    console.debug('Fetch change logs error', e)
-  }
-}
-
-//
-// todo(tim): fetchComments, fetchChangeLogs 整合到一个请求，并且取消前端排序
-//
 const fetchTimeline = async () => {
-  await Promise.all([fetchComments(), fetchChangeLogs()])
-  const cs = comments.value.map((c) => ({ ...c, kind: 'comment' }))
-  const ls = changeLogs.value.map((l) => ({ ...l, kind: 'log' }))
-
-  if (commentSort.value === 'NEWEST') {
-    timelineItems.value = [...cs, ...ls].sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-    )
-  } else {
-    timelineItems.value = [...cs, ...ls].sort(
-      (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-    )
-  }
+  await fetchCommentsAndChangeLog()
 }
 
 watch(commentSort, async () => {

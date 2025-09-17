@@ -3,7 +3,7 @@ import { defineNuxtConfig } from 'nuxt/config'
 export default defineNuxtConfig({
   devServer: {
     host: '0.0.0.0',
-    port: 3000
+    port: 3000,
   },
   ssr: true,
   modules: ['@nuxt/image'],
@@ -97,26 +97,7 @@ export default defineNuxtConfig({
     },
   },
   vite: {
-    build: {
-      // increase warning limit and split large libraries into separate chunks
-      // chunkSizeWarningLimit: 1024,
-      // rollupOptions: {
-      //   output: {
-      //     manualChunks(id) {
-      //       if (id.includes('node_modules')) {
-      //         if (id.includes('vditor')) {
-      //           return 'vditor'
-      //         }
-      //         if (id.includes('echarts')) {
-      //           return 'echarts'
-      //         }
-      //         if (id.includes('highlight.js')) {
-      //           return 'highlight'
-      //         }
-      //       }
-      //     },
-      //   },
-      // },
-    },
+    optimizeDeps: {},
+    build: {},
   },
 })

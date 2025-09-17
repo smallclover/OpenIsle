@@ -3,6 +3,7 @@ import { getToken, authState } from './auth'
 import { searchUsers, fetchFollowings, fetchAdmins } from './user'
 import { tiebaEmoji } from './tiebaEmoji'
 import vditorPostCitation from './vditorPostCitation.js'
+import { checkFileSize, formatFileSize } from './videoCompressor.js'
 
 export function getEditorTheme() {
   return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'classic'
@@ -91,7 +92,26 @@ export function createVditor(editorId, options = {}) {
       multiple: false,
       handler: async (files) => {
         const file = files[0]
-        vditor.tip('图片上传中', 0)
+        const ext = file.name.split('.').pop().toLowerCase()
+        const videoExts = ['mp4', 'webm', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'm4v', 'ogv']
+
+        // 检查文件大小
+        const sizeCheck = checkFileSize(file)
+        if (!sizeCheck.isValid) {
+          console.log(
+            '文件大小不能超过',
+            formatFileSize(sizeCheck.maxSize),
+            '，当前文件',
+            formatFileSize(sizeCheck.actualSize),
+          )
+          vditor.tip(
+            `文件大小不能超过 ${formatFileSize(sizeCheck.maxSize)}，当前文件 ${formatFileSize(sizeCheck.actualSize)}`,
+            3000,
+          )
+          return '文件过大'
+        }
+
+        vditor.tip('文件上传中', 0)
         vditor.disabled()
         const res = await fetch(
           `${API_BASE_URL}/api/upload/presign?filename=${encodeURIComponent(file.name)}`,
@@ -110,7 +130,6 @@ export function createVditor(editorId, options = {}) {
           return '上传失败'
         }
 
-        const ext = file.name.split('.').pop().toLowerCase()
         const imageExts = [
           'apng',
           'bmp',
@@ -132,6 +151,8 @@ export function createVditor(editorId, options = {}) {
           md = `![${file.name}](${info.fileUrl})`
         } else if (audioExts.includes(ext)) {
           md = `<audio controls="controls" src="${info.fileUrl}"></audio>`
+        } else if (videoExts.includes(ext)) {
+          md = `<video width="600" controls>\n  <source src="${info.fileUrl}" type="video/${ext}">\n  你的浏览器不支持 video 标签。\n</video>`
         } else {
           md = `[${file.name}](${info.fileUrl})`
         }

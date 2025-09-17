@@ -109,6 +109,10 @@ public class PostChangeLogService {
         logRepository.save(log);
     }
 
+    public void deleteLogsForPost(Post post) {
+        logRepository.deleteByPost(post);
+    }
+
     public List<PostChangeLog> listLogs(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new com.openisle.exception.NotFoundException("Post not found"));

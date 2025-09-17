@@ -27,12 +27,12 @@ public class UserVisitScheduler {
     private final UserRepository userRepository;
     private final UserVisitRepository userVisitRepository;
 
-    @Scheduled(cron = "0 5 0 * * ?")// 每天 00:05 执行
+    @Scheduled(cron = "0 5 0 * * ?") // 每天 00:05 执行
     public void persistDailyVisits(){
         LocalDate yesterday = LocalDate.now().minusDays(1);
-        String key = CachingConfig.VISIT_CACHE_NAME+":"+ yesterday;
+        String key = CachingConfig.VISIT_CACHE_NAME + ":" + yesterday;
         Set<String> usernames = redisTemplate.opsForSet().members(key);
-        if(!CollectionUtils.isEmpty(usernames)){
+        if (!CollectionUtils.isEmpty(usernames)) {
             for(String username: usernames){
                 User user = userRepository.findByUsername(username).orElse(null);
                 if(user != null){
