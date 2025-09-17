@@ -346,12 +346,16 @@ public class CommentService {
     /**
      * Update post comment statistics (comment count and last reply time)
      */
-    private void updatePostCommentStats(Post post) {
+    public void updatePostCommentStats(Post post) {
         long commentCount = commentRepository.countByPostId(post.getId());
-        LocalDateTime lastReplyAt = commentRepository.findLastCommentTime(post);
-        
         post.setCommentCount(commentCount);
-        post.setLastReplyAt(lastReplyAt);
+
+        LocalDateTime lastReplyAt = commentRepository.findLastCommentTime(post);
+        if (lastReplyAt == null) {
+            post.setLastReplyAt(post.getCreatedAt());
+        } else {
+            post.setLastReplyAt(lastReplyAt);
+        }
         postRepository.save(post);
         
         log.debug("Updated post {} stats: commentCount={}, lastReplyAt={}", 

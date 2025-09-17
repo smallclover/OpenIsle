@@ -83,7 +83,10 @@ public class PostMapper {
         dto.setParticipants(participants.stream().map(userMapper::toAuthorDto).collect(Collectors.toList()));
 
         LocalDateTime last = post.getLastReplyAt();
-        dto.setLastReplyAt(last != null ? last : post.getCreatedAt());
+        if (last == null) {
+            commentService.updatePostCommentStats(post);
+        }
+        dto.setLastReplyAt(post.getLastReplyAt());
         dto.setReward(0);
         dto.setSubscribed(false);
         dto.setType(post.getType());
