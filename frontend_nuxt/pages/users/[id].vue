@@ -712,13 +712,13 @@ watch(selectedTab, async (val) => {
   border-radius: 8px;
   padding: 5px 10px;
   color: var(--primary-color);
-  background-color: var(--secondary-color);
   border: 1px solid var(--primary-color);
   margin-top: 15px;
   width: fit-content;
   cursor: pointer;
 }
 
+.profile-page-header-unsubscribe-button:hover,
 .profile-page-header-send-mail-button:hover {
   background-color: var(--secondary-color-hover);
 }
