@@ -888,6 +888,7 @@ public class PostService {
             }
         }
         String title = post.getTitle();
+        postChangeLogService.deleteLogsForPost(post);
         postRepository.delete(post);
         if (adminDeleting) {
             notificationService.createNotification(author, NotificationType.POST_DELETED,
