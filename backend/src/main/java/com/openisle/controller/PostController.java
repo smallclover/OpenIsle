@@ -203,8 +203,8 @@ public class PostController {
 //            userVisitService.recordVisit(auth.getName());
 //        }
 
-        return postService.listPostsByLatestReply(ids, tids, page, pageSize)
-                .stream().map(postMapper::toSummaryDto).collect(Collectors.toList());
+        List<Post> posts = postService.listPostsByLatestReply(ids, tids, page, pageSize);
+        return posts.stream().map(postMapper::toSummaryDto).collect(Collectors.toList());
     }
 
     @GetMapping("/featured")
