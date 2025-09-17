@@ -97,8 +97,10 @@ public class CachingConfig {
         // 个别缓存单独设置 TTL 时间
         Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();
         RedisCacheConfiguration oneHourConfig = config.entryTtl(Duration.ofHours(1));
+        RedisCacheConfiguration tenMinutesConfig = config.entryTtl(Duration.ofMinutes(10));
         cacheConfigs.put(TAG_CACHE_NAME, oneHourConfig);
         cacheConfigs.put(CATEGORY_CACHE_NAME, oneHourConfig);
+        cacheConfigs.put(POST_CACHE_NAME, tenMinutesConfig);
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(config)

@@ -190,7 +190,7 @@ public class PostService {
         return saved;
     }
     @CacheEvict(
-            value = CachingConfig.POST_CACHE_NAME, allEntries = true
+        value = CachingConfig.POST_CACHE_NAME, allEntries = true
     )
     public Post createPost(String username,
                            Long categoryId,
