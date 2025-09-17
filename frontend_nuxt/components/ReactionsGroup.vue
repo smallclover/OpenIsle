@@ -107,14 +107,52 @@ const likeCount = computed(() => counts.value['LIKE'] || 0)
 const userReacted = (type) =>
   reactions.value.some((r) => r.type === type && r.user === authState.username)
 
-const displayedReactions = computed(() => {
-  return Object.entries(counts.value)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([type]) => ({ type }))
+const baseReactionOrder = computed(() => {
+  if (reactionTypes.value.length) return [...reactionTypes.value]
+
+  const order = []
+  const seen = new Set()
+  for (const reaction of reactions.value) {
+    if (!seen.has(reaction.type)) {
+      seen.add(reaction.type)
+      order.push(reaction.type)
+    }
+  }
+  return order
 })
 
-const panelTypes = computed(() => reactionTypes.value.filter((t) => t !== 'LIKE'))
+const sortedReactionTypes = computed(() => {
+  const baseOrder = [...baseReactionOrder.value]
+  for (const type of Object.keys(counts.value)) {
+    if (!baseOrder.includes(type)) baseOrder.push(type)
+  }
+
+  const withMetadata = baseOrder.map((type, index) => ({
+    type,
+    count: counts.value[type] || 0,
+    index,
+  }))
+
+  const nonZero = withMetadata
+    .filter((item) => item.count > 0)
+    .sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count
+      return a.index - b.index
+    })
+
+  const zero = withMetadata.filter((item) => item.count === 0)
+
+  return [...nonZero, ...zero].map((item) => item.type)
+})
+
+const displayedReactions = computed(() => {
+  return sortedReactionTypes.value
+    .filter((type) => counts.value[type] > 0)
+    .slice(0, 3)
+    .map((type) => ({ type }))
+})
+
+const panelTypes = computed(() => sortedReactionTypes.value.filter((t) => t !== 'LIKE'))
 
 const panelVisible = ref(false)
 let hideTimer = null
