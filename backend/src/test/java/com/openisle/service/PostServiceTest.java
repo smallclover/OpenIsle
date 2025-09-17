@@ -268,12 +268,14 @@ class PostServiceTest {
         ApplicationContext context = mock(ApplicationContext.class);
         PointService pointService = mock(PointService.class);
         PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
+        PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
         RedisTemplate redisTemplate = mock(RedisTemplate.class);
 
         PostService service = new PostService(postRepo, userRepo, catRepo, tagRepo, lotteryRepo,
                 pollPostRepo, pollVoteRepo, notifService, subService, commentService, commentRepo,
                 reactionRepo, subRepo, notificationRepo, postReadService,
-                imageUploader, taskScheduler, emailSender, context, pointService, postChangeLogService, PublishMode.DIRECT, redisTemplate);
+                imageUploader, taskScheduler, emailSender, context, pointService, postChangeLogService,
+                pointHistoryRepository, PublishMode.DIRECT, redisTemplate);
         when(context.getBean(PostService.class)).thenReturn(service);
 
         User author = new User();
