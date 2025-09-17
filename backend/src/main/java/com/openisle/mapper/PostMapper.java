@@ -67,7 +67,6 @@ public class PostMapper {
         dto.setCategory(categoryMapper.toDto(post.getCategory()));
         dto.setTags(post.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList()));
         dto.setViews(post.getViews());
-        dto.setCommentCount(commentService.countComments(post.getId()));
         dto.setStatus(post.getStatus());
         dto.setPinnedAt(post.getPinnedAt());
         dto.setRssExcluded(post.getRssExcluded() == null || post.getRssExcluded());
@@ -82,8 +81,12 @@ public class PostMapper {
         List<User> participants = commentService.getParticipants(post.getId(), 5);
         dto.setParticipants(participants.stream().map(userMapper::toAuthorDto).collect(Collectors.toList()));
 
-        LocalDateTime last = commentService.getLastCommentTime(post.getId());
-        dto.setLastReplyAt(last != null ? last : post.getCreatedAt());
+        LocalDateTime last = post.getLastReplyAt();
+        if (last == null) {
+            commentService.updatePostCommentStats(post);
+        }
+        dto.setCommentCount(post.getCommentCount());
+        dto.setLastReplyAt(post.getLastReplyAt());
         dto.setReward(0);
         dto.setSubscribed(false);
         dto.setType(post.getType());

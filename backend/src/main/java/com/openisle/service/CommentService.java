@@ -76,6 +76,10 @@ public class CommentService {
         comment.setContent(content);
         comment = commentRepository.save(comment);
         log.debug("Comment {} saved for post {}", comment.getId(), postId);
+        
+        // Update post comment statistics
+        updatePostCommentStats(post);
+        
         imageUploader.addReferences(imageUploader.extractUrls(content));
         if (!author.getId().equals(post.getAuthor().getId())) {
             notificationService.createNotification(post.getAuthor(), NotificationType.COMMENT_REPLY, post, comment,
@@ -129,6 +133,10 @@ public class CommentService {
         comment.setContent(content);
         comment = commentRepository.save(comment);
         log.debug("Reply {} saved for parent {}", comment.getId(), parentId);
+        
+        // Update post comment statistics
+        updatePostCommentStats(parent.getPost());
+        
         imageUploader.addReferences(imageUploader.extractUrls(content));
         if (!author.getId().equals(parent.getAuthor().getId())) {
             notificationService.createNotification(parent.getAuthor(), NotificationType.COMMENT_REPLY, parent.getPost(),
@@ -282,9 +290,13 @@ public class CommentService {
         imageUploader.removeReferences(imageUploader.extractUrls(comment.getContent()));
 
         // 逻辑删除评论
+        Post post = comment.getPost();
         commentRepository.delete(comment);
         // 删除积分历史
         pointHistoryRepository.deleteAll(pointHistories);
+        
+        // Update post comment statistics
+        updatePostCommentStats(post);
 
         // 重新计算受影响用户的积分
         if (!usersToRecalculate.isEmpty()) {
@@ -329,5 +341,24 @@ public class CommentService {
         int reactions = reactionRepository.findByComment(comment).size();
         int replies = commentRepository.findByParentOrderByCreatedAtAsc(comment).size();
         return reactions + replies;
+    }
+    
+    /**
+     * Update post comment statistics (comment count and last reply time)
+     */
+    public void updatePostCommentStats(Post post) {
+        long commentCount = commentRepository.countByPostId(post.getId());
+        post.setCommentCount(commentCount);
+
+        LocalDateTime lastReplyAt = commentRepository.findLastCommentTime(post);
+        if (lastReplyAt == null) {
+            post.setLastReplyAt(post.getCreatedAt());
+        } else {
+            post.setLastReplyAt(lastReplyAt);
+        }
+        postRepository.save(post);
+        
+        log.debug("Updated post {} stats: commentCount={}, lastReplyAt={}", 
+                post.getId(), commentCount, lastReplyAt);
     }
 }
