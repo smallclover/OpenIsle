@@ -100,7 +100,7 @@ public class UserService {
      * @param user
      */
     public void sendVerifyMail(User user, VerifyType verifyType){
-        //缓存验证码
+        // 缓存验证码
         String code = genCode();
         String key;
         String subject;
