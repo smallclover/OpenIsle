@@ -49,9 +49,9 @@ public class UserVisitService {
                 .orElseThrow(() -> new com.openisle.exception.NotFoundException("User not found"));
 
         // 如果缓存存在就返回
-        String key1 = CachingConfig.VISIT_CACHE_NAME + ":"+LocalDate.now()+":count:"+username;
+        String key1 = CachingConfig.VISIT_CACHE_NAME + ":" +LocalDate.now() + ":count:" + username;
         Integer cached = (Integer) redisTemplate.opsForValue().get(key1);
-        if(cached != null){
+        if (cached != null){
             return cached.longValue();
         }
 
