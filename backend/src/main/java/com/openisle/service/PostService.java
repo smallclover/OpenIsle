@@ -16,6 +16,7 @@ import com.openisle.repository.CommentRepository;
 import com.openisle.repository.ReactionRepository;
 import com.openisle.repository.PostSubscriptionRepository;
 import com.openisle.repository.NotificationRepository;
+import com.openisle.repository.PointHistoryRepository;
 import com.openisle.repository.PollVoteRepository;
 import com.openisle.exception.RateLimitException;
 import lombok.extern.slf4j.Slf4j;
@@ -67,6 +68,7 @@ public class PostService {
     private final ReactionRepository reactionRepository;
     private final PostSubscriptionRepository postSubscriptionRepository;
     private final NotificationRepository notificationRepository;
+    private final PointHistoryRepository pointHistoryRepository;
     private final PostReadService postReadService;
     private final ImageUploader imageUploader;
     private final TaskScheduler taskScheduler;
@@ -95,6 +97,7 @@ public class PostService {
                        ReactionRepository reactionRepository,
                        PostSubscriptionRepository postSubscriptionRepository,
                        NotificationRepository notificationRepository,
+                       PointHistoryRepository pointHistoryRepository,
                        PostReadService postReadService,
                        ImageUploader imageUploader,
                        TaskScheduler taskScheduler,
@@ -118,6 +121,7 @@ public class PostService {
         this.reactionRepository = reactionRepository;
         this.postSubscriptionRepository = postSubscriptionRepository;
         this.notificationRepository = notificationRepository;
+        this.pointHistoryRepository = pointHistoryRepository;
         this.postReadService = postReadService;
         this.imageUploader = imageUploader;
         this.taskScheduler = taskScheduler;
@@ -860,6 +864,18 @@ public class PostService {
         postSubscriptionRepository.findByPost(post).forEach(postSubscriptionRepository::delete);
         notificationRepository.deleteAll(notificationRepository.findByPost(post));
         postReadService.deleteByPost(post);
+        List<PointHistory> pointHistories = pointHistoryRepository.findByPost(post);
+        Set<User> usersToRecalculate = pointHistories.stream()
+                .map(PointHistory::getUser)
+                .collect(Collectors.toSet());
+        pointHistoryRepository.deleteAll(pointHistories);
+        if (!usersToRecalculate.isEmpty()) {
+            for (User affectedUser : usersToRecalculate) {
+                int newPoints = pointService.recalculateUserPoints(affectedUser);
+                affectedUser.setPoint(newPoints);
+            }
+            userRepository.saveAll(usersToRecalculate);
+        }
         imageUploader.removeReferences(imageUploader.extractUrls(post.getContent()));
         if (post instanceof LotteryPost lp) {
             ScheduledFuture<?> future = scheduledFinalizations.remove(lp.getId());
