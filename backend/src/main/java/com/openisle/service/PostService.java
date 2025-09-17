@@ -509,7 +509,7 @@ public class PostService {
 
     @Cacheable(
             value = CachingConfig.POST_CACHE_NAME,
-            key = "'latest_reply'"
+            key = "new org.springframework.cache.interceptor.SimpleKey('latest_reply', #categoryIds, #tagIds, #page, #pageSize)"
     )
     public List<Post> listPostsByLatestReply(java.util.List<Long> categoryIds,
                                              java.util.List<Long> tagIds,
@@ -648,7 +648,7 @@ public class PostService {
      */
     @Cacheable(
             value = CachingConfig.POST_CACHE_NAME,
-            key = "'default'"
+            key = "new org.springframework.cache.interceptor.SimpleKey('default', #ids, #tids, #page, #pageSize)"
     )
     public List<Post> defaultListPosts(List<Long> ids, List<Long> tids, Integer page, Integer pageSize){
         boolean hasCategories = !CollectionUtils.isEmpty(ids);
@@ -673,7 +673,7 @@ public class PostService {
 
     @CacheEvict(
             value = CachingConfig.POST_CACHE_NAME,
-            key = "'default'"
+            allEntries = true
     )
     public Post approvePost(Long id) {
         Post post = postRepository.findById(id)
@@ -713,7 +713,7 @@ public class PostService {
 
     @CacheEvict(
             value = CachingConfig.POST_CACHE_NAME,
-            key = "'default'"
+            allEntries = true
     )
     public Post pinPost(Long id, String username) {
         Post post = postRepository.findById(id)
@@ -729,7 +729,7 @@ public class PostService {
 
     @CacheEvict(
             value = CachingConfig.POST_CACHE_NAME,
-            key = "'default'"
+            allEntries = true
     )
     public Post unpinPost(Long id, String username) {
         Post post = postRepository.findById(id)
@@ -745,7 +745,7 @@ public class PostService {
 
     @CacheEvict(
             value = CachingConfig.POST_CACHE_NAME,
-            key = "'default'"
+            allEntries = true
     )
     public Post closePost(Long id, String username) {
         Post post = postRepository.findById(id)
@@ -764,7 +764,7 @@ public class PostService {
 
     @CacheEvict(
             value = CachingConfig.POST_CACHE_NAME,
-            key = "'default'"
+            allEntries = true
     )
     public Post reopenPost(Long id, String username) {
         Post post = postRepository.findById(id)
@@ -783,7 +783,7 @@ public class PostService {
 
     @CacheEvict(
             value = CachingConfig.POST_CACHE_NAME,
-            key = "'default'"
+            allEntries = true
     )
     @Transactional
     public Post updatePost(Long id,
@@ -840,7 +840,7 @@ public class PostService {
 
     @CacheEvict(
             value = CachingConfig.POST_CACHE_NAME,
-            key = "'default'"
+            allEntries = true
     )
     @Transactional
     public void deletePost(Long id, String username) {

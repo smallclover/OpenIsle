@@ -52,7 +52,7 @@ public class CommentService {
 
     @CacheEvict(
             value = CachingConfig.POST_CACHE_NAME,
-            key = "'latest_reply'"
+            allEntries = true
     )
     @Transactional
     public Comment addComment(String username, Long postId, String content) {
@@ -104,7 +104,7 @@ public class CommentService {
 
     @CacheEvict(
             value = CachingConfig.POST_CACHE_NAME,
-            key = "'latest_reply'"
+            allEntries = true
     )
     @Transactional
     public Comment addReply(String username, Long parentId, String content) {
@@ -241,7 +241,7 @@ public class CommentService {
 
     @CacheEvict(
             value = CachingConfig.POST_CACHE_NAME,
-            key = "'latest_reply'"
+            allEntries = true
     )
     @Transactional
     public void deleteComment(String username, Long id) {
@@ -260,7 +260,7 @@ public class CommentService {
 
     @CacheEvict(
             value = CachingConfig.POST_CACHE_NAME,
-            key = "'latest_reply'"
+            allEntries = true
     )
     @Transactional
     public void deleteCommentCascade(Comment comment) {
