@@ -139,6 +139,7 @@ import { getToken } from '~/utils/auth'
 import { stripMarkdown } from '~/utils/markdown'
 import { useIsMobile } from '~/utils/screen'
 import TimeManager from '~/utils/time'
+import { selectedCategoryGlobal, selectedTagsGlobal } from '~/composables/postFilter'
 useHead({
   title: 'OpenIsle - 全面开源的自由社区',
   meta: [
@@ -204,6 +205,10 @@ onMounted(() => {
   if (saved) {
     selectedTopic.value = saved
   }
+
+  // 和menu同步状态
+  selectedCategoryGlobal.value = selectedCategory.value
+  selectedTagsGlobal.value = selectedTags.value
 })
 
 /** 路由变更时同步筛选 **/
@@ -372,6 +377,13 @@ const ioKey = computed(() => asyncKey.value.join('::'))
 
 /** 其他工具函数 **/
 const sanitizeDescription = (text) => stripMarkdown(text)
+
+// 页面选项同步到全局状态
+watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
+  selectedCategoryGlobal.value = newCategory
+  selectedTagsGlobal.value = newTags
+})
+
 </script>
 
 <style scoped>
