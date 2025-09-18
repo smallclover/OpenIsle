@@ -5,7 +5,6 @@ import com.openisle.model.Comment;
 import com.openisle.model.Post;
 import com.openisle.model.User;
 import com.openisle.service.*;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -24,8 +23,6 @@ public class UserMapper {
   private final PostReadService postReadService;
   private final LevelService levelService;
   private final MedalService medalService;
-  private final TagMapper tagMapper;
-  private final CategoryMapper categoryMapper;
 
   @Value("${app.snippet-length}")
   private int snippetLength;
@@ -91,12 +88,7 @@ public class UserMapper {
       dto.setSnippet(content);
     }
     dto.setCreatedAt(post.getCreatedAt());
-    dto.setCategory(categoryMapper.toDto(post.getCategory()));
-    dto.setTags(post.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList()));
-    if (post.getLastReplyAt() == null) {
-      commentService.updatePostCommentStats(post);
-    }
-    dto.setCommentCount(post.getCommentCount());
+    dto.setCategory(post.getCategory().getName());
     dto.setViews(post.getViews());
     return dto;
   }

@@ -212,9 +212,107 @@
             <div class="timeline-list">
               <BaseTimeline :items="filteredTimelineItems">
                 <template #item="{ item }">
-                  <ProfileTimelinePostItem v-if="item.type === 'post'" :item="item" />
-                  <ProfileTimelineCommentGroup v-else-if="item.type === 'comment'" :item="item" />
-                  <ProfileTimelineCommentGroup v-else-if="item.type === 'reply'" :item="item" />
+                  <!-- <template v-if="item.type === 'post'">
+                    发布了文章
+                    <NuxtLink :to="`/posts/${item.post.id}`" class="timeline-link">
+                      {{ item.post.title }}
+                    </NuxtLink>
+                    <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                  </template> -->
+                  <template v-if="item.type === 'post'">
+                    <div class="ttimeline-container">
+                      <div class="timeline-header">
+                        <div class="timeline-title">发布了文章</div>
+                        <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                      </div>
+                      <div class="article-container">
+                        <NuxtLink :to="`/posts/${item.post.id}`" class="timeline-article-link">
+                          {{ item.post.title }}
+                        </NuxtLink>
+                        <div class="timeline-snippet">
+                          {{ stripMarkdown(item.post.snippet) }}
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                  <!-- <template v-else-if="item.type === 'comment'">
+                    在
+                    <NuxtLink :to="`/posts/${item.comment.post.id}`" class="timeline-link">
+                      {{ item.comment.post.title }}
+                    </NuxtLink>
+                    下评论了
+                    <NuxtLink :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`" class="timeline-link">
+                      {{ stripMarkdownLength(item.comment.content, 200) }}
+                    </NuxtLink>
+                    <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                  </template> -->
+                  <template v-else-if="item.type === 'comment'">
+                    <div class="ttimeline-container">
+                      <div class="timeline-header">
+                        <div class="timeline-title">发布了4条评论</div>
+                        <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                      </div>
+                      <div class="comment-content">
+                        <div class="comment-content-item">
+                          <div class="comment-content-item-main">
+                            <comment-one class="comment-content-item-icon" />
+                            <NuxtLink
+                              :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
+                              class="timeline-comment-link"
+                            >
+                              {{ stripMarkdownLength(item.comment.content, 200) }}
+                            </NuxtLink>
+                          </div>
+                          <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                        </div>
+                        <div class="comment-content-item">
+                          <div class="comment-content-item-main">
+                            <comment-one class="comment-content-item-icon" />
+                            <NuxtLink
+                              :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
+                              class="timeline-comment-link"
+                            >
+                              {{ stripMarkdownLength(item.comment.content, 200) }}
+                            </NuxtLink>
+                          </div>
+                          <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                        </div>
+                        <div class="comment-content-item">
+                          <div class="comment-content-item-main">
+                            <comment-one class="comment-content-item-icon" />
+                            <NuxtLink
+                              :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
+                              class="timeline-comment-link"
+                            >
+                              {{ stripMarkdownLength(item.comment.content, 200) }}
+                            </NuxtLink>
+                          </div>
+                          <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                  <template v-else-if="item.type === 'reply'">
+                    在
+                    <NuxtLink :to="`/posts/${item.comment.post.id}`" class="timeline-link">
+                      {{ item.comment.post.title }}
+                    </NuxtLink>
+                    下对
+                    <NuxtLink
+                      :to="`/posts/${item.comment.post.id}#comment-${item.comment.parentComment.id}`"
+                      class="timeline-link"
+                    >
+                      {{ stripMarkdownLength(item.comment.parentComment.content, 200) }}
+                    </NuxtLink>
+                    回复了
+                    <NuxtLink
+                      :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
+                      class="timeline-link"
+                    >
+                      {{ stripMarkdownLength(item.comment.content, 200) }}
+                    </NuxtLink>
+                    <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                  </template>
                   <template v-else-if="item.type === 'tag'">
                     创建了标签
                     <span class="timeline-link" @click="gotoTag(item.tag)">
@@ -287,8 +385,6 @@ import BasePlaceholder from '~/components/BasePlaceholder.vue'
 import BaseTimeline from '~/components/BaseTimeline.vue'
 import BaseTabs from '~/components/BaseTabs.vue'
 import LevelProgress from '~/components/LevelProgress.vue'
-import ProfileTimelineCommentGroup from '~/components/ProfileTimelineCommentGroup.vue'
-import ProfileTimelinePostItem from '~/components/ProfileTimelinePostItem.vue'
 import UserList from '~/components/UserList.vue'
 import { toast } from '~/main'
 import { authState, getToken } from '~/utils/auth'
@@ -394,22 +490,6 @@ const fetchSummary = async () => {
   }
 }
 
-const isSameDay = (a, b) => {
-  const dateA = new Date(a)
-  const dateB = new Date(b)
-  return (
-    dateA.getFullYear() === dateB.getFullYear() &&
-    dateA.getMonth() === dateB.getMonth() &&
-    dateA.getDate() === dateB.getDate()
-  )
-}
-
-const createCommentEntry = (item) => ({
-  type: item.type,
-  comment: item.comment,
-  createdAt: item.createdAt,
-})
-
 const fetchTimeline = async () => {
   const [postsRes, repliesRes, tagsRes] = await Promise.all([
     fetch(`${API_BASE_URL}/api/users/${username}/posts?limit=50`),
@@ -440,32 +520,7 @@ const fetchTimeline = async () => {
     })),
   ]
   mapped.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-
-  const grouped = []
-  for (const item of mapped) {
-    if (item.type === 'comment') {
-      const last = grouped[grouped.length - 1]
-      if (last && last.type === 'comment' && isSameDay(last.createdAt, item.createdAt)) {
-        last.entries.push(createCommentEntry(item))
-        if (new Date(item.createdAt) > new Date(last.createdAt)) {
-          last.createdAt = item.createdAt
-        }
-      } else {
-        grouped.push({
-          ...item,
-          entries: [createCommentEntry(item)],
-        })
-      }
-    } else if (item.type === 'reply') {
-      grouped.push({
-        ...item,
-        entries: [createCommentEntry(item)],
-      })
-    } else {
-      grouped.push(item)
-    }
-  }
-  timelineItems.value = grouped
+  timelineItems.value = mapped
 }
 
 const fetchFollowUsers = async () => {
