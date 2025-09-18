@@ -86,6 +86,7 @@
               v-for="c in categoryData"
               :key="c.id"
               class="section-item"
+              :class="{ selected: isCategorySelected(c.id) }"
               @click="gotoCategory(c)"
             >
               <template v-if="c.smallIcon || c.icon">
@@ -115,7 +116,14 @@
             <div v-if="isLoadingTag" class="menu-loading-container">
               <l-hatch size="28" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
             </div>
-            <div v-else v-for="t in tagData" :key="t.id" class="section-item" @click="gotoTag(t)">
+            <div 
+                v-else 
+                v-for="t in tagData" 
+                :key="t.id" 
+                class="section-item" 
+                :class="{ selected: isTagSelected(t.id) }" 
+                @click="gotoTag(t)"
+              >
               <BaseImage
                 v-if="isImageIcon(t.smallIcon || t.icon)"
                 :src="t.smallIcon || t.icon"
@@ -154,8 +162,21 @@ import { authState, fetchCurrentUser } from '~/utils/auth'
 import { fetchUnreadCount, notificationState } from '~/utils/notification'
 import { useIsMobile } from '~/utils/screen'
 import { cycleTheme, ThemeMode, themeState } from '~/utils/theme'
+import { selectedCategoryGlobal, selectedTagsGlobal } from '~/composables/postFilter'
 
 const isMobile = useIsMobile()
+// 判断当前分类是否被选中
+const isCategorySelected = (id) => {
+  return id === selectedCategoryGlobal.value
+}
+
+// 判断当前标签是否被选中
+const isTagSelected = (id) => {
+  const selected = Array.isArray(selectedTagsGlobal.value)
+    ? selectedTagsGlobal.value
+    : [selectedTagsGlobal.value]
+  return selected.includes(id)
+}
 
 const config = useRuntimeConfig()
 const API_BASE_URL = config.public.apiBaseUrl
@@ -415,6 +436,11 @@ const gotoTag = (t) => {
 .section-item:hover {
   background-color: var(--menu-selected-background-color-hover);
 }
+.section-item.selected {
+  font-weight: bold;
+  background-color: var(--menu-selected-background-color);
+}
+
 
 .section-item-text-count {
   font-size: 12px;
