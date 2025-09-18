@@ -6,6 +6,7 @@ import lombok.Data;
 /** User notification preference DTO. */
 @Data
 public class NotificationPreferenceDto {
-    private NotificationType type;
-    private boolean enabled;
+
+  private NotificationType type;
+  private boolean enabled;
 }

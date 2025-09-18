@@ -1,300 +1,444 @@
 package com.openisle.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import com.openisle.exception.RateLimitException;
 import com.openisle.model.*;
 import com.openisle.repository.*;
-import com.openisle.exception.RateLimitException;
-import org.junit.jupiter.api.Test;
-import org.springframework.scheduling.TaskScheduler;
-import org.springframework.context.ApplicationContext;
-import org.springframework.data.redis.core.RedisTemplate;
-
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-
-import static org.mockito.Mockito.*;
+import org.springframework.context.ApplicationContext;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.TaskScheduler;
 
 class PostServiceTest {
-    @Test
-    void deletePostRemovesReads() {
-        PostRepository postRepo = mock(PostRepository.class);
-        UserRepository userRepo = mock(UserRepository.class);
-        CategoryRepository catRepo = mock(CategoryRepository.class);
-        TagRepository tagRepo = mock(TagRepository.class);
-        LotteryPostRepository lotteryRepo = mock(LotteryPostRepository.class);
-        PollPostRepository pollPostRepo = mock(PollPostRepository.class);
-        PollVoteRepository pollVoteRepo = mock(PollVoteRepository.class);
-        NotificationService notifService = mock(NotificationService.class);
-        SubscriptionService subService = mock(SubscriptionService.class);
-        CommentService commentService = mock(CommentService.class);
-        CommentRepository commentRepo = mock(CommentRepository.class);
-        ReactionRepository reactionRepo = mock(ReactionRepository.class);
-        PostSubscriptionRepository subRepo = mock(PostSubscriptionRepository.class);
-        NotificationRepository notificationRepo = mock(NotificationRepository.class);
-        PostReadService postReadService = mock(PostReadService.class);
-        ImageUploader imageUploader = mock(ImageUploader.class);
-        TaskScheduler taskScheduler = mock(TaskScheduler.class);
-        EmailSender emailSender = mock(EmailSender.class);
-        ApplicationContext context = mock(ApplicationContext.class);
-        PointService pointService = mock(PointService.class);
-        PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
-        PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
-        RedisTemplate redisTemplate = mock(RedisTemplate.class);
 
-        PostService service = new PostService(postRepo, userRepo, catRepo, tagRepo, lotteryRepo,
-                pollPostRepo, pollVoteRepo, notifService, subService, commentService, commentRepo,
-                reactionRepo, subRepo, notificationRepo, postReadService,
-                imageUploader, taskScheduler, emailSender, context, pointService, postChangeLogService,
-                pointHistoryRepository, PublishMode.DIRECT, redisTemplate);
-        when(context.getBean(PostService.class)).thenReturn(service);
+  @Test
+  void deletePostRemovesReads() {
+    PostRepository postRepo = mock(PostRepository.class);
+    UserRepository userRepo = mock(UserRepository.class);
+    CategoryRepository catRepo = mock(CategoryRepository.class);
+    TagRepository tagRepo = mock(TagRepository.class);
+    LotteryPostRepository lotteryRepo = mock(LotteryPostRepository.class);
+    PollPostRepository pollPostRepo = mock(PollPostRepository.class);
+    PollVoteRepository pollVoteRepo = mock(PollVoteRepository.class);
+    NotificationService notifService = mock(NotificationService.class);
+    SubscriptionService subService = mock(SubscriptionService.class);
+    CommentService commentService = mock(CommentService.class);
+    CommentRepository commentRepo = mock(CommentRepository.class);
+    ReactionRepository reactionRepo = mock(ReactionRepository.class);
+    PostSubscriptionRepository subRepo = mock(PostSubscriptionRepository.class);
+    NotificationRepository notificationRepo = mock(NotificationRepository.class);
+    PostReadService postReadService = mock(PostReadService.class);
+    ImageUploader imageUploader = mock(ImageUploader.class);
+    TaskScheduler taskScheduler = mock(TaskScheduler.class);
+    EmailSender emailSender = mock(EmailSender.class);
+    ApplicationContext context = mock(ApplicationContext.class);
+    PointService pointService = mock(PointService.class);
+    PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
+    PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
+    RedisTemplate redisTemplate = mock(RedisTemplate.class);
 
-        Post post = new Post();
-        post.setId(1L);
-        User author = new User();
-        author.setId(1L);
-        author.setRole(Role.USER);
-        post.setAuthor(author);
+    PostService service = new PostService(
+      postRepo,
+      userRepo,
+      catRepo,
+      tagRepo,
+      lotteryRepo,
+      pollPostRepo,
+      pollVoteRepo,
+      notifService,
+      subService,
+      commentService,
+      commentRepo,
+      reactionRepo,
+      subRepo,
+      notificationRepo,
+      postReadService,
+      imageUploader,
+      taskScheduler,
+      emailSender,
+      context,
+      pointService,
+      postChangeLogService,
+      pointHistoryRepository,
+      PublishMode.DIRECT,
+      redisTemplate
+    );
+    when(context.getBean(PostService.class)).thenReturn(service);
 
-        when(postRepo.findById(1L)).thenReturn(Optional.of(post));
-        when(userRepo.findByUsername("alice")).thenReturn(Optional.of(author));
-        when(commentRepo.findByPostAndParentIsNullOrderByCreatedAtAsc(post)).thenReturn(List.of());
-        when(reactionRepo.findByPost(post)).thenReturn(List.of());
-        when(subRepo.findByPost(post)).thenReturn(List.of());
-        when(notificationRepo.findByPost(post)).thenReturn(List.of());
-        when(pointHistoryRepository.findByPost(post)).thenReturn(List.of());
+    Post post = new Post();
+    post.setId(1L);
+    User author = new User();
+    author.setId(1L);
+    author.setRole(Role.USER);
+    post.setAuthor(author);
 
-        service.deletePost(1L, "alice");
+    when(postRepo.findById(1L)).thenReturn(Optional.of(post));
+    when(userRepo.findByUsername("alice")).thenReturn(Optional.of(author));
+    when(commentRepo.findByPostAndParentIsNullOrderByCreatedAtAsc(post)).thenReturn(List.of());
+    when(reactionRepo.findByPost(post)).thenReturn(List.of());
+    when(subRepo.findByPost(post)).thenReturn(List.of());
+    when(notificationRepo.findByPost(post)).thenReturn(List.of());
+    when(pointHistoryRepository.findByPost(post)).thenReturn(List.of());
 
-        verify(postReadService).deleteByPost(post);
-        verify(postRepo).delete(post);
-        verify(postChangeLogService).deleteLogsForPost(post);
-    }
+    service.deletePost(1L, "alice");
 
-    @Test
-    void deletePostByAdminNotifiesAuthor() {
-        PostRepository postRepo = mock(PostRepository.class);
-        UserRepository userRepo = mock(UserRepository.class);
-        CategoryRepository catRepo = mock(CategoryRepository.class);
-        TagRepository tagRepo = mock(TagRepository.class);
-        LotteryPostRepository lotteryRepo = mock(LotteryPostRepository.class);
-        PollPostRepository pollPostRepo = mock(PollPostRepository.class);
-        PollVoteRepository pollVoteRepo = mock(PollVoteRepository.class);
-        NotificationService notifService = mock(NotificationService.class);
-        SubscriptionService subService = mock(SubscriptionService.class);
-        CommentService commentService = mock(CommentService.class);
-        CommentRepository commentRepo = mock(CommentRepository.class);
-        ReactionRepository reactionRepo = mock(ReactionRepository.class);
-        PostSubscriptionRepository subRepo = mock(PostSubscriptionRepository.class);
-        NotificationRepository notificationRepo = mock(NotificationRepository.class);
-        PostReadService postReadService = mock(PostReadService.class);
-        ImageUploader imageUploader = mock(ImageUploader.class);
-        TaskScheduler taskScheduler = mock(TaskScheduler.class);
-        EmailSender emailSender = mock(EmailSender.class);
-        ApplicationContext context = mock(ApplicationContext.class);
-        PointService pointService = mock(PointService.class);
-        PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
-        PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
-        RedisTemplate redisTemplate = mock(RedisTemplate.class);
+    verify(postReadService).deleteByPost(post);
+    verify(postRepo).delete(post);
+    verify(postChangeLogService).deleteLogsForPost(post);
+  }
 
-        PostService service = new PostService(postRepo, userRepo, catRepo, tagRepo, lotteryRepo,
-                pollPostRepo, pollVoteRepo, notifService, subService, commentService, commentRepo,
-                reactionRepo, subRepo, notificationRepo, postReadService,
-                imageUploader, taskScheduler, emailSender, context, pointService, postChangeLogService,
-                pointHistoryRepository, PublishMode.DIRECT, redisTemplate);
-        when(context.getBean(PostService.class)).thenReturn(service);
+  @Test
+  void deletePostByAdminNotifiesAuthor() {
+    PostRepository postRepo = mock(PostRepository.class);
+    UserRepository userRepo = mock(UserRepository.class);
+    CategoryRepository catRepo = mock(CategoryRepository.class);
+    TagRepository tagRepo = mock(TagRepository.class);
+    LotteryPostRepository lotteryRepo = mock(LotteryPostRepository.class);
+    PollPostRepository pollPostRepo = mock(PollPostRepository.class);
+    PollVoteRepository pollVoteRepo = mock(PollVoteRepository.class);
+    NotificationService notifService = mock(NotificationService.class);
+    SubscriptionService subService = mock(SubscriptionService.class);
+    CommentService commentService = mock(CommentService.class);
+    CommentRepository commentRepo = mock(CommentRepository.class);
+    ReactionRepository reactionRepo = mock(ReactionRepository.class);
+    PostSubscriptionRepository subRepo = mock(PostSubscriptionRepository.class);
+    NotificationRepository notificationRepo = mock(NotificationRepository.class);
+    PostReadService postReadService = mock(PostReadService.class);
+    ImageUploader imageUploader = mock(ImageUploader.class);
+    TaskScheduler taskScheduler = mock(TaskScheduler.class);
+    EmailSender emailSender = mock(EmailSender.class);
+    ApplicationContext context = mock(ApplicationContext.class);
+    PointService pointService = mock(PointService.class);
+    PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
+    PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
+    RedisTemplate redisTemplate = mock(RedisTemplate.class);
 
-        Post post = new Post();
-        post.setId(1L);
-        post.setTitle("T");
-        post.setContent("");
-        User author = new User();
-        author.setId(2L);
-        author.setRole(Role.USER);
-        post.setAuthor(author);
+    PostService service = new PostService(
+      postRepo,
+      userRepo,
+      catRepo,
+      tagRepo,
+      lotteryRepo,
+      pollPostRepo,
+      pollVoteRepo,
+      notifService,
+      subService,
+      commentService,
+      commentRepo,
+      reactionRepo,
+      subRepo,
+      notificationRepo,
+      postReadService,
+      imageUploader,
+      taskScheduler,
+      emailSender,
+      context,
+      pointService,
+      postChangeLogService,
+      pointHistoryRepository,
+      PublishMode.DIRECT,
+      redisTemplate
+    );
+    when(context.getBean(PostService.class)).thenReturn(service);
 
-        User admin = new User();
-        admin.setId(1L);
-        admin.setRole(Role.ADMIN);
+    Post post = new Post();
+    post.setId(1L);
+    post.setTitle("T");
+    post.setContent("");
+    User author = new User();
+    author.setId(2L);
+    author.setRole(Role.USER);
+    post.setAuthor(author);
 
-        when(postRepo.findById(1L)).thenReturn(Optional.of(post));
-        when(userRepo.findByUsername("admin")).thenReturn(Optional.of(admin));
-        when(commentRepo.findByPostAndParentIsNullOrderByCreatedAtAsc(post)).thenReturn(List.of());
-        when(reactionRepo.findByPost(post)).thenReturn(List.of());
-        when(subRepo.findByPost(post)).thenReturn(List.of());
-        when(notificationRepo.findByPost(post)).thenReturn(List.of());
-        when(pointHistoryRepository.findByPost(post)).thenReturn(List.of());
+    User admin = new User();
+    admin.setId(1L);
+    admin.setRole(Role.ADMIN);
 
-        service.deletePost(1L, "admin");
+    when(postRepo.findById(1L)).thenReturn(Optional.of(post));
+    when(userRepo.findByUsername("admin")).thenReturn(Optional.of(admin));
+    when(commentRepo.findByPostAndParentIsNullOrderByCreatedAtAsc(post)).thenReturn(List.of());
+    when(reactionRepo.findByPost(post)).thenReturn(List.of());
+    when(subRepo.findByPost(post)).thenReturn(List.of());
+    when(notificationRepo.findByPost(post)).thenReturn(List.of());
+    when(pointHistoryRepository.findByPost(post)).thenReturn(List.of());
 
-        verify(notifService).createNotification(eq(author), eq(NotificationType.POST_DELETED), isNull(),
-                isNull(), isNull(), eq(admin), isNull(), eq("T"));
-    }
+    service.deletePost(1L, "admin");
 
-    @Test
-    void createPostRespectsRateLimit() {
-        PostRepository postRepo = mock(PostRepository.class);
-        UserRepository userRepo = mock(UserRepository.class);
-        CategoryRepository catRepo = mock(CategoryRepository.class);
-        TagRepository tagRepo = mock(TagRepository.class);
-        LotteryPostRepository lotteryRepo = mock(LotteryPostRepository.class);
-        PollPostRepository pollPostRepo = mock(PollPostRepository.class);
-        PollVoteRepository pollVoteRepo = mock(PollVoteRepository.class);
-        NotificationService notifService = mock(NotificationService.class);
-        SubscriptionService subService = mock(SubscriptionService.class);
-        CommentService commentService = mock(CommentService.class);
-        CommentRepository commentRepo = mock(CommentRepository.class);
-        ReactionRepository reactionRepo = mock(ReactionRepository.class);
-        PostSubscriptionRepository subRepo = mock(PostSubscriptionRepository.class);
-        NotificationRepository notificationRepo = mock(NotificationRepository.class);
-        PostReadService postReadService = mock(PostReadService.class);
-        ImageUploader imageUploader = mock(ImageUploader.class);
-        TaskScheduler taskScheduler = mock(TaskScheduler.class);
-        EmailSender emailSender = mock(EmailSender.class);
-        ApplicationContext context = mock(ApplicationContext.class);
-        PointService pointService = mock(PointService.class);
-        PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
-        PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
-        RedisTemplate redisTemplate = mock(RedisTemplate.class);
+    verify(notifService).createNotification(
+      eq(author),
+      eq(NotificationType.POST_DELETED),
+      isNull(),
+      isNull(),
+      isNull(),
+      eq(admin),
+      isNull(),
+      eq("T")
+    );
+  }
 
-        PostService service = new PostService(postRepo, userRepo, catRepo, tagRepo, lotteryRepo,
-                pollPostRepo, pollVoteRepo, notifService, subService, commentService, commentRepo,
-                reactionRepo, subRepo, notificationRepo, postReadService,
-                imageUploader, taskScheduler, emailSender, context, pointService, postChangeLogService,
-                pointHistoryRepository, PublishMode.DIRECT, redisTemplate);
-        when(context.getBean(PostService.class)).thenReturn(service);
+  @Test
+  void createPostRespectsRateLimit() {
+    PostRepository postRepo = mock(PostRepository.class);
+    UserRepository userRepo = mock(UserRepository.class);
+    CategoryRepository catRepo = mock(CategoryRepository.class);
+    TagRepository tagRepo = mock(TagRepository.class);
+    LotteryPostRepository lotteryRepo = mock(LotteryPostRepository.class);
+    PollPostRepository pollPostRepo = mock(PollPostRepository.class);
+    PollVoteRepository pollVoteRepo = mock(PollVoteRepository.class);
+    NotificationService notifService = mock(NotificationService.class);
+    SubscriptionService subService = mock(SubscriptionService.class);
+    CommentService commentService = mock(CommentService.class);
+    CommentRepository commentRepo = mock(CommentRepository.class);
+    ReactionRepository reactionRepo = mock(ReactionRepository.class);
+    PostSubscriptionRepository subRepo = mock(PostSubscriptionRepository.class);
+    NotificationRepository notificationRepo = mock(NotificationRepository.class);
+    PostReadService postReadService = mock(PostReadService.class);
+    ImageUploader imageUploader = mock(ImageUploader.class);
+    TaskScheduler taskScheduler = mock(TaskScheduler.class);
+    EmailSender emailSender = mock(EmailSender.class);
+    ApplicationContext context = mock(ApplicationContext.class);
+    PointService pointService = mock(PointService.class);
+    PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
+    PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
+    RedisTemplate redisTemplate = mock(RedisTemplate.class);
 
-        when(postRepo.countByAuthorAfter(eq("alice"), any())).thenReturn(1L);
+    PostService service = new PostService(
+      postRepo,
+      userRepo,
+      catRepo,
+      tagRepo,
+      lotteryRepo,
+      pollPostRepo,
+      pollVoteRepo,
+      notifService,
+      subService,
+      commentService,
+      commentRepo,
+      reactionRepo,
+      subRepo,
+      notificationRepo,
+      postReadService,
+      imageUploader,
+      taskScheduler,
+      emailSender,
+      context,
+      pointService,
+      postChangeLogService,
+      pointHistoryRepository,
+      PublishMode.DIRECT,
+      redisTemplate
+    );
+    when(context.getBean(PostService.class)).thenReturn(service);
 
-        assertThrows(RateLimitException.class,
-                () -> service.createPost("alice", 1L, "t", "c", List.of(1L),
-                        null, null, null, null, null, null, null, null, null));
-    }
+    when(postRepo.countByAuthorAfter(eq("alice"), any())).thenReturn(1L);
 
-    @Test
-    void deletePostRemovesPointHistoriesAndRecalculatesPoints() {
-        PostRepository postRepo = mock(PostRepository.class);
-        UserRepository userRepo = mock(UserRepository.class);
-        CategoryRepository catRepo = mock(CategoryRepository.class);
-        TagRepository tagRepo = mock(TagRepository.class);
-        LotteryPostRepository lotteryRepo = mock(LotteryPostRepository.class);
-        PollPostRepository pollPostRepo = mock(PollPostRepository.class);
-        PollVoteRepository pollVoteRepo = mock(PollVoteRepository.class);
-        NotificationService notifService = mock(NotificationService.class);
-        SubscriptionService subService = mock(SubscriptionService.class);
-        CommentService commentService = mock(CommentService.class);
-        CommentRepository commentRepo = mock(CommentRepository.class);
-        ReactionRepository reactionRepo = mock(ReactionRepository.class);
-        PostSubscriptionRepository subRepo = mock(PostSubscriptionRepository.class);
-        NotificationRepository notificationRepo = mock(NotificationRepository.class);
-        PostReadService postReadService = mock(PostReadService.class);
-        ImageUploader imageUploader = mock(ImageUploader.class);
-        TaskScheduler taskScheduler = mock(TaskScheduler.class);
-        EmailSender emailSender = mock(EmailSender.class);
-        ApplicationContext context = mock(ApplicationContext.class);
-        PointService pointService = mock(PointService.class);
-        PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
-        PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
-        RedisTemplate redisTemplate = mock(RedisTemplate.class);
+    assertThrows(RateLimitException.class, () ->
+      service.createPost(
+        "alice",
+        1L,
+        "t",
+        "c",
+        List.of(1L),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      )
+    );
+  }
 
-        PostService service = new PostService(postRepo, userRepo, catRepo, tagRepo, lotteryRepo,
-                pollPostRepo, pollVoteRepo, notifService, subService, commentService, commentRepo,
-                reactionRepo, subRepo, notificationRepo, postReadService,
-                imageUploader, taskScheduler, emailSender, context, pointService, postChangeLogService,
-                pointHistoryRepository, PublishMode.DIRECT, redisTemplate);
-        when(context.getBean(PostService.class)).thenReturn(service);
+  @Test
+  void deletePostRemovesPointHistoriesAndRecalculatesPoints() {
+    PostRepository postRepo = mock(PostRepository.class);
+    UserRepository userRepo = mock(UserRepository.class);
+    CategoryRepository catRepo = mock(CategoryRepository.class);
+    TagRepository tagRepo = mock(TagRepository.class);
+    LotteryPostRepository lotteryRepo = mock(LotteryPostRepository.class);
+    PollPostRepository pollPostRepo = mock(PollPostRepository.class);
+    PollVoteRepository pollVoteRepo = mock(PollVoteRepository.class);
+    NotificationService notifService = mock(NotificationService.class);
+    SubscriptionService subService = mock(SubscriptionService.class);
+    CommentService commentService = mock(CommentService.class);
+    CommentRepository commentRepo = mock(CommentRepository.class);
+    ReactionRepository reactionRepo = mock(ReactionRepository.class);
+    PostSubscriptionRepository subRepo = mock(PostSubscriptionRepository.class);
+    NotificationRepository notificationRepo = mock(NotificationRepository.class);
+    PostReadService postReadService = mock(PostReadService.class);
+    ImageUploader imageUploader = mock(ImageUploader.class);
+    TaskScheduler taskScheduler = mock(TaskScheduler.class);
+    EmailSender emailSender = mock(EmailSender.class);
+    ApplicationContext context = mock(ApplicationContext.class);
+    PointService pointService = mock(PointService.class);
+    PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
+    PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
+    RedisTemplate redisTemplate = mock(RedisTemplate.class);
 
-        Post post = new Post();
-        post.setId(10L);
-        User author = new User();
-        author.setId(20L);
-        author.setRole(Role.USER);
-        post.setAuthor(author);
+    PostService service = new PostService(
+      postRepo,
+      userRepo,
+      catRepo,
+      tagRepo,
+      lotteryRepo,
+      pollPostRepo,
+      pollVoteRepo,
+      notifService,
+      subService,
+      commentService,
+      commentRepo,
+      reactionRepo,
+      subRepo,
+      notificationRepo,
+      postReadService,
+      imageUploader,
+      taskScheduler,
+      emailSender,
+      context,
+      pointService,
+      postChangeLogService,
+      pointHistoryRepository,
+      PublishMode.DIRECT,
+      redisTemplate
+    );
+    when(context.getBean(PostService.class)).thenReturn(service);
 
-        User historyUser = new User();
-        historyUser.setId(30L);
+    Post post = new Post();
+    post.setId(10L);
+    User author = new User();
+    author.setId(20L);
+    author.setRole(Role.USER);
+    post.setAuthor(author);
 
-        PointHistory history = new PointHistory();
-        history.setUser(historyUser);
-        history.setPost(post);
+    User historyUser = new User();
+    historyUser.setId(30L);
 
-        when(postRepo.findById(10L)).thenReturn(Optional.of(post));
-        when(userRepo.findByUsername("author")).thenReturn(Optional.of(author));
-        when(commentRepo.findByPostAndParentIsNullOrderByCreatedAtAsc(post)).thenReturn(List.of());
-        when(reactionRepo.findByPost(post)).thenReturn(List.of());
-        when(subRepo.findByPost(post)).thenReturn(List.of());
-        when(notificationRepo.findByPost(post)).thenReturn(List.of());
-        when(pointHistoryRepository.findByPost(post)).thenReturn(List.of(history));
-        when(pointService.recalculateUserPoints(historyUser)).thenReturn(0);
+    PointHistory history = new PointHistory();
+    history.setUser(historyUser);
+    history.setPost(post);
 
-        service.deletePost(10L, "author");
+    when(postRepo.findById(10L)).thenReturn(Optional.of(post));
+    when(userRepo.findByUsername("author")).thenReturn(Optional.of(author));
+    when(commentRepo.findByPostAndParentIsNullOrderByCreatedAtAsc(post)).thenReturn(List.of());
+    when(reactionRepo.findByPost(post)).thenReturn(List.of());
+    when(subRepo.findByPost(post)).thenReturn(List.of());
+    when(notificationRepo.findByPost(post)).thenReturn(List.of());
+    when(pointHistoryRepository.findByPost(post)).thenReturn(List.of(history));
+    when(pointService.recalculateUserPoints(historyUser)).thenReturn(0);
 
-        ArgumentCaptor<List<PointHistory>> captor = ArgumentCaptor.forClass(List.class);
-        verify(pointHistoryRepository).saveAll(captor.capture());
-        List<PointHistory> savedHistories = captor.getValue();
-        assertEquals(1, savedHistories.size());
-        PointHistory savedHistory = savedHistories.get(0);
-        assertNull(savedHistory.getPost());
-        assertNotNull(savedHistory.getDeletedAt());
-        assertTrue(savedHistory.getDeletedAt().isBefore(LocalDateTime.now().plusSeconds(1)));
+    service.deletePost(10L, "author");
 
-        verify(pointService).recalculateUserPoints(historyUser);
-        verify(userRepo).saveAll(any());
-    }
+    ArgumentCaptor<List<PointHistory>> captor = ArgumentCaptor.forClass(List.class);
+    verify(pointHistoryRepository).saveAll(captor.capture());
+    List<PointHistory> savedHistories = captor.getValue();
+    assertEquals(1, savedHistories.size());
+    PointHistory savedHistory = savedHistories.get(0);
+    assertNull(savedHistory.getPost());
+    assertNotNull(savedHistory.getDeletedAt());
+    assertTrue(savedHistory.getDeletedAt().isBefore(LocalDateTime.now().plusSeconds(1)));
 
-    @Test
-    void finalizeLotteryNotifiesAuthor() {
-        PostRepository postRepo = mock(PostRepository.class);
-        UserRepository userRepo = mock(UserRepository.class);
-        CategoryRepository catRepo = mock(CategoryRepository.class);
-        TagRepository tagRepo = mock(TagRepository.class);
-        LotteryPostRepository lotteryRepo = mock(LotteryPostRepository.class);
-        PollPostRepository pollPostRepo = mock(PollPostRepository.class);
-        PollVoteRepository pollVoteRepo = mock(PollVoteRepository.class);
-        NotificationService notifService = mock(NotificationService.class);
-        SubscriptionService subService = mock(SubscriptionService.class);
-        CommentService commentService = mock(CommentService.class);
-        CommentRepository commentRepo = mock(CommentRepository.class);
-        ReactionRepository reactionRepo = mock(ReactionRepository.class);
-        PostSubscriptionRepository subRepo = mock(PostSubscriptionRepository.class);
-        NotificationRepository notificationRepo = mock(NotificationRepository.class);
-        PostReadService postReadService = mock(PostReadService.class);
-        ImageUploader imageUploader = mock(ImageUploader.class);
-        TaskScheduler taskScheduler = mock(TaskScheduler.class);
-        EmailSender emailSender = mock(EmailSender.class);
-        ApplicationContext context = mock(ApplicationContext.class);
-        PointService pointService = mock(PointService.class);
-        PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
-        PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
-        RedisTemplate redisTemplate = mock(RedisTemplate.class);
+    verify(pointService).recalculateUserPoints(historyUser);
+    verify(userRepo).saveAll(any());
+  }
 
-        PostService service = new PostService(postRepo, userRepo, catRepo, tagRepo, lotteryRepo,
-                pollPostRepo, pollVoteRepo, notifService, subService, commentService, commentRepo,
-                reactionRepo, subRepo, notificationRepo, postReadService,
-                imageUploader, taskScheduler, emailSender, context, pointService, postChangeLogService,
-                pointHistoryRepository, PublishMode.DIRECT, redisTemplate);
-        when(context.getBean(PostService.class)).thenReturn(service);
+  @Test
+  void finalizeLotteryNotifiesAuthor() {
+    PostRepository postRepo = mock(PostRepository.class);
+    UserRepository userRepo = mock(UserRepository.class);
+    CategoryRepository catRepo = mock(CategoryRepository.class);
+    TagRepository tagRepo = mock(TagRepository.class);
+    LotteryPostRepository lotteryRepo = mock(LotteryPostRepository.class);
+    PollPostRepository pollPostRepo = mock(PollPostRepository.class);
+    PollVoteRepository pollVoteRepo = mock(PollVoteRepository.class);
+    NotificationService notifService = mock(NotificationService.class);
+    SubscriptionService subService = mock(SubscriptionService.class);
+    CommentService commentService = mock(CommentService.class);
+    CommentRepository commentRepo = mock(CommentRepository.class);
+    ReactionRepository reactionRepo = mock(ReactionRepository.class);
+    PostSubscriptionRepository subRepo = mock(PostSubscriptionRepository.class);
+    NotificationRepository notificationRepo = mock(NotificationRepository.class);
+    PostReadService postReadService = mock(PostReadService.class);
+    ImageUploader imageUploader = mock(ImageUploader.class);
+    TaskScheduler taskScheduler = mock(TaskScheduler.class);
+    EmailSender emailSender = mock(EmailSender.class);
+    ApplicationContext context = mock(ApplicationContext.class);
+    PointService pointService = mock(PointService.class);
+    PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
+    PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
+    RedisTemplate redisTemplate = mock(RedisTemplate.class);
 
-        User author = new User();
-        author.setId(1L);
-        User winner = new User();
-        winner.setId(2L);
+    PostService service = new PostService(
+      postRepo,
+      userRepo,
+      catRepo,
+      tagRepo,
+      lotteryRepo,
+      pollPostRepo,
+      pollVoteRepo,
+      notifService,
+      subService,
+      commentService,
+      commentRepo,
+      reactionRepo,
+      subRepo,
+      notificationRepo,
+      postReadService,
+      imageUploader,
+      taskScheduler,
+      emailSender,
+      context,
+      pointService,
+      postChangeLogService,
+      pointHistoryRepository,
+      PublishMode.DIRECT,
+      redisTemplate
+    );
+    when(context.getBean(PostService.class)).thenReturn(service);
 
-        LotteryPost lp = new LotteryPost();
-        lp.setId(1L);
-        lp.setAuthor(author);
-        lp.setTitle("L");
-        lp.setPrizeCount(1);
-        lp.getParticipants().add(winner);
+    User author = new User();
+    author.setId(1L);
+    User winner = new User();
+    winner.setId(2L);
 
-        when(lotteryRepo.findById(1L)).thenReturn(Optional.of(lp));
+    LotteryPost lp = new LotteryPost();
+    lp.setId(1L);
+    lp.setAuthor(author);
+    lp.setTitle("L");
+    lp.setPrizeCount(1);
+    lp.getParticipants().add(winner);
 
-        service.finalizeLottery(1L);
+    when(lotteryRepo.findById(1L)).thenReturn(Optional.of(lp));
 
-        verify(notifService).createNotification(eq(winner), eq(NotificationType.LOTTERY_WIN), eq(lp), isNull(), isNull(), eq(author), isNull(), isNull());
-        verify(notifService).createNotification(eq(author), eq(NotificationType.LOTTERY_DRAW), eq(lp), isNull(), isNull(), isNull(), isNull(), isNull());
-    }
+    service.finalizeLottery(1L);
+
+    verify(notifService).createNotification(
+      eq(winner),
+      eq(NotificationType.LOTTERY_WIN),
+      eq(lp),
+      isNull(),
+      isNull(),
+      eq(author),
+      isNull(),
+      isNull()
+    );
+    verify(notifService).createNotification(
+      eq(author),
+      eq(NotificationType.LOTTERY_DRAW),
+      eq(lp),
+      isNull(),
+      isNull(),
+      isNull(),
+      isNull(),
+      isNull()
+    );
+  }
 }

@@ -13,23 +13,23 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class RedisConnectionLogger implements InitializingBean {
 
-    private final RedisConnectionFactory connectionFactory;
+  private final RedisConnectionFactory connectionFactory;
 
-    public RedisConnectionLogger(RedisConnectionFactory connectionFactory) {
-        this.connectionFactory = connectionFactory;
-    }
+  public RedisConnectionLogger(RedisConnectionFactory connectionFactory) {
+    this.connectionFactory = connectionFactory;
+  }
 
-    @Override
-    public void afterPropertiesSet() {
-        try (var connection = connectionFactory.getConnection()) {
-            connection.ping();
-            if (connectionFactory instanceof LettuceConnectionFactory lettuce) {
-                log.info("Redis connection established at {}:{}", lettuce.getHostName(), lettuce.getPort());
-            } else {
-                log.info("Redis connection established");
-            }
-        } catch (Exception e) {
-            log.error("Failed to connect to Redis", e);
-        }
+  @Override
+  public void afterPropertiesSet() {
+    try (var connection = connectionFactory.getConnection()) {
+      connection.ping();
+      if (connectionFactory instanceof LettuceConnectionFactory lettuce) {
+        log.info("Redis connection established at {}:{}", lettuce.getHostName(), lettuce.getPort());
+      } else {
+        log.info("Redis connection established");
+      }
+    } catch (Exception e) {
+      log.error("Failed to connect to Redis", e);
     }
+  }
 }

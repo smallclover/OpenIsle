@@ -6,5 +6,6 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class PioneerMedalDto extends MedalDto {
-    private long rank;
+
+  private long rank;
 }

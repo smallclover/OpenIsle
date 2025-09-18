@@ -5,10 +5,11 @@ import lombok.Data;
 
 @Data
 public class MedalDto {
-    private String icon;
-    private String title;
-    private String description;
-    private MedalType type;
-    private boolean completed;
-    private boolean selected;
+
+  private String icon;
+  private String title;
+  private String description;
+  private MedalType type;
+  private boolean completed;
+  private boolean selected;
 }

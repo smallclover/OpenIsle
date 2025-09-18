@@ -12,15 +12,16 @@ import lombok.Setter;
 @NoArgsConstructor
 @Table(name = "point_goods")
 public class PointGood {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    @Column(nullable = false)
-    private String name;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false)
-    private int cost;
+  @Column(nullable = false)
+  private String name;
 
-    private String image;
+  @Column(nullable = false)
+  private int cost;
+
+  private String image;
 }

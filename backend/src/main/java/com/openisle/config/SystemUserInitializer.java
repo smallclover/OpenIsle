@@ -14,23 +14,27 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class SystemUserInitializer implements CommandLineRunner {
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
-    @Override
-    public void run(String... args) {
-        userRepository.findByUsername("system").orElseGet(() -> {
-            User system = new User();
-            system.setUsername("system");
-            system.setEmail("system@openisle.local");
-            // todo(tim): raw password 采用环境变量
-            system.setPassword(passwordEncoder.encode("system"));
-            system.setRole(Role.USER);
-            system.setVerified(true);
-            system.setApproved(true);
-            system.setAvatar("https://openisle-1307107697.cos.ap-guangzhou.myqcloud.com/assert/image.png");
-            return userRepository.save(system);
-        });
-    }
+  private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
+
+  @Override
+  public void run(String... args) {
+    userRepository
+      .findByUsername("system")
+      .orElseGet(() -> {
+        User system = new User();
+        system.setUsername("system");
+        system.setEmail("system@openisle.local");
+        // todo(tim): raw password 采用环境变量
+        system.setPassword(passwordEncoder.encode("system"));
+        system.setRole(Role.USER);
+        system.setVerified(true);
+        system.setApproved(true);
+        system.setAvatar(
+          "https://openisle-1307107697.cos.ap-guangzhou.myqcloud.com/assert/image.png"
+        );
+        return userRepository.save(system);
+      });
+  }
 }
-

@@ -9,17 +9,18 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class RegisterModeService {
-    private RegisterMode registerMode;
 
-    public RegisterModeService(@Value("${app.register.mode:WHITELIST}") RegisterMode registerMode) {
-        this.registerMode = registerMode;
-    }
+  private RegisterMode registerMode;
 
-    public RegisterMode getRegisterMode() {
-        return registerMode;
-    }
+  public RegisterModeService(@Value("${app.register.mode:WHITELIST}") RegisterMode registerMode) {
+    this.registerMode = registerMode;
+  }
 
-    public void setRegisterMode(RegisterMode mode) {
-        this.registerMode = mode;
-    }
+  public RegisterMode getRegisterMode() {
+    return registerMode;
+  }
+
+  public void setRegisterMode(RegisterMode mode) {
+    this.registerMode = mode;
+  }
 }

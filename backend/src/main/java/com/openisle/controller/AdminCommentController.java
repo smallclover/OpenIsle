@@ -19,24 +19,31 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/admin/comments")
 @RequiredArgsConstructor
 public class AdminCommentController {
-    private final CommentService commentService;
-    private final CommentMapper commentMapper;
 
-    @PostMapping("/{id}/pin")
-    @SecurityRequirement(name = "JWT")
-    @Operation(summary = "Pin comment", description = "Pin a comment by its id")
-    @ApiResponse(responseCode = "200", description = "Pinned comment",
-            content = @Content(schema = @Schema(implementation = CommentDto.class)))
-    public CommentDto pin(@PathVariable Long id, Authentication auth) {
-        return commentMapper.toDto(commentService.pinComment(auth.getName(), id));
-    }
+  private final CommentService commentService;
+  private final CommentMapper commentMapper;
 
-    @PostMapping("/{id}/unpin")
-    @SecurityRequirement(name = "JWT")
-    @Operation(summary = "Unpin comment", description = "Remove pin from a comment")
-    @ApiResponse(responseCode = "200", description = "Unpinned comment",
-            content = @Content(schema = @Schema(implementation = CommentDto.class)))
-    public CommentDto unpin(@PathVariable Long id, Authentication auth) {
-        return commentMapper.toDto(commentService.unpinComment(auth.getName(), id));
-    }
+  @PostMapping("/{id}/pin")
+  @SecurityRequirement(name = "JWT")
+  @Operation(summary = "Pin comment", description = "Pin a comment by its id")
+  @ApiResponse(
+    responseCode = "200",
+    description = "Pinned comment",
+    content = @Content(schema = @Schema(implementation = CommentDto.class))
+  )
+  public CommentDto pin(@PathVariable Long id, Authentication auth) {
+    return commentMapper.toDto(commentService.pinComment(auth.getName(), id));
+  }
+
+  @PostMapping("/{id}/unpin")
+  @SecurityRequirement(name = "JWT")
+  @Operation(summary = "Unpin comment", description = "Remove pin from a comment")
+  @ApiResponse(
+    responseCode = "200",
+    description = "Unpinned comment",
+    content = @Content(schema = @Schema(implementation = CommentDto.class))
+  )
+  public CommentDto unpin(@PathVariable Long id, Authentication auth) {
+    return commentMapper.toDto(commentService.unpinComment(auth.getName(), id));
+  }
 }

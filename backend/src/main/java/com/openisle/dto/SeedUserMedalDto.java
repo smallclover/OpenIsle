@@ -7,5 +7,6 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class SeedUserMedalDto extends MedalDto {
-    private LocalDateTime registerDate;
+
+  private LocalDateTime registerDate;
 }

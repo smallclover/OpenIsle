@@ -12,6 +12,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "post_title_change_logs")
 public class PostTitleChangeLog extends PostChangeLog {
-    private String oldTitle;
-    private String newTitle;
+
+  private String oldTitle;
+  private String newTitle;
 }

@@ -1,9 +1,9 @@
-import { generateFiles } from 'fumadocs-openapi';
-import { openapi } from '@/lib/openapi';
+import { generateFiles } from "fumadocs-openapi";
+import { openapi } from "@/lib/openapi";
 
 void generateFiles({
   input: openapi,
-  output: './content/docs/openapi/(generated)',
+  output: "./content/docs/openapi/(generated)",
   // we recommend to enable it
   // make sure your endpoint description doesn't break MDX syntax.
   includeDescription: true,

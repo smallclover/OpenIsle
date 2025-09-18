@@ -1,15 +1,15 @@
 - [前置工作](#前置工作)
 - [启动后端服务](#启动后端服务)
-    - [本地 IDEA](#本地-idea)
-        - [配置环境变量](#配置环境变量)
-        - [配置 IDEA 参数](#配置-idea-参数)
-        - [配置 MySQL](#配置-mysql)
-    - [Docker 环境](#docker-环境)
-        - [配置环境变量](#配置环境变量-1)
-        - [构建并启动镜像](#构建并启动镜像)
+  - [本地 IDEA](#本地-idea)
+    - [配置环境变量](#配置环境变量)
+    - [配置 IDEA 参数](#配置-idea-参数)
+    - [配置 MySQL](#配置-mysql)
+  - [Docker 环境](#docker-环境)
+    - [配置环境变量](#配置环境变量-1)
+    - [构建并启动镜像](#构建并启动镜像)
 - [启动前端服务](#启动前端服务)
-    - [配置环境变量](#配置环境变量-2)
-    - [安装依赖和运行](#安装依赖和运行)
+  - [配置环境变量](#配置环境变量-2)
+  - [安装依赖和运行](#安装依赖和运行)
 - [其他配置](#其他配置)
 
 ## 前置工作
@@ -22,9 +22,9 @@ cd OpenIsle
 ```
 
 - 后端开发环境
-    - JDK 17+
+  - JDK 17+
 - 前端开发环境
-    - Node.JS 20+
+  - Node.JS 20+
 
 ## 启动后端服务
 
@@ -45,15 +45,15 @@ IDEA 打开 `backend/` 文件夹。
 
 1. 生成环境变量文件
 
-    ```shell
-    cp open-isle.env.example open-isle.env
-    ```
+   ```shell
+   cp open-isle.env.example open-isle.env
+   ```
 
-    `open-isle.env.example` 是环境变量模板，`open-isle.env` 才是真正读取的内容
+   `open-isle.env.example` 是环境变量模板，`open-isle.env` 才是真正读取的内容
 
 2. 修改环境变量，留下需要的，比如你要开发 Google 登录业务，就需要谷歌相关的变量，数据库是一定要的
 
-    ![环境变量](assets/contributing/backend_img_7.png)
+   ![环境变量](assets/contributing/backend_img_7.png)
 
 3. 应用环境文件，选择刚刚的 `open-isle.env`
 
@@ -72,11 +72,11 @@ SERVER_PORT=8082
 - 设置 JDK 版本为 java 17
 
 - 设置 VM Option，最好运行在其他端口，非 `8080`，这里设置 `8081`
-    若上面在环境变量中设置了端口，那这里就不需要再额外设置
+  若上面在环境变量中设置了端口，那这里就不需要再额外设置
 
-    ```shell
-    -Dserver.port=8081
-    ```
+  ```shell
+  -Dserver.port=8081
+  ```
 
 ![配置1](assets/contributing/backend_img_3.png)
 
@@ -88,26 +88,25 @@ SERVER_PORT=8082
 > 如果不知道怎么配置数据库可以参考 [Docker 环境](#docker-环境) 章节
 
 1. 本机配置 MySQL 服务（网上很多教程，忽略）
-
-    + 可以用 Laragon，自带 MySQL 包括 Nodejs，版本建议 `6.x`，`7` 以后需要 Lisence
-    + [下载地址](https://github.com/leokhoa/laragon/releases)
+   - 可以用 Laragon，自带 MySQL 包括 Nodejs，版本建议 `6.x`，`7` 以后需要 Lisence
+   - [下载地址](https://github.com/leokhoa/laragon/releases)
 
 2. 填写环境变量
 
-    ![环境变量](assets/contributing/backend_img_6.png)
+   ![环境变量](assets/contributing/backend_img_6.png)
 
-    ```ini
-    MYSQL_URL=jdbc:mysql://<数据库地址>:<端口>/<数据库名>?useUnicode=yes&characterEncoding=UTF-8&useInformationSchema=true&useSSL=false&serverTimezone=UTC
-    MYSQL_USER=<数据库用户名>
-    MYSQL_PASSWORD=<数据库密码>
-    ```
+   ```ini
+   MYSQL_URL=jdbc:mysql://<数据库地址>:<端口>/<数据库名>?useUnicode=yes&characterEncoding=UTF-8&useInformationSchema=true&useSSL=false&serverTimezone=UTC
+   MYSQL_USER=<数据库用户名>
+   MYSQL_PASSWORD=<数据库密码>
+   ```
 
 3. 执行 [`db/init/init_script.sql`](backend/src/main/resources/db/init/init_script.sql) 脚本，导入基本的数据
-    管理员：**admin/123456**
-    普通用户1：**user1/123456**
-    普通用户2：**user2/123456**
-    
-    ![初始化脚本](assets/contributing/resources_img.png)
+   管理员：**admin/123456**
+   普通用户1：**user1/123456**
+   普通用户2：**user2/123456**
+
+   ![初始化脚本](assets/contributing/resources_img.png)
 
 #### 配置 Redis
 
@@ -134,9 +133,9 @@ cd docker/
 
 - `backend/open-isle.env`：后端环境变量，配置同上，见 [配置环境变量](#配置环境变量)。
 - `docker/.env`：Docker Compose 环境变量，主要配置 MySQL 相关
-    ```shell
-    cp .env.example .env
-    ```
+  ```shell
+  cp .env.example .env
+  ```
 
 > [!TIP]
 > 使用单独的 `.env` 文件是为了兼容线上环境或已启用 MySQL 服务的情况，如果只是想快速体验或者启动统一的环境，则推荐使用本方式。
@@ -176,21 +175,21 @@ cd frontend_nuxt/
 
 - 利用预发环境：**（⚠️ 强烈推荐只开发前端的朋友使用该环境）**
 
-    ```shell
-    cp .env.staging.example .env
-    ```
+  ```shell
+  cp .env.staging.example .env
+  ```
 
 - 利用生产环境
 
-    ```shell
-    cp .env.production.example .env
-    ```
+  ```shell
+  cp .env.production.example .env
+  ```
 
 - 利用本地环境
 
-    ```shell
-    cp .env.dev.example .env
-    ```
+  ```shell
+  cp .env.dev.example .env
+  ```
 
 若依赖本机部署的后端，需要修改 `.env` 中的 `NUXT_PUBLIC_API_BASE_URL` 值与后端服务端口一致
 
@@ -214,17 +213,17 @@ npm run dev
 
 - 修改 `application.properties` 配置
 
-    ![后端配置](assets/contributing/backend_img.png)
+  ![后端配置](assets/contributing/backend_img.png)
 
 - 修改 `.env` 配置
 
-    ![前端](assets/contributing/fontend_img.png)
+  ![前端](assets/contributing/fontend_img.png)
 
 - 配置第三方登录回调地址
 
-    ![github配置](assets/contributing/github_img.png)
+  ![github配置](assets/contributing/github_img.png)
 
-    ![github配置2](assets/contributing/github_img_2.png)
+  ![github配置2](assets/contributing/github_img_2.png)
 
 ### 配置 Resend 邮箱服务
 
@@ -250,5 +249,3 @@ https://resend.com/emails 创建账号并登录
 ## 开源共建和API文档
 
 - API文档: https://docs.open-isle.com/openapi
-
-

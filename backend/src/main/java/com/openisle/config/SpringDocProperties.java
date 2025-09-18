@@ -10,11 +10,13 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "springdoc.api-docs")
 public class SpringDocProperties {
-    private List<ServerConfig> servers = new ArrayList<>();
 
-    @Data
-    public static class ServerConfig {
-        private String url;
-        private String description;
-    }
+  private List<ServerConfig> servers = new ArrayList<>();
+
+  @Data
+  public static class ServerConfig {
+
+    private String url;
+    private String description;
+  }
 }

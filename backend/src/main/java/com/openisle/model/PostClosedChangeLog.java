@@ -12,6 +12,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "post_closed_change_logs")
 public class PostClosedChangeLog extends PostChangeLog {
-    private boolean oldClosed;
-    private boolean newClosed;
+
+  private boolean oldClosed;
+  private boolean newClosed;
 }

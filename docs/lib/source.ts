@@ -1,16 +1,16 @@
-import { createElement } from 'react';
-import { icons } from 'lucide-react';
-import { loader } from 'fumadocs-core/source';
-import { transformerOpenAPI } from 'fumadocs-openapi/server';
-import { createOpenAPI } from 'fumadocs-openapi/server';
-import { docs } from '@/.source';
-import * as Adapters from './media-adapter';
-import * as ClientAdapters from './media-adapter.client';
+import { createElement } from "react";
+import { icons } from "lucide-react";
+import { loader } from "fumadocs-core/source";
+import { transformerOpenAPI } from "fumadocs-openapi/server";
+import { createOpenAPI } from "fumadocs-openapi/server";
+import { docs } from "@/.source";
+import * as Adapters from "./media-adapter";
+import * as ClientAdapters from "./media-adapter.client";
 
 // See https://fumadocs.vercel.app/docs/headless/source-api for more info
 export const source = loader({
   // it assigns a URL to your pages
-  baseUrl: '/',
+  baseUrl: "/",
   source: docs.toFumadocsSource(),
   pageTree: {
     transformers: [transformerOpenAPI()],
@@ -26,10 +26,10 @@ export const source = loader({
 });
 
 export const openapi = createOpenAPI({
-  proxyUrl: '/api/proxy',
+  proxyUrl: "/api/proxy",
   mediaAdapters: {
     // override the default adapter of `application/json`
-    'application/json': {
+    "application/json": {
       ...Adapters.OpenIsleMediaAdapter,
       client: ClientAdapters.OpenIsleMediaAdapter,
     },

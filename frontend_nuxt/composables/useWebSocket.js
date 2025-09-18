@@ -12,7 +12,7 @@ const resubscribeCallbacks = new Map()
 // Helper for unified subscription logging
 const logSubscriptionActivity = (action, destination, subscriptionId = 'N/A') => {
   console.log(
-    `[SUB_MAN] ${action} | Dest: ${destination} | SubID: ${subscriptionId} | Active: ${activeSubscriptions.value.size}`
+    `[SUB_MAN] ${action} | Dest: ${destination} | SubID: ${subscriptionId} | Active: ${activeSubscriptions.value.size}`,
   )
 }
 
@@ -20,7 +20,6 @@ const connect = (token) => {
   if (isConnected.value || (client.value && client.value.active)) {
     return
   }
-
 
   const config = useRuntimeConfig()
   const WEBSOCKET_URL = config.public.websocketUrl
@@ -31,9 +30,7 @@ const connect = (token) => {
     connectHeaders: {
       Authorization: `Bearer ${token}`,
     },
-    debug: function (str) {
-    
-    },
+    debug: function (str) {},
     reconnectDelay: 10000,
     heartbeatIncoming: 4000,
     heartbeatOutgoing: 4000,
@@ -42,7 +39,7 @@ const connect = (token) => {
   stompClient.onConnect = (frame) => {
     isConnected.value = true
     resubscribeCallbacks.forEach((callback, destination) => {
-        doSubscribe(destination, callback)
+      doSubscribe(destination, callback)
     })
   }
 
@@ -50,16 +47,14 @@ const connect = (token) => {
     console.error('Full frame:', frame)
   }
 
-  stompClient.onWebSocketError = (event) => {
-    
-  }
+  stompClient.onWebSocketError = (event) => {}
 
   stompClient.onWebSocketClose = (event) => {
-    isConnected.value = false;
-    activeSubscriptions.value.clear();
-    logSubscriptionActivity('Cleared all subscriptions due to WebSocket close', 'N/A');
-  };
-  
+    isConnected.value = false
+    activeSubscriptions.value.clear()
+    logSubscriptionActivity('Cleared all subscriptions due to WebSocket close', 'N/A')
+  }
+
   stompClient.onDisconnect = (frame) => {
     isConnected.value = false
   }
@@ -92,7 +87,7 @@ const unsubscribe = (destination) => {
 const unsubscribeAll = () => {
   logSubscriptionActivity('Unsubscribing from ALL', `Total: ${activeSubscriptions.value.size}`)
   const destinations = [...activeSubscriptions.value.keys()]
-  destinations.forEach(dest => {
+  destinations.forEach((dest) => {
     unsubscribe(dest)
   })
 }
@@ -148,16 +143,20 @@ const subscribe = (destination, callback) => {
       const sub = doSubscribe(destination, callback)
       resolve(sub)
     } else {
-      const unwatch = watch(isConnected, (newVal) => {
-        if (newVal) {
-          setTimeout(() => {
-            const sub = doSubscribe(destination, callback)
-            unwatch()
-            resolve(sub)
-          }, 100)
-        }
-      }, { immediate: false })
-      
+      const unwatch = watch(
+        isConnected,
+        (newVal) => {
+          if (newVal) {
+            setTimeout(() => {
+              const sub = doSubscribe(destination, callback)
+              unwatch()
+              resolve(sub)
+            }, 100)
+          }
+        },
+        { immediate: false },
+      )
+
       setTimeout(() => {
         unwatch()
         if (!isConnected.value) {

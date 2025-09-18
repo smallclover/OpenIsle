@@ -6,15 +6,16 @@ package com.openisle.util;
  * @since  2025-09-08
  */
 public enum VerifyType {
-    REGISTER(1),
-    RESET_PASSWORD(2);
-    private final int code;
+  REGISTER(1),
+  RESET_PASSWORD(2);
 
-    VerifyType(int code) {
-        this.code = code;
-    }
+  private final int code;
 
-    public int getCode() {
-        return code;
-    }
+  VerifyType(int code) {
+    this.code = code;
+  }
+
+  public int getCode() {
+    return code;
+  }
 }

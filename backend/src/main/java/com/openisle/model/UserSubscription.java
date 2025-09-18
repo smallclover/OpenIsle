@@ -10,18 +10,21 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "user_subscriptions",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"subscriber_id", "target_id"}))
+@Table(
+  name = "user_subscriptions",
+  uniqueConstraints = @UniqueConstraint(columnNames = { "subscriber_id", "target_id" })
+)
 public class UserSubscription {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "subscriber_id")
-    private User subscriber;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "target_id")
-    private User target;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "subscriber_id")
+  private User subscriber;
+
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "target_id")
+  private User target;
 }

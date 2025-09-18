@@ -1,8 +1,7 @@
 package com.openisle.dto;
 
-import lombok.*;
-
 import java.time.LocalDateTime;
+import lombok.*;
 
 /**
  * comment and change_log Dto
@@ -13,8 +12,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class TimelineItemDto<T> {
 
-    private Long id;
-    private String kind; // "comment" | "log"
-    private LocalDateTime createdAt;
-    private T payload; // 泛型，具体类型由外部决定
+  private Long id;
+  private String kind; // "comment" | "log"
+  private LocalDateTime createdAt;
+  private T payload; // 泛型，具体类型由外部决定
 }

@@ -5,5 +5,6 @@ import lombok.Data;
 /** Request to trigger a forgot password email. */
 @Data
 public class ForgotPasswordRequest {
-    private String email;
+
+  private String email;
 }

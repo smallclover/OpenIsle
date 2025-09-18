@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class CommentMedalDto extends MedalDto {
-    private long currentCommentCount;
-    private long targetCommentCount;
+
+  private long currentCommentCount;
+  private long targetCommentCount;
 }

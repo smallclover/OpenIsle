@@ -1,11 +1,16 @@
-import { source } from '@/lib/source';
-import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/page';
-import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { createRelativeLink } from 'fumadocs-ui/mdx';
-import { getMDXComponents } from '@/mdx-components';
-import { Card, Cards } from 'fumadocs-ui/components/card';
-import { getPageTreePeers } from 'fumadocs-core/server';
+import { source } from "@/lib/source";
+import {
+  DocsBody,
+  DocsDescription,
+  DocsPage,
+  DocsTitle,
+} from "fumadocs-ui/page";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { createRelativeLink } from "fumadocs-ui/mdx";
+import { getMDXComponents } from "@/mdx-components";
+import { Card, Cards } from "fumadocs-ui/components/card";
+import { getPageTreePeers } from "fumadocs-core/server";
 
 function DocsCategory({ url }: { url: string }) {
   return (
@@ -19,7 +24,7 @@ function DocsCategory({ url }: { url: string }) {
   );
 }
 
-export default async function Page(props: PageProps<'/[[...slug]]'>) {
+export default async function Page(props: PageProps<"/[[...slug]]">) {
   const params = await props.params;
   const page = source.getPage(params.slug);
   if (!page) notFound();
@@ -48,7 +53,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata(
-  props: PageProps<'/[[...slug]]'>
+  props: PageProps<"/[[...slug]]">,
 ): Promise<Metadata> {
   const params = await props.params;
   const page = source.getPage(params.slug);

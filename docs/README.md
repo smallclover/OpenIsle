@@ -1,4 +1,5 @@
 # OpenIsle Documentation
+
 ## 要求
 
 使用 [bun](https://bun.com/) 作为工具链的运行时，版本 1.2+。

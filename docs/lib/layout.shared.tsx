@@ -1,14 +1,14 @@
-import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
+import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 
 /**
  * Shared layout configurations
  */
 export function baseOptions(): BaseLayoutProps {
   return {
-    githubUrl: 'https://github.com/nagisa77/OpenIsle',
+    githubUrl: "https://github.com/nagisa77/OpenIsle",
     nav: {
-      title: 'OpenIsle Docs',
-      url: '/',
+      title: "OpenIsle Docs",
+      url: "/",
     },
     searchToggle: {
       enabled: false,

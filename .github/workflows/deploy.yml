@@ -3,7 +3,7 @@ name: CI & CD
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 19 * * *"   # 每天 UTC 19:00，相当于北京时间凌晨3点
+    - cron: "0 19 * * *" # 每天 UTC 19:00，相当于北京时间凌晨3点
 
 jobs:
   build-and-deploy:

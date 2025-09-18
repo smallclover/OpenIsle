@@ -4,19 +4,21 @@ import com.openisle.model.Comment;
 import com.openisle.model.PointHistory;
 import com.openisle.model.Post;
 import com.openisle.model.User;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PointHistoryRepository extends JpaRepository<PointHistory, Long> {
-    List<PointHistory> findByUserOrderByIdDesc(User user);
-    List<PointHistory> findByUserOrderByIdAsc(User user);
-    long countByUser(User user);
+  List<PointHistory> findByUserOrderByIdDesc(User user);
+  List<PointHistory> findByUserOrderByIdAsc(User user);
+  long countByUser(User user);
 
-    List<PointHistory> findByUserAndCreatedAtAfterOrderByCreatedAtDesc(User user, LocalDateTime createdAt);
+  List<PointHistory> findByUserAndCreatedAtAfterOrderByCreatedAtDesc(
+    User user,
+    LocalDateTime createdAt
+  );
 
-    List<PointHistory> findByComment(Comment comment);
+  List<PointHistory> findByComment(Comment comment);
 
-    List<PointHistory> findByPost(Post post);
+  List<PointHistory> findByPost(Post post);
 }

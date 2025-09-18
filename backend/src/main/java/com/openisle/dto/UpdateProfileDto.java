@@ -5,6 +5,7 @@ import lombok.Data;
 /** Request body for updating user profile. */
 @Data
 public class UpdateProfileDto {
-    private String username;
-    private String introduction;
+
+  private String username;
+  private String introduction;
 }

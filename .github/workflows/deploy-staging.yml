@@ -12,7 +12,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     environment: Deploy
-    if: ${{ !github.event.repository.fork }}  # 只有非 fork 才执行
+    if: ${{ !github.event.repository.fork }} # 只有非 fork 才执行
 
     steps:
       - uses: actions/checkout@v4
@@ -32,4 +32,3 @@ jobs:
     secrets: inherit
     with:
       build-id: ${{ github.run_id }}
-

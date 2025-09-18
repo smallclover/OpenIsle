@@ -1,14 +1,13 @@
 package com.openisle.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 /** Generic activity entity. */
 @Entity
@@ -17,34 +16,37 @@ import java.util.Set;
 @NoArgsConstructor
 @Table(name = "activities")
 public class Activity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    @Column(nullable = false)
-    private String title;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    private String icon;
+  @Column(nullable = false)
+  private String title;
 
-    private String content;
+  private String icon;
 
-    @Column(name = "start_time", nullable = false)
-    @CreationTimestamp
-    private LocalDateTime startTime;
+  private String content;
 
-    @Column(name = "end_time")
-    private LocalDateTime endTime;
+  @Column(name = "start_time", nullable = false)
+  @CreationTimestamp
+  private LocalDateTime startTime;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ActivityType type = ActivityType.NORMAL;
+  @Column(name = "end_time")
+  private LocalDateTime endTime;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "activity_participants",
-            joinColumns = @JoinColumn(name = "activity_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private Set<User> participants = new HashSet<>();
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private ActivityType type = ActivityType.NORMAL;
 
-    @Column(nullable = false)
-    private boolean ended = false;
+  @ManyToMany(fetch = FetchType.LAZY)
+  @JoinTable(
+    name = "activity_participants",
+    joinColumns = @JoinColumn(name = "activity_id"),
+    inverseJoinColumns = @JoinColumn(name = "user_id")
+  )
+  private Set<User> participants = new HashSet<>();
+
+  @Column(nullable = false)
+  private boolean ended = false;
 }

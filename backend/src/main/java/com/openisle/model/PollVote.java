@@ -6,23 +6,27 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "poll_votes", uniqueConstraints = @UniqueConstraint(columnNames = {"post_id", "user_id", "option_index"}))
+@Table(
+  name = "poll_votes",
+  uniqueConstraints = @UniqueConstraint(columnNames = { "post_id", "user_id", "option_index" })
+)
 @Getter
 @Setter
 @NoArgsConstructor
 public class PollVote {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "post_id")
-    private PollPost post;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id")
-    private User user;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "post_id")
+  private PollPost post;
 
-    @Column(name = "option_index", nullable = false)
-    private int optionIndex;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "user_id")
+  private User user;
+
+  @Column(name = "option_index", nullable = false)
+  private int optionIndex;
 }

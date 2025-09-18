@@ -11,6 +11,4 @@ import lombok.Setter;
 @NoArgsConstructor
 @Entity
 @Table(name = "post_lottery_result_change_logs")
-public class PostLotteryResultChangeLog extends PostChangeLog {
-}
-
+public class PostLotteryResultChangeLog extends PostChangeLog {}

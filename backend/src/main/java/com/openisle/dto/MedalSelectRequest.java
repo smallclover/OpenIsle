@@ -5,5 +5,6 @@ import lombok.Data;
 
 @Data
 public class MedalSelectRequest {
-    private MedalType type;
+
+  private MedalType type;
 }

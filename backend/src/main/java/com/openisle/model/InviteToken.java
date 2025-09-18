@@ -1,9 +1,8 @@
 package com.openisle.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
-
 import java.time.LocalDate;
+import lombok.Data;
 
 /**
  * Invite token entity tracking usage counts.
@@ -11,20 +10,21 @@ import java.time.LocalDate;
 @Data
 @Entity
 public class InviteToken {
-    @Id
-    private String token;
 
-    /**
-     * Short token used in invite links. Existing records may have this field null
-     * and fall back to {@link #token} for backward compatibility.
-     */
-    @Column(unique = true)
-    private String shortToken;
+  @Id
+  private String token;
 
-    @ManyToOne
-    private User inviter;
+  /**
+   * Short token used in invite links. Existing records may have this field null
+   * and fall back to {@link #token} for backward compatibility.
+   */
+  @Column(unique = true)
+  private String shortToken;
 
-    private LocalDate createdDate;
+  @ManyToOne
+  private User inviter;
 
-    private int usageCount;
+  private LocalDate createdDate;
+
+  private int usageCount;
 }

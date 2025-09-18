@@ -6,6 +6,7 @@ import lombok.Data;
 /** Request to update a single notification preference. */
 @Data
 public class NotificationPreferenceUpdateRequest {
-    private NotificationType type;
-    private boolean enabled;
+
+  private NotificationType type;
+  private boolean enabled;
 }

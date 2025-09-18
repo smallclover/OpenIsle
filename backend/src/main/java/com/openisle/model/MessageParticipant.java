@@ -2,11 +2,10 @@ package com.openisle.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -14,19 +13,20 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Table(name = "message_participants")
 public class MessageParticipant {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "conversation_id")
-    @JsonBackReference
-    private MessageConversation conversation;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+  @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  @JoinColumn(name = "conversation_id")
+  @JsonBackReference
+  private MessageConversation conversation;
 
-    @Column
-    private LocalDateTime lastReadAt;
+  @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id")
+  private User user;
+
+  @Column
+  private LocalDateTime lastReadAt;
 }

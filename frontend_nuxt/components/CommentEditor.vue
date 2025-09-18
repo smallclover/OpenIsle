@@ -8,13 +8,9 @@
       <div class="comment-submit" :class="{ disabled: isDisabled }" @click="submit">
         <template v-if="!loading">
           发布评论
-          <span class="shortcut-icon" v-if="!isMobile">
-            {{ isMac ? '⌘' : 'Ctrl' }} ⏎
-          </span>
+          <span class="shortcut-icon" v-if="!isMobile"> {{ isMac ? '⌘' : 'Ctrl' }} ⏎ </span>
         </template>
-        <template v-else>
-          <loading-four /> 发布中...
-        </template>
+        <template v-else> <loading-four /> 发布中... </template>
       </div>
     </div>
   </div>
@@ -115,7 +111,7 @@ export default {
         },
       })
       // 不是手机的情况下不添加快捷键
-      if(!isMobile.value){
+      if (!isMobile.value) {
         // 添加快捷键监听 (Ctrl+Enter 或 Cmd+Enter)
         const handleKeydown = (e) => {
           if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -172,7 +168,7 @@ export default {
       },
     )
 
-    return { submit, isDisabled, editorId, isMac, isMobile}
+    return { submit, isDisabled, editorId, isMac, isMobile }
   },
 }
 </script>

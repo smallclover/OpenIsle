@@ -11,19 +11,20 @@ import lombok.Setter;
 @NoArgsConstructor
 @Table(name = "categories")
 public class Category {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String name;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false)
-    private String icon;
+  @Column(nullable = false, unique = true)
+  private String name;
 
-    @Column
-    private String smallIcon;
+  @Column(nullable = false)
+  private String icon;
 
-    @Column(name = "description", nullable = false)
-    private String description;
+  @Column
+  private String smallIcon;
+
+  @Column(name = "description", nullable = false)
+  private String description;
 }

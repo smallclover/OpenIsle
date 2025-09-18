@@ -5,10 +5,11 @@ import lombok.Data;
 /** DTO representing a search result entry. */
 @Data
 public class SearchResultDto {
-    private String type;
-    private Long id;
-    private String text;
-    private String subText;
-    private String extra;
-    private Long postId;
+
+  private String type;
+  private Long id;
+  private String text;
+  private String subText;
+  private String extra;
+  private Long postId;
 }

@@ -55,10 +55,7 @@ public class PostMapper {
       .map(commentMapper::toDtoWithReplies)
       .collect(Collectors.toList());
     dto.setComments(comments);
-    dto.setSubscribed(
-      viewer != null &&
-        subscriptionService.isPostSubscribed(viewer, post.getId())
-    );
+    dto.setSubscribed(viewer != null && subscriptionService.isPostSubscribed(viewer, post.getId()));
     return dto;
   }
 
@@ -70,9 +67,7 @@ public class PostMapper {
     dto.setCreatedAt(post.getCreatedAt());
     dto.setAuthor(userMapper.toAuthorDto(post.getAuthor()));
     dto.setCategory(categoryMapper.toDto(post.getCategory()));
-    dto.setTags(
-      post.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList())
-    );
+    dto.setTags(post.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList()));
     dto.setViews(post.getViews());
     dto.setStatus(post.getStatus());
     dto.setPinnedAt(post.getPinnedAt());
@@ -88,10 +83,7 @@ public class PostMapper {
 
     List<User> participants = commentService.getParticipants(post.getId(), 5);
     dto.setParticipants(
-      participants
-        .stream()
-        .map(userMapper::toAuthorDto)
-        .collect(Collectors.toList())
+      participants.stream().map(userMapper::toAuthorDto).collect(Collectors.toList())
     );
 
     LocalDateTime last = post.getLastReplyAt();
@@ -113,18 +105,10 @@ public class PostMapper {
       l.setStartTime(lp.getStartTime());
       l.setEndTime(lp.getEndTime());
       l.setParticipants(
-        lp
-          .getParticipants()
-          .stream()
-          .map(userMapper::toAuthorDto)
-          .collect(Collectors.toList())
+        lp.getParticipants().stream().map(userMapper::toAuthorDto).collect(Collectors.toList())
       );
       l.setWinners(
-        lp
-          .getWinners()
-          .stream()
-          .map(userMapper::toAuthorDto)
-          .collect(Collectors.toList())
+        lp.getWinners().stream().map(userMapper::toAuthorDto).collect(Collectors.toList())
       );
       dto.setLottery(l);
     }
@@ -135,11 +119,7 @@ public class PostMapper {
       p.setVotes(pp.getVotes());
       p.setEndTime(pp.getEndTime());
       p.setParticipants(
-        pp
-          .getParticipants()
-          .stream()
-          .map(userMapper::toAuthorDto)
-          .collect(Collectors.toList())
+        pp.getParticipants().stream().map(userMapper::toAuthorDto).collect(Collectors.toList())
       );
       Map<Integer, List<AuthorDto>> optionParticipants = pollVoteRepository
         .findByPostId(pp.getId())
@@ -147,10 +127,7 @@ public class PostMapper {
         .collect(
           Collectors.groupingBy(
             PollVote::getOptionIndex,
-            Collectors.mapping(
-              v -> userMapper.toAuthorDto(v.getUser()),
-              Collectors.toList()
-            )
+            Collectors.mapping(v -> userMapper.toAuthorDto(v.getUser()), Collectors.toList())
           )
         );
       p.setOptionParticipants(optionParticipants);

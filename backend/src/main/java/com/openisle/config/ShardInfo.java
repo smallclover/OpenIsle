@@ -8,7 +8,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ShardInfo {
-    private int shardIndex;
-    private String queueName;
-    private String routingKey;
+
+  private int shardIndex;
+  private String queueName;
+  private String routingKey;
 }

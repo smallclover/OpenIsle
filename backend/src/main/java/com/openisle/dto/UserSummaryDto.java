@@ -4,7 +4,8 @@ import lombok.Data;
 
 @Data
 public class UserSummaryDto {
-    private Long id;
-    private String username;
-    private String avatar;
+
+  private Long id;
+  private String username;
+  private String avatar;
 }

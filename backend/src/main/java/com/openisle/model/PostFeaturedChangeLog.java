@@ -12,6 +12,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "post_featured_change_logs")
 public class PostFeaturedChangeLog extends PostChangeLog {
-    private boolean oldFeatured;
-    private boolean newFeatured;
+
+  private boolean oldFeatured;
+  private boolean newFeatured;
 }

@@ -6,5 +6,6 @@ import lombok.Data;
 /** Request for reacting to a post or comment. */
 @Data
 public class ReactionRequest {
-    private ReactionType type;
+
+  private ReactionType type;
 }

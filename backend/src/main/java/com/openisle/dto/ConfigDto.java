@@ -8,8 +8,9 @@ import lombok.Data;
 /** DTO for site configuration. */
 @Data
 public class ConfigDto {
-    private PublishMode publishMode;
-    private PasswordStrength passwordStrength;
-    private Integer aiFormatLimit;
-    private RegisterMode registerMode;
+
+  private PublishMode publishMode;
+  private PasswordStrength passwordStrength;
+  private Integer aiFormatLimit;
+  private RegisterMode registerMode;
 }

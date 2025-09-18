@@ -13,39 +13,45 @@ import org.hibernate.annotations.CreationTimestamp;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "reactions",
-       uniqueConstraints = {
-           @UniqueConstraint(columnNames = {"user_id", "post_id", "type"}),
-           @UniqueConstraint(columnNames = {"user_id", "comment_id", "type"}),
-           @UniqueConstraint(columnNames = {"user_id", "message_id", "type"})
-       })
+@Table(
+  name = "reactions",
+  uniqueConstraints = {
+    @UniqueConstraint(columnNames = { "user_id", "post_id", "type" }),
+    @UniqueConstraint(columnNames = { "user_id", "comment_id", "type" }),
+    @UniqueConstraint(columnNames = { "user_id", "message_id", "type" }),
+  }
+)
 public class Reaction {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ReactionType type;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id")
-    private User user;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private ReactionType type;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id")
-    private Post post;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "user_id")
+  private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "comment_id")
-    private Comment comment;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "post_id")
+  private Post post;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "message_id")
-    private Message message;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "comment_id")
+  private Comment comment;
 
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false,
-            columnDefinition = "DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6)")
-    private java.time.LocalDateTime createdAt;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "message_id")
+  private Message message;
+
+  @CreationTimestamp
+  @Column(
+    nullable = false,
+    updatable = false,
+    columnDefinition = "DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6)"
+  )
+  private java.time.LocalDateTime createdAt;
 }

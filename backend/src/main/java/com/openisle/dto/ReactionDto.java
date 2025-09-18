@@ -8,12 +8,12 @@ import lombok.Data;
  */
 @Data
 public class ReactionDto {
-    private Long id;
-    private ReactionType type;
-    private String user;
-    private Long postId;
-    private Long commentId;
-    private Long messageId;
-    private int reward;
-}
 
+  private Long id;
+  private ReactionType type;
+  private String user;
+  private Long postId;
+  private Long commentId;
+  private Long messageId;
+  private int reward;
+}

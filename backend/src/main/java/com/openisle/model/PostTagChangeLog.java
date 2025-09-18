@@ -13,9 +13,10 @@ import lombok.Setter;
 @Entity
 @Table(name = "post_tag_change_logs")
 public class PostTagChangeLog extends PostChangeLog {
-    @Column(name = "old_tags")
-    private String oldTags;
 
-    @Column(name = "new_tags")
-    private String newTags;
+  @Column(name = "old_tags")
+  private String oldTags;
+
+  @Column(name = "new_tags")
+  private String newTags;
 }

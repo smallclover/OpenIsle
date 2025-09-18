@@ -17,44 +17,56 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/admin/config")
 @RequiredArgsConstructor
 public class AdminConfigController {
-    private final PostService postService;
-    private final PasswordValidator passwordValidator;
-    private final AiUsageService aiUsageService;
-    private final RegisterModeService registerModeService;
 
-    @GetMapping
-    @SecurityRequirement(name = "JWT")
-    @Operation(summary = "Get configuration", description = "Retrieve application configuration settings")
-    @ApiResponse(responseCode = "200", description = "Current configuration",
-            content = @Content(schema = @Schema(implementation = ConfigDto.class)))
-    public ConfigDto getConfig() {
-        ConfigDto dto = new ConfigDto();
-        dto.setPublishMode(postService.getPublishMode());
-        dto.setPasswordStrength(passwordValidator.getStrength());
-        dto.setAiFormatLimit(aiUsageService.getFormatLimit());
-        dto.setRegisterMode(registerModeService.getRegisterMode());
-        return dto;
+  private final PostService postService;
+  private final PasswordValidator passwordValidator;
+  private final AiUsageService aiUsageService;
+  private final RegisterModeService registerModeService;
+
+  @GetMapping
+  @SecurityRequirement(name = "JWT")
+  @Operation(
+    summary = "Get configuration",
+    description = "Retrieve application configuration settings"
+  )
+  @ApiResponse(
+    responseCode = "200",
+    description = "Current configuration",
+    content = @Content(schema = @Schema(implementation = ConfigDto.class))
+  )
+  public ConfigDto getConfig() {
+    ConfigDto dto = new ConfigDto();
+    dto.setPublishMode(postService.getPublishMode());
+    dto.setPasswordStrength(passwordValidator.getStrength());
+    dto.setAiFormatLimit(aiUsageService.getFormatLimit());
+    dto.setRegisterMode(registerModeService.getRegisterMode());
+    return dto;
+  }
+
+  @PostMapping
+  @SecurityRequirement(name = "JWT")
+  @Operation(
+    summary = "Update configuration",
+    description = "Update application configuration settings"
+  )
+  @ApiResponse(
+    responseCode = "200",
+    description = "Updated configuration",
+    content = @Content(schema = @Schema(implementation = ConfigDto.class))
+  )
+  public ConfigDto updateConfig(@RequestBody ConfigDto dto) {
+    if (dto.getPublishMode() != null) {
+      postService.setPublishMode(dto.getPublishMode());
     }
-
-    @PostMapping
-    @SecurityRequirement(name = "JWT")
-    @Operation(summary = "Update configuration", description = "Update application configuration settings")
-    @ApiResponse(responseCode = "200", description = "Updated configuration",
-            content = @Content(schema = @Schema(implementation = ConfigDto.class)))
-    public ConfigDto updateConfig(@RequestBody ConfigDto dto) {
-        if (dto.getPublishMode() != null) {
-            postService.setPublishMode(dto.getPublishMode());
-        }
-        if (dto.getPasswordStrength() != null) {
-            passwordValidator.setStrength(dto.getPasswordStrength());
-        }
-        if (dto.getAiFormatLimit() != null) {
-            aiUsageService.setFormatLimit(dto.getAiFormatLimit());
-        }
-        if (dto.getRegisterMode() != null) {
-            registerModeService.setRegisterMode(dto.getRegisterMode());
-        }
-        return getConfig();
+    if (dto.getPasswordStrength() != null) {
+      passwordValidator.setStrength(dto.getPasswordStrength());
     }
-
+    if (dto.getAiFormatLimit() != null) {
+      aiUsageService.setFormatLimit(dto.getAiFormatLimit());
+    }
+    if (dto.getRegisterMode() != null) {
+      registerModeService.setRegisterMode(dto.getRegisterMode());
+    }
+    return getConfig();
+  }
 }

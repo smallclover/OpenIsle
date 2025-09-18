@@ -13,9 +13,10 @@ import lombok.Setter;
 @Entity
 @Table(name = "post_content_change_logs")
 public class PostContentChangeLog extends PostChangeLog {
-    @Column(name = "old_content", columnDefinition = "LONGTEXT")
-    private String oldContent;
 
-    @Column(name = "new_content", columnDefinition = "LONGTEXT")
-    private String newContent;
+  @Column(name = "old_content", columnDefinition = "LONGTEXT")
+  private String oldContent;
+
+  @Column(name = "new_content", columnDefinition = "LONGTEXT")
+  private String newContent;
 }

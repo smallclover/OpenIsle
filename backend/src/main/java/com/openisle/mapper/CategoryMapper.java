@@ -8,18 +8,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class CategoryMapper {
 
-    public CategoryDto toDto(Category c) {
-        return toDto(c, null);
-    }
+  public CategoryDto toDto(Category c) {
+    return toDto(c, null);
+  }
 
-    public CategoryDto toDto(Category c, Long count) {
-        CategoryDto dto = new CategoryDto();
-        dto.setId(c.getId());
-        dto.setName(c.getName());
-        dto.setDescription(c.getDescription());
-        dto.setIcon(c.getIcon());
-        dto.setSmallIcon(c.getSmallIcon());
-        dto.setCount(count);
-        return dto;
-    }
+  public CategoryDto toDto(Category c, Long count) {
+    CategoryDto dto = new CategoryDto();
+    dto.setId(c.getId());
+    dto.setName(c.getName());
+    dto.setDescription(c.getDescription());
+    dto.setIcon(c.getIcon());
+    dto.setSmallIcon(c.getSmallIcon());
+    dto.setCount(count);
+    return dto;
+  }
 }

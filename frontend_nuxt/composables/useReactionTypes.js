@@ -13,7 +13,7 @@ export function useReactionTypes() {
       reactionTypes.value = [...(window.reactionTypes || [])]
       return reactionTypes.value
     }
-    
+
     isLoading = true
     try {
       const token = getToken()
@@ -47,6 +47,6 @@ export function useReactionTypes() {
     reactionTypes: readonly(reactionTypes),
     fetchReactionTypes,
     initialize,
-    isInitialized: readonly(isInitialized)
+    isInitialized: readonly(isInitialized),
   }
 }

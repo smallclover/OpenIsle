@@ -6,7 +6,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class ContributorMedalDto extends MedalDto {
-    private long currentContributionLines;
-    private long targetContributionLines;
-}
 
+  private long currentContributionLines;
+  private long targetContributionLines;
+}
