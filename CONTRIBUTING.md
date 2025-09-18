@@ -4,6 +4,8 @@
     - [配置环境变量](#配置环境变量)
     - [配置 IDEA 参数](#配置-idea-参数)
     - [配置 MySQL](#配置-mysql)
+    - [配置 Redis](#配置-redis)
+    - [配置 RabbitMQ](#配置-rabbitmq)
   - [Docker 环境](#docker-环境)
     - [配置环境变量](#配置环境变量-1)
     - [构建并启动镜像](#构建并启动镜像)
@@ -117,14 +119,75 @@ SERVER_PORT=8082
 
 #### 配置 Redis
 
-填写环境变量 `.env` 中的 Redis 相关配置并启动 Redis
+后端的登录态缓存、访问频控等都依赖 Redis，请确保本地有可用的 Redis 实例。
 
-```ini
-REDIS_HOST=<Redis 地址>
-REDIS_PORT=<Redis 端口>
-```
+1. **启动 Redis 服务**（已有服务可跳过）
 
-处理完环境问题直接跑起来就能通了
+   ```bash
+   docker run --name openisle-redis -p 6379:6379 -d redis:7-alpine
+   ```
+
+   该命令会在本机暴露 `6379` 端口。若你已有其他端口的 Redis，可以根据实际情况调整映射关系。
+
+2. **在 `backend/open-isle.env` 中填写连接信息**
+
+   ```ini
+   REDIS_HOST=127.0.0.1
+   REDIS_PORT=6379
+   # 可选：若需要切换逻辑库，可新增此变量，默认使用 0 号库
+   REDIS_DATABASE=0
+   ```
+
+   `application.properties` 中的默认值为 `localhost:6379`、数据库 `0`，如果你的环境恰好一致，也可以不额外填写；显式声明可以避免 IDE/运行时读取到意外配置。
+
+3. **验证连接**
+
+   ```bash
+   redis-cli -h 127.0.0.1 -p 6379 ping
+   ```
+
+   启动后端后，日志中会出现 `Redis connection established ...`（来自 `RedisConnectionLogger`），说明已成功连通。
+
+#### 配置 RabbitMQ
+
+消息通知和 WebSocket 推送链路依赖 RabbitMQ。后端会自动声明交换机与队列，确保本地 RabbitMQ 可用即可。
+
+1. **启动 RabbitMQ 服务**（推荐包含管理界面）
+
+   ```bash
+   docker run --name openisle-rabbitmq \
+     -e RABBITMQ_DEFAULT_USER=openisle \
+     -e RABBITMQ_DEFAULT_PASS=openisle \
+     -p 5672:5672 -p 15672:15672 \
+     -d rabbitmq:3.13-management
+   ```
+
+   管理界面位于 http://127.0.0.1:15672 ，可用于查看队列、交换机等资源。
+
+2. **同步填写后端与 WebSocket 服务的环境变量**
+
+   ```ini
+   # backend/open-isle.env
+   RABBITMQ_HOST=127.0.0.1
+   RABBITMQ_PORT=5672
+   RABBITMQ_USERNAME=openisle
+   RABBITMQ_PASSWORD=openisle
+
+   # 如果需要启动 websocket_service，也需要在 websocket_service.env 中保持一致
+   ```
+
+   如果沿用 RabbitMQ 默认的 `guest/guest`，可以不显式设置，Spring Boot 会回退到 `application.properties` 中的默认值 (`localhost:5672`、`guest/guest`、虚拟主机 `/`)。
+
+3. **确认自动声明的资源**
+
+   - 交换机：`openisle-exchange`
+   - 旧版兼容队列：`notifications-queue`
+   - 分片队列：`notifications-queue-0` ~ `notifications-queue-f`（共 16 个，对应路由键 `notifications.shard.0` ~ `notifications.shard.f`）
+   - 队列持久化默认开启，来自 `rabbitmq.queue.durable=true`，如需仅在本地短暂测试，可在 `application.properties` 中调整该配置。
+
+   启动后端时可在日志中看到 `=== 开始主动声明 RabbitMQ 组件 ===` 与后续的声明结果，也可以在管理界面中查看是否创建成功。
+
+完成 Redis 与 RabbitMQ 配置后，即可继续启动后端服务。
 
 ![运行画面](assets/contributing/backend_img_4.png)
 
