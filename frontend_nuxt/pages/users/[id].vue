@@ -220,98 +220,13 @@
                     <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
                   </template> -->
                   <template v-if="item.type === 'post'">
-                    <div class="ttimeline-container">
-                      <div class="timeline-header">
-                        <div class="timeline-title">发布了文章</div>
-                        <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
-                      </div>
-                      <div class="article-container">
-                        <NuxtLink :to="`/posts/${item.post.id}`" class="timeline-article-link">
-                          {{ item.post.title }}
-                        </NuxtLink>
-                        <div class="timeline-snippet">
-                          {{ stripMarkdown(item.post.snippet) }}
-                        </div>
-                      </div>
-                    </div>
+                    <TimelinePostItem :item="item" />
                   </template>
-                  <!-- <template v-else-if="item.type === 'comment'">
-                    在
-                    <NuxtLink :to="`/posts/${item.comment.post.id}`" class="timeline-link">
-                      {{ item.comment.post.title }}
-                    </NuxtLink>
-                    下评论了
-                    <NuxtLink :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`" class="timeline-link">
-                      {{ stripMarkdownLength(item.comment.content, 200) }}
-                    </NuxtLink>
-                    <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
-                  </template> -->
                   <template v-else-if="item.type === 'comment'">
-                    <div class="ttimeline-container">
-                      <div class="timeline-header">
-                        <div class="timeline-title">发布了4条评论</div>
-                        <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
-                      </div>
-                      <div class="comment-content">
-                        <div class="comment-content-item">
-                          <div class="comment-content-item-main">
-                            <comment-one class="comment-content-item-icon" />
-                            <NuxtLink
-                              :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
-                              class="timeline-comment-link"
-                            >
-                              {{ stripMarkdownLength(item.comment.content, 200) }}
-                            </NuxtLink>
-                          </div>
-                          <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
-                        </div>
-                        <div class="comment-content-item">
-                          <div class="comment-content-item-main">
-                            <comment-one class="comment-content-item-icon" />
-                            <NuxtLink
-                              :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
-                              class="timeline-comment-link"
-                            >
-                              {{ stripMarkdownLength(item.comment.content, 200) }}
-                            </NuxtLink>
-                          </div>
-                          <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
-                        </div>
-                        <div class="comment-content-item">
-                          <div class="comment-content-item-main">
-                            <comment-one class="comment-content-item-icon" />
-                            <NuxtLink
-                              :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
-                              class="timeline-comment-link"
-                            >
-                              {{ stripMarkdownLength(item.comment.content, 200) }}
-                            </NuxtLink>
-                          </div>
-                          <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
-                        </div>
-                      </div>
-                    </div>
+                    <TimelineCommentGroup :item="item" />
                   </template>
                   <template v-else-if="item.type === 'reply'">
-                    在
-                    <NuxtLink :to="`/posts/${item.comment.post.id}`" class="timeline-link">
-                      {{ item.comment.post.title }}
-                    </NuxtLink>
-                    下对
-                    <NuxtLink
-                      :to="`/posts/${item.comment.post.id}#comment-${item.comment.parentComment.id}`"
-                      class="timeline-link"
-                    >
-                      {{ stripMarkdownLength(item.comment.parentComment.content, 200) }}
-                    </NuxtLink>
-                    回复了
-                    <NuxtLink
-                      :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
-                      class="timeline-link"
-                    >
-                      {{ stripMarkdownLength(item.comment.content, 200) }}
-                    </NuxtLink>
-                    <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                    <TimelineCommentGroup :item="item" />
                   </template>
                   <template v-else-if="item.type === 'tag'">
                     创建了标签
@@ -385,6 +300,8 @@ import BasePlaceholder from '~/components/BasePlaceholder.vue'
 import BaseTimeline from '~/components/BaseTimeline.vue'
 import BaseTabs from '~/components/BaseTabs.vue'
 import LevelProgress from '~/components/LevelProgress.vue'
+import TimelineCommentGroup from '~/components/TimelineCommentGroup.vue'
+import TimelinePostItem from '~/components/TimelinePostItem.vue'
 import UserList from '~/components/UserList.vue'
 import { toast } from '~/main'
 import { authState, getToken } from '~/utils/auth'
@@ -490,6 +407,57 @@ const fetchSummary = async () => {
   }
 }
 
+const isDiscussionItem = (item) => item && (item.type === 'comment' || item.type === 'reply')
+
+const toDateKey = (value) => {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
+}
+
+const combineDiscussionItems = (items) => {
+  const result = []
+  items.forEach((item) => {
+    if (!isDiscussionItem(item)) {
+      result.push(item)
+      return
+    }
+
+    const dateKey = toDateKey(item.createdAt)
+    const last = result[result.length - 1]
+    if (last && isDiscussionItem(last) && last.dateKey === dateKey) {
+      last.entries.push({
+        type: item.type,
+        comment: item.comment,
+        createdAt: item.createdAt,
+      })
+      if (item.type === 'comment' && last.type === 'reply') {
+        last.type = 'comment'
+      }
+      if (new Date(item.createdAt) > new Date(last.createdAt)) {
+        last.createdAt = item.createdAt
+      }
+    } else {
+      result.push({
+        type: item.type,
+        icon: item.icon,
+        createdAt: item.createdAt,
+        dateKey,
+        entries: [
+          {
+            type: item.type,
+            comment: item.comment,
+            createdAt: item.createdAt,
+          },
+        ],
+      })
+    }
+  })
+  return result
+}
+
 const fetchTimeline = async () => {
   const [postsRes, repliesRes, tagsRes] = await Promise.all([
     fetch(`${API_BASE_URL}/api/users/${username}/posts?limit=50`),
@@ -520,7 +488,7 @@ const fetchTimeline = async () => {
     })),
   ]
   mapped.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-  timelineItems.value = mapped
+  timelineItems.value = combineDiscussionItems(mapped)
 }
 
 const fetchFollowUsers = async () => {
