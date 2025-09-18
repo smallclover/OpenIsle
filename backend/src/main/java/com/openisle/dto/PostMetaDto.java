@@ -1,6 +1,7 @@
 package com.openisle.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.Data;
 
 /** Lightweight post metadata used in user profile lists. */
@@ -11,6 +12,8 @@ public class PostMetaDto {
   private String title;
   private String snippet;
   private LocalDateTime createdAt;
-  private String category;
+  private CategoryDto category;
+  private List<TagDto> tags;
   private long views;
+  private long commentCount;
 }
