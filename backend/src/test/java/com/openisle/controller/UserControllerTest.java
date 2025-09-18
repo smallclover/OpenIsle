@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.openisle.dto.CommentInfoDto;
 import com.openisle.dto.PostMetaDto;
 import com.openisle.dto.UserDto;
+import com.openisle.mapper.CategoryMapper;
 import com.openisle.mapper.TagMapper;
 import com.openisle.mapper.UserMapper;
 import com.openisle.model.User;
@@ -63,6 +64,9 @@ class UserControllerTest {
 
   @MockBean
   private TagMapper tagMapper;
+
+  @MockBean
+  private CategoryMapper categoryMapper;
 
   @Test
   void getCurrentUser() throws Exception {
