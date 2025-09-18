@@ -24,7 +24,7 @@ public class UserMapper {
   private final LevelService levelService;
   private final MedalService medalService;
 
-  @Value("${app.snippet-length:50}")
+  @Value("${app.snippet-length}")
   private int snippetLength;
 
   public AuthorDto toAuthorDto(User user) {

@@ -212,26 +212,85 @@
             <div class="timeline-list">
               <BaseTimeline :items="filteredTimelineItems">
                 <template #item="{ item }">
-                  <template v-if="item.type === 'post'">
+                  <!-- <template v-if="item.type === 'post'">
                     发布了文章
                     <NuxtLink :to="`/posts/${item.post.id}`" class="timeline-link">
                       {{ item.post.title }}
                     </NuxtLink>
                     <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                  </template> -->
+                  <template v-if="item.type === 'post'">
+                    <div class="ttimeline-container">
+                      <div class="timeline-header">
+                        <div class="timeline-title">发布了文章</div>
+                        <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                      </div>
+                      <div class="article-container">
+                        <NuxtLink :to="`/posts/${item.post.id}`" class="timeline-article-link">
+                          {{ item.post.title }}
+                        </NuxtLink>
+                        <div class="timeline-snippet">
+                          {{ stripMarkdown(item.post.snippet) }}
+                        </div>
+                      </div>
+                    </div>
                   </template>
-                  <template v-else-if="item.type === 'comment'">
+                  <!-- <template v-else-if="item.type === 'comment'">
                     在
                     <NuxtLink :to="`/posts/${item.comment.post.id}`" class="timeline-link">
                       {{ item.comment.post.title }}
                     </NuxtLink>
                     下评论了
-                    <NuxtLink
-                      :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
-                      class="timeline-link"
-                    >
+                    <NuxtLink :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`" class="timeline-link">
                       {{ stripMarkdownLength(item.comment.content, 200) }}
                     </NuxtLink>
                     <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                  </template> -->
+                  <template v-else-if="item.type === 'comment'">
+                    <div class="ttimeline-container">
+                      <div class="timeline-header">
+                        <div class="timeline-title">发布了4条评论</div>
+                        <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                      </div>
+                      <div class="comment-content">
+                        <div class="comment-content-item">
+                          <div class="comment-content-item-main">
+                            <comment-one class="comment-content-item-icon" />
+                            <NuxtLink
+                              :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
+                              class="timeline-comment-link"
+                            >
+                              {{ stripMarkdownLength(item.comment.content, 200) }}
+                            </NuxtLink>
+                          </div>
+                          <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                        </div>
+                        <div class="comment-content-item">
+                          <div class="comment-content-item-main">
+                            <comment-one class="comment-content-item-icon" />
+                            <NuxtLink
+                              :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
+                              class="timeline-comment-link"
+                            >
+                              {{ stripMarkdownLength(item.comment.content, 200) }}
+                            </NuxtLink>
+                          </div>
+                          <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                        </div>
+                        <div class="comment-content-item">
+                          <div class="comment-content-item-main">
+                            <comment-one class="comment-content-item-icon" />
+                            <NuxtLink
+                              :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
+                              class="timeline-comment-link"
+                            >
+                              {{ stripMarkdownLength(item.comment.content, 200) }}
+                            </NuxtLink>
+                          </div>
+                          <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                        </div>
+                      </div>
+                    </div>
                   </template>
                   <template v-else-if="item.type === 'reply'">
                     在
@@ -903,6 +962,7 @@ watch(selectedTab, async (val) => {
   font-size: 12px;
   color: gray;
   margin-top: 5px;
+  white-space: nowrap;
 }
 
 .timeline-snippet {
@@ -937,6 +997,81 @@ watch(selectedTab, async (val) => {
   justify-content: center;
   align-items: center;
   padding: 40px 0;
+}
+
+.ttimeline-container {
+  margin-top: 2px;
+  padding-bottom: 30px;
+}
+
+.timeline-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.timeline-title {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.comment-content {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  gap: 5px;
+}
+
+.comment-content-item-main {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  align-items: flex-start;
+}
+
+.comment-content-item-icon {
+  width: 20px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comment-content-item {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.timeline-comment-link {
+  color: var(--text-color);
+  word-break: break-word;
+  text-decoration: underline;
+}
+
+.timeline-comment-link:hover {
+  color: var(--primary-color);
+}
+
+.timeline-article-link {
+  color: var(--text-color);
+  font-weight: bold;
+  font-size: 20px;
+  word-break: break-word;
+  text-decoration: underline;
+}
+
+.timeline-article-link:hover {
+  color: var(--primary-color);
+}
+
+.article-container {
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid var(--normal-border-color);
+  margin-top: 10px;
 }
 
 .follow-container {

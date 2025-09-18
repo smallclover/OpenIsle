@@ -94,6 +94,7 @@ body {
   font-family: 'WenQuanYi Micro Hei', 'Helvetica Neue', Arial, sans-serif;
   background-color: var(--normal-background-color);
   color: var(--text-color);
+  text-underline-offset: 4px;
   /* 禁止滚动 */
   /* overflow: hidden;  */
 }
