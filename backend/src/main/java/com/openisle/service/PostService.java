@@ -323,6 +323,9 @@ public class PostService {
         return false;
     }
 
+    @CacheEvict(
+            value = CachingConfig.POST_CACHE_NAME, allEntries = true
+    )
     public void joinLottery(Long postId, String username) {
         LotteryPost post = lotteryPostRepository.findById(postId)
                 .orElseThrow(() -> new com.openisle.exception.NotFoundException("Post not found"));
@@ -339,6 +342,9 @@ public class PostService {
                 .orElseThrow(() -> new com.openisle.exception.NotFoundException("Post not found"));
     }
 
+    @CacheEvict(
+            value = CachingConfig.POST_CACHE_NAME, allEntries = true
+    )
     @Transactional
     public PollPost votePoll(Long postId, String username, java.util.List<Integer> optionIndices) {
         PollPost post = pollPostRepository.findById(postId)
@@ -376,6 +382,9 @@ public class PostService {
         return saved;
     }
 
+    @CacheEvict(
+            value = CachingConfig.POST_CACHE_NAME, allEntries = true
+    )
     @Transactional
     public void finalizePoll(Long postId) {
         scheduledFinalizations.remove(postId);
@@ -395,6 +404,9 @@ public class PostService {
         });
     }
 
+    @CacheEvict(
+            value = CachingConfig.POST_CACHE_NAME, allEntries = true
+    )
     @Transactional
     public void finalizeLottery(Long postId) {
         log.info("start to finalizeLottery for {}", postId);
@@ -508,10 +520,6 @@ public class PostService {
         return listPostsByLatestReply(null, null, page, pageSize);
     }
 
-    @Cacheable(
-            value = CachingConfig.POST_CACHE_NAME,
-            key = "new org.springframework.cache.interceptor.SimpleKey('latest_reply', #categoryIds, #tagIds, #page, #pageSize)"
-    )
     public List<Post> listPostsByLatestReply(java.util.List<Long> categoryIds,
                                              java.util.List<Long> tagIds,
                                              Integer page,
@@ -647,10 +655,6 @@ public class PostService {
      * @param pageSize
      * @return
      */
-    @Cacheable(
-            value = CachingConfig.POST_CACHE_NAME,
-            key = "new org.springframework.cache.interceptor.SimpleKey('default', #ids, #tids, #page, #pageSize)"
-    )
     public List<Post> defaultListPosts(List<Long> ids, List<Long> tids, Integer page, Integer pageSize){
         boolean hasCategories = !CollectionUtils.isEmpty(ids);
         boolean hasTags = !CollectionUtils.isEmpty(tids);
