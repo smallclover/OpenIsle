@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /** Mapper responsible for converting posts into DTOs. */
@@ -99,6 +100,8 @@ public class PostMapper {
             l.setPointCost(lp.getPointCost());
             l.setStartTime(lp.getStartTime());
             l.setEndTime(lp.getEndTime());
+            l.setParticipants(lp.getParticipants().stream().map(userMapper::toAuthorDto).collect(Collectors.toList()));
+            l.setWinners(lp.getWinners().stream().map(userMapper::toAuthorDto).collect(Collectors.toList()));
             dto.setLottery(l);
         }
 
@@ -107,6 +110,7 @@ public class PostMapper {
             p.setOptions(pp.getOptions());
             p.setVotes(pp.getVotes());
             p.setEndTime(pp.getEndTime());
+            p.setParticipants(pp.getParticipants().stream().map(userMapper::toAuthorDto).collect(Collectors.toList()));
             Map<Integer, List<AuthorDto>> optionParticipants = pollVoteRepository.findByPostId(pp.getId()).stream()
                     .collect(Collectors.groupingBy(PollVote::getOptionIndex,
                             Collectors.mapping(v -> userMapper.toAuthorDto(v.getUser()), Collectors.toList())));

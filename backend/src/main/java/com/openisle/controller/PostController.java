@@ -1,5 +1,6 @@
 package com.openisle.controller;
 
+import com.openisle.config.CachingConfig;
 import com.openisle.dto.PostDetailDto;
 import com.openisle.dto.PostRequest;
 import com.openisle.dto.PostSummaryDto;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -142,6 +144,10 @@ public class PostController {
     @Operation(summary = "List posts", description = "List posts by various filters")
     @ApiResponse(responseCode = "200", description = "List of posts",
             content = @Content(array = @ArraySchema(schema = @Schema(implementation = PostSummaryDto.class))))
+    @Cacheable(
+            value = CachingConfig.POST_CACHE_NAME,
+            key = "new org.springframework.cache.interceptor.SimpleKey('default', #categoryId, #categoryIds, #tagId, #tagIds, #page, #pageSize)"
+    )
     public List<PostSummaryDto> listPosts(@RequestParam(value = "categoryId", required = false) Long categoryId,
                                    @RequestParam(value = "categoryIds", required = false) List<Long> categoryIds,
                                    @RequestParam(value = "tagId", required = false) Long tagId,
@@ -188,6 +194,10 @@ public class PostController {
     @Operation(summary = "Latest reply posts", description = "List posts by latest replies")
     @ApiResponse(responseCode = "200", description = "Posts sorted by latest reply",
             content = @Content(array = @ArraySchema(schema = @Schema(implementation = PostSummaryDto.class))))
+    @Cacheable(
+            value = CachingConfig.POST_CACHE_NAME,
+            key = "new org.springframework.cache.interceptor.SimpleKey('latest_reply', #categoryId, #categoryIds, #tagIds, #page, #pageSize)"
+    )
     public List<PostSummaryDto> latestReplyPosts(@RequestParam(value = "categoryId", required = false) Long categoryId,
                                           @RequestParam(value = "categoryIds", required = false) List<Long> categoryIds,
                                           @RequestParam(value = "tagId", required = false) Long tagId,
