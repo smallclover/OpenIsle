@@ -143,15 +143,7 @@
                 <div class="summary-content" v-if="hotPosts.length > 0">
                   <BaseTimeline :items="hotPosts">
                     <template #item="{ item }">
-                      <NuxtLink :to="`/posts/${item.post.id}`" class="timeline-link">
-                        {{ item.post.title }}
-                      </NuxtLink>
-                      <div class="timeline-snippet">
-                        {{ stripMarkdown(item.post.snippet) }}
-                      </div>
-                      <div class="timeline-date">
-                        {{ formatDate(item.post.createdAt) }}
-                      </div>
+                      <TimelinePostItem :item="item" />
                     </template>
                   </BaseTimeline>
                 </div>
@@ -164,15 +156,7 @@
                 <div class="summary-content" v-if="hotTags.length > 0">
                   <BaseTimeline :items="hotTags">
                     <template #item="{ item }">
-                      <span class="timeline-link" @click="gotoTag(item.tag)">
-                        {{ item.tag.name }}<span v-if="item.tag.count"> x{{ item.tag.count }}</span>
-                      </span>
-                      <div class="timeline-snippet" v-if="item.tag.description">
-                        {{ item.tag.description }}
-                      </div>
-                      <div class="timeline-date">
-                        {{ formatDate(item.tag.createdAt) }}
-                      </div>
+                      <TimelineTagItem :item="item" mode="summary" @tag-click="gotoTag" />
                     </template>
                   </BaseTimeline>
                 </div>
@@ -222,16 +206,7 @@
                     <TimelineCommentGroup :item="item" />
                   </template>
                   <template v-else-if="item.type === 'tag'">
-                    <div class="tags-container">
-                      <div class="tags-container-item">
-                        <div class="timeline-tag-title">创建了标签</div>
-                        <ArticleTags :tags="[item.tag]" />
-                      </div>
-                      <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
-                    </div>
-                    <div class="timeline-snippet" v-if="item.tag.description">
-                      {{ item.tag.description }}
-                    </div>
+                    <TimelineTagItem :item="item" />
                   </template>
                 </template>
               </BaseTimeline>
@@ -297,6 +272,7 @@ import BaseTabs from '~/components/BaseTabs.vue'
 import LevelProgress from '~/components/LevelProgress.vue'
 import TimelineCommentGroup from '~/components/TimelineCommentGroup.vue'
 import TimelinePostItem from '~/components/TimelinePostItem.vue'
+import TimelineTagItem from '~/components/TimelineTagItem.vue'
 import UserList from '~/components/UserList.vue'
 import { toast } from '~/main'
 import { authState, getToken } from '~/utils/auth'
@@ -386,7 +362,12 @@ const fetchSummary = async () => {
   const postsRes = await fetch(`${API_BASE_URL}/api/users/${username}/hot-posts`)
   if (postsRes.ok) {
     const data = await postsRes.json()
-    hotPosts.value = data.map((p) => ({ icon: 'file-text', post: p }))
+    hotPosts.value = data.map((p) => ({
+      icon: 'file-text',
+      type: 'post',
+      post: p,
+      createdAt: p.createdAt,
+    }))
   }
 
   const repliesRes = await fetch(`${API_BASE_URL}/api/users/${username}/hot-replies`)
@@ -398,7 +379,12 @@ const fetchSummary = async () => {
   const tagsRes = await fetch(`${API_BASE_URL}/api/users/${username}/hot-tags`)
   if (tagsRes.ok) {
     const data = await tagsRes.json()
-    hotTags.value = data.map((t) => ({ icon: 'tag-one', tag: t }))
+    hotTags.value = data.map((t) => ({
+      icon: 'tag-one',
+      type: 'tag',
+      tag: t,
+      createdAt: t.createdAt,
+    }))
   }
 }
 
