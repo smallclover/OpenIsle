@@ -223,17 +223,15 @@
                   </template>
                   <template v-else-if="item.type === 'tag'">
                     <div class="tags-container">
-                      <div class="timeline-tag-title">创建了标签</div>
-                      <!-- <span class="timeline-link" @click="gotoTag(item.tag)">
-                      {{ item.tag.name }}<span v-if="item.tag.count"> x{{ item.tag.count }}</span>
-                    </span>
+                      <div class="tags-container-item">
+                        <div class="timeline-tag-title">创建了标签</div>
+                        <ArticleTags :tags="[item.tag]" />
+                      </div>
+                      <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                    </div>
                     <div class="timeline-snippet" v-if="item.tag.description">
                       {{ item.tag.description }}
                     </div>
-                    <div class="timeline-date">{{ formatDate(item.createdAt) }}</div> -->
-                      <ArticleTags :tags="[item.tag]" />
-                    </div>
-                    <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
                   </template>
                 </template>
               </BaseTimeline>
@@ -981,6 +979,15 @@ watch(selectedTab, async (val) => {
   flex-direction: row;
   gap: 10px;
   padding-top: 5px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tags-container-item {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  align-items: center;
 }
 
 .timeline-tag-title {
