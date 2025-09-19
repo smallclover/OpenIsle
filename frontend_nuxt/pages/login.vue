@@ -16,7 +16,7 @@
 
         <div v-else class="login-page-button-primary disabled">
           <div class="login-page-button-text">
-            <loading-four />
+            <loading-four class="loading-icon" />
             登录中...
           </div>
         </div>
