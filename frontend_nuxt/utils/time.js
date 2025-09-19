@@ -40,4 +40,33 @@ export default class TimeManager {
 
     return `${date.getFullYear()}.${month}.${day} ${timePart}`
   }
+
+  // 仅显示日期（不含时间）
+  static formatWithDay(input) {
+    const date = new Date(input)
+    if (Number.isNaN(date.getTime())) return ''
+
+    const now = new Date()
+
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    const diffDays = Math.floor((startOfToday - startOfDate) / 86400000)
+
+    if (diffDays === 0) return '今天'
+    if (diffDays === 1) return '昨天'
+    if (diffDays === 2) return '前天'
+
+    const month = date.getMonth() + 1
+    const day = date.getDate()
+
+    if (date.getFullYear() === now.getFullYear()) {
+      return `${month}.${day}`
+    }
+
+    if (date.getFullYear() === now.getFullYear() - 1) {
+      return `去年 ${month}.${day}`
+    }
+
+    return `${date.getFullYear()}.${month}.${day}`
+  }
 }

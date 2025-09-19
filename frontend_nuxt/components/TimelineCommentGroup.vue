@@ -9,23 +9,6 @@
         <div class="comment-content-item-main">
           <comment-one class="comment-content-item-icon" />
           <div class="comment-content-item-text">
-            <span class="comment-content-item-prefix">
-              在
-              <NuxtLink :to="`/posts/${entry.comment.post.id}`" class="timeline-link">
-                {{ entry.comment.post.title }}
-              </NuxtLink>
-              <template v-if="entry.comment.parentComment">
-                下对
-                <NuxtLink
-                  :to="`/posts/${entry.comment.post.id}#comment-${entry.comment.parentComment.id}`"
-                  class="timeline-link"
-                >
-                  {{ parentSnippet(entry) }}
-                </NuxtLink>
-                回复了
-              </template>
-              <template v-else> 下评论了 </template>
-            </span>
             <NuxtLink
               :to="`/posts/${entry.comment.post.id}#comment-${entry.comment.id}`"
               class="timeline-comment-link"
@@ -65,7 +48,7 @@ const entries = computed(() => {
   return []
 })
 
-const formattedDate = computed(() => TimeManager.format(props.item.createdAt))
+const formattedDate = computed(() => TimeManager.formatWithDay(props.item.createdAt))
 
 const hasReplies = computed(() => entries.value.some((entry) => !!entry.comment.parentComment))
 const hasComments = computed(() => entries.value.some((entry) => !entry.comment.parentComment))
@@ -93,9 +76,8 @@ const parentSnippet = (entry) =>
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--timeline-card-background, transparent);
+  padding-top: 5px;
+  padding-bottom: 20px;
 }
 
 .timeline-header {
@@ -112,20 +94,20 @@ const parentSnippet = (entry) =>
 .timeline-date {
   font-size: 12px;
   color: var(--timeline-date-color, #888);
+  white-space: nowrap;
 }
 
 .comment-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 3px;
 }
 
 .comment-content-item {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: space-between;
   gap: 6px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--comment-item-border, rgba(0, 0, 0, 0.05));
 }
 
 .comment-content-item:last-child {
@@ -160,11 +142,11 @@ const parentSnippet = (entry) =>
 .timeline-comment-link {
   font-size: 14px;
   color: var(--link-color);
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 .timeline-comment-link:hover {
-  text-decoration: underline;
+  color: var(--primary-color);
 }
 
 .timeline-link {

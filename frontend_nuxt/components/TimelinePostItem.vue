@@ -13,11 +13,7 @@
       </div>
       <div class="article-meta" v-if="hasMeta">
         <ArticleCategory v-if="item.post?.category" :category="item.post.category" />
-        <div class="article-tags" v-if="(item.post?.tags?.length ?? 0) > 0">
-          <span class="article-tag" v-for="tag in item.post?.tags" :key="tag.id || tag.name">
-            #{{ tag.name }}
-          </span>
-        </div>
+        <ArticleTags :tags="item.post?.tags" />
         <div class="article-comment-count" v-if="item.post?.commentCount !== undefined">
           <comment-one class="article-comment-count-icon" />
           <span>{{ item.post?.commentCount }}</span>
@@ -29,7 +25,6 @@
 
 <script setup>
 import { computed } from 'vue'
-import ArticleCategory from '~/components/ArticleCategory.vue'
 import { stripMarkdown } from '~/utils/markdown'
 import TimeManager from '~/utils/time'
 
@@ -58,8 +53,8 @@ const hasMeta = computed(() => {
 .timeline-container {
   display: flex;
   flex-direction: column;
+  padding-top: 5px;
   gap: 12px;
-  padding: 10px 12px;
   border-radius: 10px;
   background: var(--timeline-card-background, transparent);
 }
@@ -83,6 +78,9 @@ const hasMeta = computed(() => {
 .article-container {
   display: flex;
   flex-direction: column;
+  border: 1px solid var(--normal-border-color);
+  border-radius: 10px;
+  padding: 10px;
   gap: 6px;
 }
 

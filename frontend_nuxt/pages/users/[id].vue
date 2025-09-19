@@ -212,13 +212,6 @@
             <div class="timeline-list">
               <BaseTimeline :items="filteredTimelineItems">
                 <template #item="{ item }">
-                  <!-- <template v-if="item.type === 'post'">
-                    发布了文章
-                    <NuxtLink :to="`/posts/${item.post.id}`" class="timeline-link">
-                      {{ item.post.title }}
-                    </NuxtLink>
-                    <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
-                  </template> -->
                   <template v-if="item.type === 'post'">
                     <TimelinePostItem :item="item" />
                   </template>
@@ -229,12 +222,16 @@
                     <TimelineCommentGroup :item="item" />
                   </template>
                   <template v-else-if="item.type === 'tag'">
-                    创建了标签
-                    <span class="timeline-link" @click="gotoTag(item.tag)">
+                    <div class="tags-container">
+                      <div class="timeline-tag-title">创建了标签</div>
+                      <!-- <span class="timeline-link" @click="gotoTag(item.tag)">
                       {{ item.tag.name }}<span v-if="item.tag.count"> x{{ item.tag.count }}</span>
                     </span>
                     <div class="timeline-snippet" v-if="item.tag.description">
                       {{ item.tag.description }}
+                    </div>
+                    <div class="timeline-date">{{ formatDate(item.createdAt) }}</div> -->
+                      <ArticleTags :tags="[item.tag]" />
                     </div>
                     <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
                   </template>
@@ -979,9 +976,16 @@ watch(selectedTab, async (val) => {
   justify-content: space-between;
 }
 
-.timeline-title {
-  font-size: 18px;
-  font-weight: bold;
+.tags-container {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  padding-top: 5px;
+}
+
+.timeline-tag-title {
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .comment-content {
