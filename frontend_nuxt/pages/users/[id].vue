@@ -112,19 +112,18 @@
                         {{ item.comment.post.title }}
                       </NuxtLink>
                       <template v-if="item.comment.parentComment">
-                        下对
                         <NuxtLink
                           :to="`/posts/${item.comment.post.id}#comment-${item.comment.parentComment.id}`"
-                          class="timeline-link"
+                          class="timeline-comment-link"
                         >
                           {{ stripMarkdownLength(item.comment.parentComment.content, 200) }}
                         </NuxtLink>
-                        回复了
+                        <next class="reply-icon" /> 回复了
                       </template>
                       <template v-else> 下评论了 </template>
                       <NuxtLink
                         :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
-                        class="timeline-link"
+                        class="timeline-comment-link"
                       >
                         {{ stripMarkdownLength(item.comment.content, 200) }}
                       </NuxtLink>
@@ -143,15 +142,7 @@
                 <div class="summary-content" v-if="hotPosts.length > 0">
                   <BaseTimeline :items="hotPosts">
                     <template #item="{ item }">
-                      <NuxtLink :to="`/posts/${item.post.id}`" class="timeline-link">
-                        {{ item.post.title }}
-                      </NuxtLink>
-                      <div class="timeline-snippet">
-                        {{ stripMarkdown(item.post.snippet) }}
-                      </div>
-                      <div class="timeline-date">
-                        {{ formatDate(item.post.createdAt) }}
-                      </div>
+                      <TimelinePostItem :item="item" />
                     </template>
                   </BaseTimeline>
                 </div>
@@ -164,15 +155,7 @@
                 <div class="summary-content" v-if="hotTags.length > 0">
                   <BaseTimeline :items="hotTags">
                     <template #item="{ item }">
-                      <span class="timeline-link" @click="gotoTag(item.tag)">
-                        {{ item.tag.name }}<span v-if="item.tag.count"> x{{ item.tag.count }}</span>
-                      </span>
-                      <div class="timeline-snippet" v-if="item.tag.description">
-                        {{ item.tag.description }}
-                      </div>
-                      <div class="timeline-date">
-                        {{ formatDate(item.tag.createdAt) }}
-                      </div>
+                      <TimelineTagItem :item="item" />
                     </template>
                   </BaseTimeline>
                 </div>
@@ -213,56 +196,16 @@
               <BaseTimeline :items="filteredTimelineItems">
                 <template #item="{ item }">
                   <template v-if="item.type === 'post'">
-                    发布了文章
-                    <NuxtLink :to="`/posts/${item.post.id}`" class="timeline-link">
-                      {{ item.post.title }}
-                    </NuxtLink>
-                    <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                    <TimelinePostItem :item="item" />
                   </template>
                   <template v-else-if="item.type === 'comment'">
-                    在
-                    <NuxtLink :to="`/posts/${item.comment.post.id}`" class="timeline-link">
-                      {{ item.comment.post.title }}
-                    </NuxtLink>
-                    下评论了
-                    <NuxtLink
-                      :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
-                      class="timeline-link"
-                    >
-                      {{ stripMarkdownLength(item.comment.content, 200) }}
-                    </NuxtLink>
-                    <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                    <TimelineCommentGroup :item="item" />
                   </template>
                   <template v-else-if="item.type === 'reply'">
-                    在
-                    <NuxtLink :to="`/posts/${item.comment.post.id}`" class="timeline-link">
-                      {{ item.comment.post.title }}
-                    </NuxtLink>
-                    下对
-                    <NuxtLink
-                      :to="`/posts/${item.comment.post.id}#comment-${item.comment.parentComment.id}`"
-                      class="timeline-link"
-                    >
-                      {{ stripMarkdownLength(item.comment.parentComment.content, 200) }}
-                    </NuxtLink>
-                    回复了
-                    <NuxtLink
-                      :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
-                      class="timeline-link"
-                    >
-                      {{ stripMarkdownLength(item.comment.content, 200) }}
-                    </NuxtLink>
-                    <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                    <TimelineCommentGroup :item="item" />
                   </template>
                   <template v-else-if="item.type === 'tag'">
-                    创建了标签
-                    <span class="timeline-link" @click="gotoTag(item.tag)">
-                      {{ item.tag.name }}<span v-if="item.tag.count"> x{{ item.tag.count }}</span>
-                    </span>
-                    <div class="timeline-snippet" v-if="item.tag.description">
-                      {{ item.tag.description }}
-                    </div>
-                    <div class="timeline-date">{{ formatDate(item.createdAt) }}</div>
+                    <TimelineTagItem :item="item" />
                   </template>
                 </template>
               </BaseTimeline>
@@ -326,6 +269,9 @@ import BasePlaceholder from '~/components/BasePlaceholder.vue'
 import BaseTimeline from '~/components/BaseTimeline.vue'
 import BaseTabs from '~/components/BaseTabs.vue'
 import LevelProgress from '~/components/LevelProgress.vue'
+import TimelineCommentGroup from '~/components/TimelineCommentGroup.vue'
+import TimelinePostItem from '~/components/TimelinePostItem.vue'
+import TimelineTagItem from '~/components/TimelineTagItem.vue'
 import UserList from '~/components/UserList.vue'
 import { toast } from '~/main'
 import { authState, getToken } from '~/utils/auth'
@@ -415,7 +361,12 @@ const fetchSummary = async () => {
   const postsRes = await fetch(`${API_BASE_URL}/api/users/${username}/hot-posts`)
   if (postsRes.ok) {
     const data = await postsRes.json()
-    hotPosts.value = data.map((p) => ({ icon: 'file-text', post: p }))
+    hotPosts.value = data.map((p) => ({
+      icon: 'file-text',
+      type: 'post',
+      post: p,
+      createdAt: p.createdAt,
+    }))
   }
 
   const repliesRes = await fetch(`${API_BASE_URL}/api/users/${username}/hot-replies`)
@@ -427,8 +378,64 @@ const fetchSummary = async () => {
   const tagsRes = await fetch(`${API_BASE_URL}/api/users/${username}/hot-tags`)
   if (tagsRes.ok) {
     const data = await tagsRes.json()
-    hotTags.value = data.map((t) => ({ icon: 'tag-one', tag: t }))
+    hotTags.value = data.map((t) => ({
+      icon: 'tag-one',
+      type: 'tag',
+      tag: t,
+      createdAt: t.createdAt,
+    }))
   }
+}
+
+const isDiscussionItem = (item) => item && (item.type === 'comment' || item.type === 'reply')
+
+const toDateKey = (value) => {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
+}
+
+const combineDiscussionItems = (items) => {
+  const result = []
+  items.forEach((item) => {
+    if (!isDiscussionItem(item)) {
+      result.push(item)
+      return
+    }
+
+    const dateKey = toDateKey(item.createdAt)
+    const last = result[result.length - 1]
+    if (last && isDiscussionItem(last) && last.dateKey === dateKey) {
+      last.entries.push({
+        type: item.type,
+        comment: item.comment,
+        createdAt: item.createdAt,
+      })
+      if (item.type === 'comment' && last.type === 'reply') {
+        last.type = 'comment'
+      }
+      if (new Date(item.createdAt) > new Date(last.createdAt)) {
+        last.createdAt = item.createdAt
+      }
+    } else {
+      result.push({
+        type: item.type,
+        icon: item.icon,
+        createdAt: item.createdAt,
+        dateKey,
+        entries: [
+          {
+            type: item.type,
+            comment: item.comment,
+            createdAt: item.createdAt,
+          },
+        ],
+      })
+    }
+  })
+  return result
 }
 
 const fetchTimeline = async () => {
@@ -461,7 +468,7 @@ const fetchTimeline = async () => {
     })),
   ]
   mapped.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-  timelineItems.value = mapped
+  timelineItems.value = combineDiscussionItems(mapped)
 }
 
 const fetchFollowUsers = async () => {
@@ -660,6 +667,11 @@ watch(selectedTab, async (val) => {
 .profile-page-header-user-info-description {
   font-size: 20px;
   color: #666;
+}
+
+.reply-icon {
+  color: var(--primary-color);
+  margin-left: 5px;
 }
 
 .profile-page-header-user-info-buttons {
@@ -903,6 +915,7 @@ watch(selectedTab, async (val) => {
   font-size: 12px;
   color: gray;
   margin-top: 5px;
+  white-space: nowrap;
 }
 
 .timeline-snippet {
@@ -913,8 +926,8 @@ watch(selectedTab, async (val) => {
 
 .timeline-link {
   font-weight: bold;
-  color: var(--primary-color);
   text-decoration: none;
+  color: var(--text-color);
   word-break: break-word;
 }
 
@@ -937,6 +950,98 @@ watch(selectedTab, async (val) => {
   justify-content: center;
   align-items: center;
   padding: 40px 0;
+}
+
+.ttimeline-container {
+  margin-top: 2px;
+  padding-bottom: 30px;
+}
+
+.timeline-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tags-container {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  padding-top: 5px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tags-container-item {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  align-items: center;
+}
+
+.timeline-tag-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.comment-content {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  gap: 5px;
+}
+
+.comment-content-item-main {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  align-items: flex-start;
+}
+
+.comment-content-item-icon {
+  width: 20px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comment-content-item {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.timeline-comment-link {
+  color: var(--text-color);
+  word-break: break-word;
+  text-decoration: underline;
+  margin-left: 5px;
+}
+
+.timeline-comment-link:hover {
+  color: var(--primary-color);
+}
+
+.timeline-article-link {
+  color: var(--text-color);
+  font-weight: bold;
+  font-size: 20px;
+  word-break: break-word;
+  text-decoration: underline;
+}
+
+.timeline-article-link:hover {
+  color: var(--primary-color);
+}
+
+.article-container {
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid var(--normal-border-color);
+  margin-top: 10px;
 }
 
 .follow-container {

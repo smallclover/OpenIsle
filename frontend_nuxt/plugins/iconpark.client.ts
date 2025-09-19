@@ -22,6 +22,7 @@ import {
   Moon,
   ComputerOne,
   Comment,
+  CommentOne,
   Link,
   SlyFaceWhitSmile,
   Like,
@@ -103,6 +104,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.component('Moon', Moon)
   nuxtApp.vueApp.component('ComputerOne', ComputerOne)
   nuxtApp.vueApp.component('CommentIcon', Comment)
+  nuxtApp.vueApp.component('CommentOne', CommentOne)
   nuxtApp.vueApp.component('LinkIcon', Link)
   nuxtApp.vueApp.component('SlyFaceWhitSmile', SlyFaceWhitSmile)
   nuxtApp.vueApp.component('Like', Like)

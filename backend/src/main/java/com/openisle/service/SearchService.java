@@ -28,7 +28,7 @@ public class SearchService {
   private final CategoryRepository categoryRepository;
   private final TagRepository tagRepository;
 
-  @org.springframework.beans.factory.annotation.Value("${app.snippet-length:50}")
+  @org.springframework.beans.factory.annotation.Value("${app.snippet-length}")
   private int snippetLength;
 
   public List<User> searchUsers(String keyword) {
