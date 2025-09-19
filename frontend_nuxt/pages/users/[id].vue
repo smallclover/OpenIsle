@@ -112,19 +112,18 @@
                         {{ item.comment.post.title }}
                       </NuxtLink>
                       <template v-if="item.comment.parentComment">
-                        下对
                         <NuxtLink
                           :to="`/posts/${item.comment.post.id}#comment-${item.comment.parentComment.id}`"
-                          class="timeline-link"
+                          class="timeline-comment-link"
                         >
                           {{ stripMarkdownLength(item.comment.parentComment.content, 200) }}
                         </NuxtLink>
-                        回复了
+                        <next class="reply-icon" /> 回复了
                       </template>
                       <template v-else> 下评论了 </template>
                       <NuxtLink
                         :to="`/posts/${item.comment.post.id}#comment-${item.comment.id}`"
-                        class="timeline-link"
+                        class="timeline-comment-link"
                       >
                         {{ stripMarkdownLength(item.comment.content, 200) }}
                       </NuxtLink>
@@ -156,7 +155,7 @@
                 <div class="summary-content" v-if="hotTags.length > 0">
                   <BaseTimeline :items="hotTags">
                     <template #item="{ item }">
-                      <TimelineTagItem :item="item" mode="summary" @tag-click="gotoTag" />
+                      <TimelineTagItem :item="item" />
                     </template>
                   </BaseTimeline>
                 </div>
@@ -670,6 +669,11 @@ watch(selectedTab, async (val) => {
   color: #666;
 }
 
+.reply-icon {
+  color: var(--primary-color);
+  margin-left: 5px;
+}
+
 .profile-page-header-user-info-buttons {
   display: flex;
   flex-direction: row;
@@ -922,8 +926,8 @@ watch(selectedTab, async (val) => {
 
 .timeline-link {
   font-weight: bold;
-  color: var(--primary-color);
   text-decoration: none;
+  color: var(--text-color);
   word-break: break-word;
 }
 
@@ -1014,6 +1018,7 @@ watch(selectedTab, async (val) => {
   color: var(--text-color);
   word-break: break-word;
   text-decoration: underline;
+  margin-left: 5px;
 }
 
 .timeline-comment-link:hover {

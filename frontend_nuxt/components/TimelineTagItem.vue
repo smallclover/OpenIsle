@@ -1,26 +1,16 @@
 <template>
   <div class="timeline-tag-item">
-    <template v-if="mode === 'timeline'">
-      <div class="tags-container">
-        <div class="tags-container-item">
-          <div class="timeline-tag-title">{{ title }}</div>
-          <ArticleTags v-if="tag" :tags="[tag]" />
-        </div>
-        <div v-if="timelineDate" class="timeline-date">{{ timelineDate }}</div>
+    <div class="tags-container">
+      <div class="tags-container-item">
+        <div class="timeline-tag-title">创建了标签</div>
+        <ArticleTags v-if="tag" :tags="[tag]" />
+        <span class="timeline-tag-count" v-if="tag?.count"> x{{ tag.count }}</span>
       </div>
-      <div v-if="hasDescription" class="timeline-snippet">
-        {{ tag?.description }}
-      </div>
-    </template>
-    <template v-else>
-      <span class="timeline-link" :class="{ clickable: isClickable }" @click="handleTagClick">
-        {{ tag?.name }}<span v-if="tag?.count"> x{{ tag.count }}</span>
-      </span>
-      <div v-if="hasDescription" class="timeline-snippet">
-        {{ tag?.description }}
-      </div>
-      <div v-if="summaryDate" class="timeline-date">{{ summaryDate }}</div>
-    </template>
+      <div v-if="timelineDate" class="timeline-date">{{ timelineDate }}</div>
+    </div>
+    <div v-if="hasDescription" class="timeline-snippet">
+      {{ tag?.description }}
+    </div>
   </div>
 </template>
 
@@ -30,15 +20,6 @@ import TimeManager from '~/utils/time'
 
 const props = defineProps({
   item: { type: Object, required: true },
-  mode: {
-    type: String,
-    default: 'timeline',
-    validator: (value) => ['timeline', 'summary'].includes(value),
-  },
-  title: {
-    type: String,
-    default: '创建了标签',
-  },
 })
 
 const emit = defineEmits(['tag-click'])
@@ -93,6 +74,10 @@ const handleTagClick = () => {
 .timeline-tag-title {
   font-size: 16px;
   font-weight: 600;
+}
+
+.timeline-tag-count {
+  font-size: 12px;
 }
 
 .timeline-date {

@@ -95,7 +95,7 @@ export default {
 }
 
 .timeline-item:last-child::before {
-  display: none;
+  bottom: 0px;
 }
 
 .timeline-content {
