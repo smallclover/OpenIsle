@@ -10,7 +10,7 @@
           发布评论
           <span class="shortcut-icon" v-if="!isMobile"> {{ isMac ? '⌘' : 'Ctrl' }} ⏎ </span>
         </template>
-        <template v-else> <loading-four /> 发布中... </template>
+        <template v-else> <loading-four class="loading-icon" /> 发布中... </template>
       </div>
     </div>
   </div>

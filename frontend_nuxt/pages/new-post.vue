@@ -30,7 +30,7 @@
           >
             发布
           </div>
-          <div v-else class="post-submit-loading"><loading-four /> 发布中...</div>
+          <div v-else class="post-submit-loading loading-icon"><loading-four /> 发布中...</div>
         </div>
       </div>
       <LotteryForm v-if="postType === 'LOTTERY'" :data="lottery" />

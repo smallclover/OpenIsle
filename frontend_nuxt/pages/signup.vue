@@ -35,7 +35,7 @@
         </div>
         <div v-else class="signup-page-button-primary disabled">
           <div class="signup-page-button-text">
-            <loading-four />
+            <loading-four class="loading-icon" />
             发送中...
           </div>
         </div>
@@ -56,7 +56,7 @@
         </div>
         <div v-else class="signup-page-button-primary disabled">
           <div class="signup-page-button-text">
-            <loading-four />
+            <loading-four class="loading-icon" />
             验证中...
           </div>
         </div>
