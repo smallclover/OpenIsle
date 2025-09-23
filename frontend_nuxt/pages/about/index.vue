@@ -18,7 +18,9 @@
             </div>
           </div>
           <div class="about-api-title">API文档和调试入口</div>
-          <div class="about-api-link">API Playground <share /></div>
+          <a href="http://docs.open-isle.com" target="_blank" rel="noopener" class="about-api-link">
+            API 文档与 Playground <share />
+          </a>
         </div>
       </template>
       <template v-else>
@@ -233,6 +235,7 @@ export default {
 .about-api-link {
   color: var(--primary-color);
   cursor: pointer;
+  text-decoration: none;
 }
 
 .about-api-link:hover {
