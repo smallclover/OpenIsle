@@ -53,24 +53,24 @@
       </div>
     </div>
     <div class="prize-member-container">
-      <BaseImage
+      <BaseUserAvatar
         v-for="p in lotteryParticipants"
         :key="p.id"
         class="prize-member-avatar"
+        :user-id="p.id"
         :src="p.avatar"
         alt="avatar"
-        @click="gotoUser(p.id)"
       />
       <div v-if="lotteryEnded && lotteryWinners.length" class="prize-member-winner">
         <medal-one class="medal-icon"></medal-one>
         <span class="prize-member-winner-name">获奖者: </span>
-        <BaseImage
+        <BaseUserAvatar
           v-for="w in lotteryWinners"
           :key="w.id"
           class="prize-member-avatar"
+          :user-id="w.id"
           :src="w.avatar"
           alt="avatar"
-          @click="gotoUser(w.id)"
         />
         <div v-if="lotteryWinners.length === 1" class="prize-member-winner-name">
           {{ lotteryWinners[0].username }}
@@ -87,6 +87,7 @@ import { toast } from '~/main'
 import { useRuntimeConfig } from '#imports'
 import { useIsMobile } from '~/utils/screen'
 import { useCountdown } from '~/composables/useCountdown'
+import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 
 const props = defineProps({
   lottery: { type: Object, required: true },
@@ -105,8 +106,6 @@ const hasJoined = computed(() => {
   if (!loggedIn.value) return false
   return lotteryParticipants.value.some((p) => p.id === Number(authState.userId))
 })
-
-const gotoUser = (id) => navigateTo(`/users/${id}`, { replace: true })
 
 const config = useRuntimeConfig()
 const API_BASE_URL = config.public.apiBaseUrl
@@ -247,8 +246,13 @@ const joinLottery = async () => {
   height: 30px;
   margin-left: 3px;
   border-radius: 50%;
-  object-fit: cover;
   cursor: pointer;
+}
+
+.prize-member-avatar :deep(.base-user-avatar-img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .prize-member-winner {

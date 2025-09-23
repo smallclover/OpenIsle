@@ -44,7 +44,12 @@
             <div v-if="item.replyTo" class="reply-preview info-content-text">
               <div class="reply-header">
                 <next class="reply-icon" />
-                <BaseImage class="reply-avatar" :src="item.replyTo.sender.avatar" alt="avatar" />
+                <BaseUserAvatar
+                  class="reply-avatar"
+                  :src="item.replyTo.sender.avatar"
+                  :user-id="item.replyTo.sender.id"
+                  :alt="item.replyTo.sender.username"
+                />
                 <div class="reply-author">{{ item.replyTo.sender.username }}:</div>
               </div>
               <div class="reply-content" v-html="renderMarkdown(item.replyTo.content)"></div>
@@ -121,6 +126,7 @@ import TimeManager from '~/utils/time'
 import BaseTimeline from '~/components/BaseTimeline.vue'
 import BasePlaceholder from '~/components/BasePlaceholder.vue'
 import VueEasyLightbox from 'vue-easy-lightbox'
+import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 
 const config = useRuntimeConfig()
 const route = useRoute()
@@ -243,6 +249,7 @@ async function fetchMessages(page = 0) {
     const newMessages = pageData.content.reverse().map((item) => ({
       ...item,
       src: item.sender.avatar,
+      userId: item.sender.id,
       iconClick: () => {
         openUser(item.sender.id)
       },
@@ -328,6 +335,7 @@ async function sendMessage(content, clearInput) {
     messages.value.push({
       ...newMessage,
       src: newMessage.sender.avatar,
+      userId: newMessage.sender.id,
       iconClick: () => {
         openUser(newMessage.sender.id)
       },
@@ -403,6 +411,7 @@ const subscribeToConversation = () => {
       messages.value.push({
         ...parsedMessage,
         src: parsedMessage.sender.avatar,
+        userId: parsedMessage.sender.id,
         iconClick: () => openUser(parsedMessage.sender.id),
       })
 
@@ -684,6 +693,12 @@ function goBack() {
   height: 20px;
   border-radius: 50%;
   margin-right: 5px;
+}
+
+.reply-avatar :deep(.base-user-avatar-img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .reply-preview {

@@ -1,12 +1,13 @@
 <template>
   <div :id="`change-log-${log.id}`" class="change-log-container">
     <div class="change-log-text">
-      <BaseImage
+      <BaseUserAvatar
         v-if="log.userAvatar"
         class="change-log-avatar"
         :src="log.userAvatar"
+        :to="log.username ? `/users/${log.username}` : ''"
         alt="avatar"
-        @click="() => navigateTo(`/users/${log.username}`)"
+        :disable-link="!log.username"
       />
       <span v-if="log.username" class="change-log-user">{{ log.username }}</span>
       <span v-if="log.type === 'CONTENT'" class="change-log-content">变更了文章内容</span>
@@ -55,10 +56,8 @@
 import { computed } from 'vue'
 import { html } from 'diff2html'
 import { createTwoFilesPatch } from 'diff'
-import { useIsMobile } from '~/utils/screen'
 import 'diff2html/bundles/css/diff2html.min.css'
-import BaseImage from '~/components/BaseImage.vue'
-import { navigateTo } from 'nuxt/app'
+import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 import { themeState } from '~/utils/theme'
 import ArticleCategory from '~/components/ArticleCategory.vue'
 import ArticleTags from '~/components/ArticleTags.vue'
@@ -133,6 +132,12 @@ const diffHtml = computed(() => {
   border-radius: 50%;
   margin-right: 4px;
   cursor: pointer;
+}
+
+.change-log-avatar :deep(.base-user-avatar-img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .change-log-time {

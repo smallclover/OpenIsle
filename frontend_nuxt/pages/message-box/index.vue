@@ -33,11 +33,12 @@
           @click="goToConversation(convo.id)"
         >
           <div class="conversation-avatar">
-            <BaseImage
-              :src="getOtherParticipant(convo)?.avatar || '/default-avatar.svg'"
+            <BaseUserAvatar
+              :src="getOtherParticipant(convo)?.avatar"
+              :user-id="getOtherParticipant(convo)?.id"
               :alt="getOtherParticipant(convo)?.username || '用户'"
               class="avatar-img"
-              @error="handleAvatarError"
+              :disable-link="true"
             />
           </div>
 
@@ -130,6 +131,7 @@ import { stripMarkdownLength } from '~/utils/markdown'
 import SearchPersonDropdown from '~/components/SearchPersonDropdown.vue'
 import BasePlaceholder from '~/components/BasePlaceholder.vue'
 import BaseTabs from '~/components/BaseTabs.vue'
+import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 
 const config = useRuntimeConfig()
 const conversations = ref([])
@@ -431,6 +433,11 @@ function minimize() {
   width: 40px;
   height: 40px;
   border-radius: 50%;
+}
+
+.avatar-img :deep(.base-user-avatar-img) {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 

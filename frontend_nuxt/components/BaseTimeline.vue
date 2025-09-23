@@ -3,10 +3,18 @@
     <div class="timeline-item" v-for="(item, idx) in items" :key="idx">
       <div
         class="timeline-icon"
-        :class="{ clickable: !!item.iconClick }"
-        @click="item.iconClick && item.iconClick()"
+        :class="{ clickable: !!item.iconClick || hasLink(item) }"
+        @click="onIconClick(item, $event)"
       >
-        <BaseImage v-if="item.src" :src="item.src" class="timeline-img" alt="timeline item" />
+        <BaseUserAvatar
+          v-if="item.src"
+          :src="item.src"
+          :user-id="item.userId"
+          :to="item.avatarLink"
+          class="timeline-img"
+          alt="timeline item"
+          :disable-link="!hasLink(item) || !!item.iconClick"
+        />
         <component
           v-else-if="item.icon && (typeof item.icon !== 'string' || !item.icon.includes(' '))"
           :is="item.icon"
@@ -22,10 +30,27 @@
 </template>
 
 <script>
+import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
+
 export default {
   name: 'BaseTimeline',
+  components: { BaseUserAvatar },
   props: {
     items: { type: Array, default: () => [] },
+  },
+  methods: {
+    hasLink(item) {
+      if (!item) return false
+      if (item.avatarLink) return true
+      const id = item?.userId
+      return id !== undefined && id !== null && id !== ''
+    },
+    onIconClick(item, event) {
+      if (item && item.iconClick) {
+        event.preventDefault()
+        item.iconClick()
+      }
+    },
   },
 }
 </script>
@@ -66,8 +91,12 @@ export default {
 .timeline-img {
   width: 100%;
   height: 100%;
+}
+
+.timeline-img :deep(.base-user-avatar-img) {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 50%;
 }
 
 .timeline-emoji {
