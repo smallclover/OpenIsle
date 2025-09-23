@@ -48,7 +48,13 @@
       <div class="info-content-container author-info-container">
         <div class="user-avatar-container" @click="gotoProfile">
           <div class="user-avatar-item">
-            <BaseImage class="user-avatar-item-img" :src="author.avatar" alt="avatar" />
+            <BaseUserAvatar
+              class="user-avatar-item-img"
+              :src="author.avatar"
+              :user-id="author.id"
+              alt="avatar"
+              :disable-link="true"
+            />
           </div>
           <div v-if="isMobile" class="info-content-header">
             <div class="user-name">
@@ -193,6 +199,7 @@ import ReactionsGroup from '~/components/ReactionsGroup.vue'
 import DropdownMenu from '~/components/DropdownMenu.vue'
 import PostLottery from '~/components/PostLottery.vue'
 import PostPoll from '~/components/PostPoll.vue'
+import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 import { renderMarkdown, handleMarkdownClick, stripMarkdownLength } from '~/utils/markdown'
 import { getMedalTitle } from '~/utils/medal'
 import { toast } from '~/main'
@@ -340,7 +347,7 @@ const mapComment = (
   iconClick: () => navigateTo(`/users/${c.author.id}`),
   parentUserName: parentUserName,
   parentUserAvatar: parentUserAvatar,
-  parentUserClick: parentUserId ? () => navigateTo(`/users/${parentUserId}`) : null,
+  parentUserId: parentUserId,
 })
 
 const changeLogIcon = (l) => {
@@ -1184,6 +1191,12 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   border-radius: 50%;
+}
+
+.user-avatar-item-img :deep(.base-user-avatar-img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .info-content {

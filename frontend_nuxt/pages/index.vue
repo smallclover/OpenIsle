@@ -85,14 +85,16 @@
           </div>
 
           <div class="article-member-avatars-container">
-            <NuxtLink
-              v-for="member in article.members"
-              :key="`${article.id}-${member.id}`"
-              class="article-member-avatar-item"
-              :to="`/users/${member.id}`"
-            >
-              <BaseImage class="article-member-avatar-item-img" :src="member.avatar" alt="avatar" />
-            </NuxtLink>
+            <div v-for="member in article.members">
+              <BaseUserAvatar
+                class="article-member-avatar-item-img"
+                :src="member.avatar"
+                :user-id="member.id"
+                alt="avatar"
+                :disable-link="true"
+                :width="25"
+              />
+            </div>
           </div>
 
           <div class="article-comments main-info-text">
@@ -138,6 +140,7 @@ import InfiniteLoadMore from '~/components/InfiniteLoadMore.vue'
 import { getToken } from '~/utils/auth'
 import { stripMarkdown } from '~/utils/markdown'
 import { useIsMobile } from '~/utils/screen'
+import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 import TimeManager from '~/utils/time'
 import { selectedCategoryGlobal, selectedTagsGlobal } from '~/composables/postFilter'
 useHead({
@@ -383,7 +386,6 @@ watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
   selectedCategoryGlobal.value = newCategory
   selectedTagsGlobal.value = newTags
 })
-
 </script>
 
 <style scoped>
@@ -628,14 +630,12 @@ watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
   margin-left: 20px;
 }
 
-.article-member-avatar-item {
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  overflow: hidden;
+.article-member-avatar-item-img {
+  width: 100%;
+  height: 100%;
 }
 
-.article-member-avatar-item-img {
+.article-member-avatar-item-img :deep(.base-user-avatar-img) {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -692,6 +692,7 @@ watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
     margin-left: 0px;
     gap: 0px;
   }
+
   .article-main-container,
   .header-item.main-item {
     width: calc(70% - 20px);

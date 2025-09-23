@@ -15,7 +15,13 @@
         <div class="avatar-row">
           <!-- label 充当点击区域，内部隐藏 input -->
           <label class="avatar-container">
-            <BaseImage :src="avatar" class="avatar-preview" alt="avatar" />
+            <BaseUserAvatar
+              :src="avatar"
+              :user-id="userId"
+              alt="avatar"
+              class="avatar-preview"
+              :disable-link="true"
+            />
             <!-- 半透明蒙层：hover 时出现 -->
             <div class="avatar-overlay">更换头像</div>
             <input type="file" class="avatar-input" accept="image/*" @change="onAvatarChange" />
@@ -74,6 +80,7 @@ import AvatarCropper from '~/components/AvatarCropper.vue'
 import BaseInput from '~/components/BaseInput.vue'
 import Dropdown from '~/components/Dropdown.vue'
 import BaseSwitch from '~/components/BaseSwitch.vue'
+import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 import { toast } from '~/main'
 import { fetchCurrentUser, getToken, setToken } from '~/utils/auth'
 import { frostedState, setFrosted } from '~/utils/frosted'
@@ -87,6 +94,7 @@ const avatarFile = ref(null)
 const tempAvatar = ref('')
 const showCropper = ref(false)
 const role = ref('')
+const userId = ref(null)
 const publishMode = ref('DIRECT')
 const passwordStrength = ref('LOW')
 const aiFormatLimit = ref(3)
@@ -103,6 +111,7 @@ onMounted(async () => {
     username.value = user.username
     introduction.value = user.introduction || ''
     avatar.value = user.avatar
+    userId.value = user.id
     role.value = user.role
     if (role.value === 'ADMIN') {
       loadAdminConfig()
@@ -271,6 +280,11 @@ const save = async () => {
   width: 80px;
   height: 80px;
   border-radius: 40px;
+}
+
+.avatar-preview :deep(.base-user-avatar-img) {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
