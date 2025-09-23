@@ -26,7 +26,9 @@
           >
             更新
           </div>
-          <div v-else class="post-submit-loading loading-icon"><loading-four /> 更新中...</div>
+          <div v-else class="post-submit-loading">
+            <loading-four class="loading-icon" /> 更新中...
+          </div>
         </div>
       </div>
     </div>
