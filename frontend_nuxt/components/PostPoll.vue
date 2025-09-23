@@ -17,13 +17,14 @@
               ></div>
             </div>
             <div class="poll-participants">
-              <BaseImage
+              <BaseUserAvatar
                 v-for="p in pollOptionParticipants[idx] || []"
                 :key="p.id"
                 class="poll-participant-avatar"
-                :src="p.avatar"
-                alt="avatar"
-                @click="gotoUser(p.id)"
+                :user-id="p.id"
+                :avatar="p.avatar"
+                :username="p.username"
+                :width="30"
               />
             </div>
           </div>
@@ -151,8 +152,6 @@ const hasVoted = computed(() => {
 watch([hasVoted, pollEnded], ([voted, ended]) => {
   if (voted || ended) showPollResult.value = true
 })
-
-const gotoUser = (id) => navigateTo(`/users/${id}`, { replace: true })
 
 const config = useRuntimeConfig()
 const API_BASE_URL = config.public.apiBaseUrl
@@ -426,7 +425,6 @@ const submitMultiPoll = async () => {
 .poll-participant-avatar {
   width: 30px;
   height: 30px;
-  border-radius: 50%;
   cursor: pointer;
 }
 </style>

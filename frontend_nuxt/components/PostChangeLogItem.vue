@@ -1,12 +1,13 @@
 <template>
   <div :id="`change-log-${log.id}`" class="change-log-container">
     <div class="change-log-text">
-      <BaseImage
+      <BaseUserAvatar
         v-if="log.userAvatar"
         class="change-log-avatar"
-        :src="log.userAvatar"
-        alt="avatar"
-        @click="() => navigateTo(`/users/${log.username}`)"
+        :user-id="log.userId"
+        :avatar="log.userAvatar"
+        :username="log.username"
+        :width="20"
       />
       <span v-if="log.username" class="change-log-user">{{ log.username }}</span>
       <span v-if="log.type === 'CONTENT'" class="change-log-content">变更了文章内容</span>
@@ -57,8 +58,6 @@ import { html } from 'diff2html'
 import { createTwoFilesPatch } from 'diff'
 import { useIsMobile } from '~/utils/screen'
 import 'diff2html/bundles/css/diff2html.min.css'
-import BaseImage from '~/components/BaseImage.vue'
-import { navigateTo } from 'nuxt/app'
 import { themeState } from '~/utils/theme'
 import ArticleCategory from '~/components/ArticleCategory.vue'
 import ArticleTags from '~/components/ArticleTags.vue'

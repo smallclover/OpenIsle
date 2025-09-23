@@ -24,10 +24,13 @@
       </template>
       <template #option="{ option }">
         <div class="search-option-item">
-          <BaseImage
-            :src="option.avatar || '/default-avatar.svg'"
+          <BaseUserAvatar
             class="avatar"
-            @error="handleAvatarError"
+            :user-id="option.id"
+            :avatar="option.avatar"
+            :username="option.username"
+            :width="32"
+            :link="false"
           />
           <div class="result-body">
             <div class="result-main" v-html="highlight(option.username)"></div>
@@ -85,10 +88,6 @@ const highlight = (text) => {
   if (!keyword.value) return text
   const reg = new RegExp(keyword.value, 'gi')
   return text.replace(reg, (m) => `<span class="highlight">${m}</span>`)
-}
-
-const handleAvatarError = (e) => {
-  e.target.src = '/default-avatar.svg'
 }
 
 watch(selected, async (val) => {
@@ -178,8 +177,6 @@ defineExpose({
 .avatar {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
 }
 
 .result-body {

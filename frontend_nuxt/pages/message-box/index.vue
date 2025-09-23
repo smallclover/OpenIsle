@@ -33,11 +33,23 @@
           @click="goToConversation(convo.id)"
         >
           <div class="conversation-avatar">
-            <BaseImage
-              :src="getOtherParticipant(convo)?.avatar || '/default-avatar.svg'"
-              :alt="getOtherParticipant(convo)?.username || '用户'"
+            <BaseUserAvatar
+              v-if="getOtherParticipant(convo)"
               class="avatar-img"
-              @error="handleAvatarError"
+              :user-id="getOtherParticipant(convo).id"
+              :avatar="getOtherParticipant(convo).avatar"
+              :username="getOtherParticipant(convo).username"
+              :width="40"
+              @click.stop
+            />
+            <BaseUserAvatar
+              v-else
+              class="avatar-img"
+              :user-id="convo.id"
+              :avatar="''"
+              username="用户"
+              :width="40"
+              :link="false"
             />
           </div>
 
@@ -431,7 +443,6 @@ function minimize() {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  object-fit: cover;
 }
 
 .conversation-content {

@@ -199,6 +199,8 @@ function createFetchNotifications() {
           arr.push({
             ...n,
             src: n.comment.author.avatar,
+            userId: n.comment.author.id,
+            userName: n.comment.author.username,
             iconClick: () => {
               markNotificationRead(n.id)
               navigateTo(`/users/${n.comment.author.id}`, { replace: true })
@@ -219,6 +221,8 @@ function createFetchNotifications() {
           arr.push({
             ...n,
             src: n.fromUser ? n.fromUser.avatar : null,
+            userId: n.fromUser ? n.fromUser.id : undefined,
+            userName: n.fromUser ? n.fromUser.username : undefined,
             icon: n.fromUser ? undefined : iconMap[n.type],
             iconClick: () => {
               if (n.fromUser) {
@@ -231,6 +235,8 @@ function createFetchNotifications() {
           arr.push({
             ...n,
             src: n.fromUser ? n.fromUser.avatar : null,
+            userId: n.fromUser ? n.fromUser.id : undefined,
+            userName: n.fromUser ? n.fromUser.username : undefined,
             icon: n.fromUser ? undefined : iconMap[n.type],
             iconClick: () => {
               if (n.fromUser) {
@@ -269,6 +275,8 @@ function createFetchNotifications() {
           arr.push({
             ...n,
             src: n.comment.author.avatar,
+            userId: n.comment.author.id,
+            userName: n.comment.author.username,
             iconClick: () => {
               markNotificationRead(n.id)
               navigateTo(`/users/${n.comment.author.id}`, { replace: true })
@@ -315,6 +323,8 @@ function createFetchNotifications() {
           arr.push({
             ...n,
             src: n.fromUser ? n.fromUser.avatar : null,
+            userId: n.fromUser ? n.fromUser.id : undefined,
+            userName: n.fromUser ? n.fromUser.username : undefined,
             icon: n.fromUser ? undefined : iconMap[n.type],
             iconClick: () => {
               if (n.post) {

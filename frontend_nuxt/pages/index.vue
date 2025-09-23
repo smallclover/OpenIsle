@@ -85,14 +85,15 @@
           </div>
 
           <div class="article-member-avatars-container">
-            <NuxtLink
+            <BaseUserAvatar
               v-for="member in article.members"
               :key="`${article.id}-${member.id}`"
               class="article-member-avatar-item"
-              :to="`/users/${member.id}`"
-            >
-              <BaseImage class="article-member-avatar-item-img" :src="member.avatar" alt="avatar" />
-            </NuxtLink>
+              :user-id="member.id"
+              :avatar="member.avatar"
+              :username="member.username"
+              :width="25"
+            />
           </div>
 
           <div class="article-comments main-info-text">
@@ -291,7 +292,11 @@ const {
       description: p.content,
       category: p.category,
       tags: p.tags || [],
-      members: (p.participants || []).map((m) => ({ id: m.id, avatar: m.avatar })),
+      members: (p.participants || []).map((m) => ({
+        id: m.id,
+        avatar: m.avatar,
+        username: m.username,
+      })),
       comments: p.commentCount,
       views: p.views,
       rssExcluded: p.rssExcluded || false,
@@ -333,7 +338,11 @@ const fetchNextPage = async () => {
     description: p.content,
     category: p.category,
     tags: p.tags || [],
-    members: (p.participants || []).map((m) => ({ id: m.id, avatar: m.avatar })),
+    members: (p.participants || []).map((m) => ({
+      id: m.id,
+      avatar: m.avatar,
+      username: m.username,
+    })),
     comments: p.commentCount,
     views: p.views,
     rssExcluded: p.rssExcluded || false,
@@ -383,7 +392,6 @@ watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
   selectedCategoryGlobal.value = newCategory
   selectedTagsGlobal.value = newTags
 })
-
 </script>
 
 <style scoped>
@@ -631,14 +639,7 @@ watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
 .article-member-avatar-item {
   width: 25px;
   height: 25px;
-  border-radius: 50%;
-  overflow: hidden;
-}
-
-.article-member-avatar-item-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .placeholder-container {
