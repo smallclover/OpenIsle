@@ -1,28 +1,19 @@
 <template>
   <NuxtLink
-    v-if="isLink"
     :to="resolvedLink"
     class="base-user-avatar"
     :class="wrapperClass"
     :style="wrapperStyle"
     v-bind="wrapperAttrs"
   >
-    <img :src="currentSrc" :alt="altText" class="base-user-avatar-img" @error="onError" />
+    <BaseImage :src="currentSrc" :alt="altText" class="base-user-avatar-img" @error="onError" />
   </NuxtLink>
-  <div
-    v-else
-    class="base-user-avatar"
-    :class="wrapperClass"
-    :style="wrapperStyle"
-    v-bind="wrapperAttrs"
-  >
-    <img :src="currentSrc" :alt="altText" class="base-user-avatar-img" @error="onError" />
-  </div>
 </template>
 
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useAttrs } from 'vue'
+import BaseImage from './BaseImage.vue'
 
 const DEFAULT_AVATAR = '/default-avatar.svg'
 
@@ -75,8 +66,6 @@ const resolvedLink = computed(() => {
   }
   return null
 })
-
-const isLink = computed(() => !props.disableLink && Boolean(resolvedLink.value))
 
 const altText = computed(() => props.alt || '用户头像')
 

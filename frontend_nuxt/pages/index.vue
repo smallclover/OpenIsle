@@ -85,20 +85,16 @@
           </div>
 
           <div class="article-member-avatars-container">
-            <NuxtLink
-              v-for="member in article.members"
-              :key="`${article.id}-${member.id}`"
-              class="article-member-avatar-item"
-              :to="`/users/${member.id}`"
-            >
+            <div v-for="member in article.members">
               <BaseUserAvatar
                 class="article-member-avatar-item-img"
                 :src="member.avatar"
                 :user-id="member.id"
                 alt="avatar"
                 :disable-link="true"
+                :width="25"
               />
-            </NuxtLink>
+            </div>
           </div>
 
           <div class="article-comments main-info-text">
@@ -634,13 +630,6 @@ watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
   margin-left: 20px;
 }
 
-.article-member-avatar-item {
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  overflow: hidden;
-}
-
 .article-member-avatar-item-img {
   width: 100%;
   height: 100%;
@@ -703,6 +692,7 @@ watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
     margin-left: 0px;
     gap: 0px;
   }
+
   .article-main-container,
   .header-item.main-item {
     width: calc(70% - 20px);
