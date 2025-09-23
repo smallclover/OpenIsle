@@ -97,11 +97,33 @@ function onError() {
 
 <style scoped>
 .base-user-avatar {
+  --base-avatar-ring-width: var(--avatar-ring-width, 1.5px);
+  --base-avatar-ring: var(--avatar-ring, linear-gradient(135deg, #6366f1, #ec4899));
+  --base-avatar-surface: var(
+    --avatar-surface,
+    var(--avatar-placeholder-color, rgba(255, 255, 255, 0.88))
+  );
+  --base-avatar-shadow: var(--avatar-shadow, 0 12px 30px -18px rgba(15, 23, 42, 0.55));
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background-color: var(--avatar-placeholder-color, #f0f0f0);
+  position: relative;
+  box-sizing: border-box;
+  color: inherit;
+  border-radius: 50%;
+  border: var(--base-avatar-ring-width) solid transparent;
+  background:
+    var(--base-avatar-surface) padding-box,
+    var(--base-avatar-ring) border-box;
+  background-clip: padding-box, border-box;
+  background-origin: border-box;
+  box-shadow: var(--base-avatar-shadow);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    filter 0.25s ease;
 }
 
 .base-user-avatar.is-rounded {
@@ -109,7 +131,7 @@ function onError() {
 }
 
 .base-user-avatar:not(.is-rounded) {
-  border-radius: 0;
+  border-radius: var(--avatar-square-radius, 0);
 }
 
 .base-user-avatar-img {
@@ -117,5 +139,51 @@ function onError() {
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: inherit;
+  position: relative;
+  z-index: 1;
+  transition:
+    transform 0.25s ease,
+    filter 0.25s ease;
+  backface-visibility: hidden;
+}
+
+.base-user-avatar:hover,
+.base-user-avatar:focus-visible {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 18px 35px -20px rgba(15, 23, 42, 0.65);
+}
+
+.base-user-avatar:focus-visible {
+  outline: 2px solid rgba(96, 165, 250, 0.6);
+  outline-offset: 3px;
+}
+
+.base-user-avatar:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.base-user-avatar:hover .base-user-avatar-img,
+.base-user-avatar:focus-visible .base-user-avatar-img {
+  transform: scale(1.03);
+  filter: saturate(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .base-user-avatar,
+  .base-user-avatar-img {
+    transition: none;
+  }
+
+  .base-user-avatar:hover,
+  .base-user-avatar:focus-visible,
+  .base-user-avatar:active {
+    transform: none;
+  }
+
+  .base-user-avatar:hover .base-user-avatar-img,
+  .base-user-avatar:focus-visible .base-user-avatar-img {
+    transform: none;
+  }
 }
 </style>
