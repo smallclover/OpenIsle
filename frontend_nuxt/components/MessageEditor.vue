@@ -159,12 +159,6 @@ export default {
   border: 1px solid var(--border-color);
   border-radius: 8px;
 }
-
-.vditor {
-  min-height: 50px;
-  max-height: 150px;
-}
-
 .message-bottom-container {
   display: flex;
   flex-direction: row;
