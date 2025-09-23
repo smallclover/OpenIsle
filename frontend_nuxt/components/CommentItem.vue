@@ -26,11 +26,12 @@
           <span v-if="level >= 2" class="reply-item">
             <next class="reply-icon" />
             <span class="reply-info">
-              <BaseImage
+              <BaseUserAvatar
                 class="reply-avatar"
-                :src="comment.parentUserAvatar || '/default-avatar.svg'"
-                alt="avatar"
-                @click="comment.parentUserClick && comment.parentUserClick()"
+                :src="comment.parentUserAvatar"
+                :user-id="comment.parentUserId"
+                :alt="comment.parentUserName"
+                :disable-link="!comment.parentUserId"
               />
               <span class="reply-user-name">{{ comment.parentUserName }}</span>
             </span>
@@ -111,6 +112,7 @@ import BaseTimeline from '~/components/BaseTimeline.vue'
 import CommentEditor from '~/components/CommentEditor.vue'
 import DropdownMenu from '~/components/DropdownMenu.vue'
 import ReactionsGroup from '~/components/ReactionsGroup.vue'
+import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 const config = useRuntimeConfig()
 const API_BASE_URL = config.public.apiBaseUrl
 
@@ -259,6 +261,7 @@ const submitReply = async (parentUserName, text, clear) => {
         text: data.content,
         parentUserName: parentUserName,
         parentUserAvatar: props.comment.avatar,
+        parentUserId: props.comment.userId,
         reactions: [],
         reply: (data.replies || []).map((r) => ({
           id: r.id,
@@ -270,10 +273,12 @@ const submitReply = async (parentUserName, text, clear) => {
           reply: [],
           openReplies: false,
           src: r.author.avatar,
+          userId: r.author.id,
           iconClick: () => navigateTo(`/users/${r.author.id}`),
         })),
         openReplies: false,
         src: data.author.avatar,
+        userId: data.author.id,
         iconClick: () => navigateTo(`/users/${data.author.id}`),
       })
       clear()

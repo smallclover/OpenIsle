@@ -2,7 +2,7 @@
   <div class="user-list">
     <BasePlaceholder v-if="users.length === 0" text="暂无用户" icon="inbox" />
     <div v-for="u in users" :key="u.id" class="user-item" @click="handleUserClick(u)">
-      <BaseImage :src="u.avatar" alt="avatar" class="user-avatar" />
+      <BaseUserAvatar :src="u.avatar" :user-id="u.id" alt="avatar" class="user-avatar" />
       <div class="user-info">
         <div class="user-name">{{ u.username }}</div>
         <div v-if="u.introduction" class="user-intro">{{ u.introduction }}</div>
@@ -13,6 +13,7 @@
 
 <script setup>
 import BasePlaceholder from '~/components/BasePlaceholder.vue'
+import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 
 defineProps({
   users: { type: Array, default: () => [] },
@@ -43,6 +44,11 @@ const handleUserClick = (user) => {
   height: 50px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+.user-avatar :deep(.base-user-avatar-img) {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 .user-info {

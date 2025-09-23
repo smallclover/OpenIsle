@@ -17,13 +17,13 @@
               ></div>
             </div>
             <div class="poll-participants">
-              <BaseImage
+              <BaseUserAvatar
                 v-for="p in pollOptionParticipants[idx] || []"
                 :key="p.id"
                 class="poll-participant-avatar"
+                :user-id="p.id"
                 :src="p.avatar"
                 alt="avatar"
-                @click="gotoUser(p.id)"
               />
             </div>
           </div>
@@ -119,6 +119,7 @@ import { getToken, authState } from '~/utils/auth'
 import { toast } from '~/main'
 import { useRuntimeConfig } from '#imports'
 import { useCountdown } from '~/composables/useCountdown'
+import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 
 const props = defineProps({
   poll: { type: Object, required: true },
@@ -151,8 +152,6 @@ const hasVoted = computed(() => {
 watch([hasVoted, pollEnded], ([voted, ended]) => {
   if (voted || ended) showPollResult.value = true
 })
-
-const gotoUser = (id) => navigateTo(`/users/${id}`, { replace: true })
 
 const config = useRuntimeConfig()
 const API_BASE_URL = config.public.apiBaseUrl
@@ -428,5 +427,11 @@ const submitMultiPoll = async () => {
   height: 30px;
   border-radius: 50%;
   cursor: pointer;
+}
+
+.poll-participant-avatar :deep(.base-user-avatar-img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 </style>

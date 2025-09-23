@@ -24,10 +24,12 @@
       </template>
       <template #option="{ option }">
         <div class="search-option-item">
-          <BaseImage
-            :src="option.avatar || '/default-avatar.svg'"
+          <BaseUserAvatar
+            :src="option.avatar"
+            :user-id="option.id"
+            :alt="option.username"
             class="avatar"
-            @error="handleAvatarError"
+            :disable-link="true"
           />
           <div class="result-body">
             <div class="result-main" v-html="highlight(option.username)"></div>
@@ -49,6 +51,7 @@ import Dropdown from '~/components/Dropdown.vue'
 import { stripMarkdown } from '~/utils/markdown'
 import { useIsMobile } from '~/utils/screen'
 import { getToken } from '~/utils/auth'
+import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 const config = useRuntimeConfig()
 const API_BASE_URL = config.public.apiBaseUrl
 
@@ -85,10 +88,6 @@ const highlight = (text) => {
   if (!keyword.value) return text
   const reg = new RegExp(keyword.value, 'gi')
   return text.replace(reg, (m) => `<span class="highlight">${m}</span>`)
-}
-
-const handleAvatarError = (e) => {
-  e.target.src = '/default-avatar.svg'
 }
 
 watch(selected, async (val) => {
@@ -179,6 +178,12 @@ defineExpose({
   width: 32px;
   height: 32px;
   border-radius: 50%;
+  overflow: hidden;
+}
+
+.avatar :deep(.base-user-avatar-img) {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 

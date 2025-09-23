@@ -7,7 +7,12 @@
     <div v-else>
       <div class="profile-page-header">
         <div class="profile-page-header-avatar">
-          <BaseImage :src="user.avatar" alt="avatar" class="profile-page-header-avatar-img" />
+          <BaseUserAvatar
+            :src="user.avatar"
+            :user-id="user.id"
+            alt="avatar"
+            class="profile-page-header-avatar-img"
+          />
         </div>
         <div class="profile-page-header-user-info">
           <div class="profile-page-header-user-info-name">{{ user.username }}</div>
@@ -272,6 +277,7 @@ import LevelProgress from '~/components/LevelProgress.vue'
 import TimelineCommentGroup from '~/components/TimelineCommentGroup.vue'
 import TimelinePostItem from '~/components/TimelinePostItem.vue'
 import TimelineTagItem from '~/components/TimelineTagItem.vue'
+import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 import UserList from '~/components/UserList.vue'
 import { toast } from '~/main'
 import { authState, getToken } from '~/utils/auth'
@@ -652,6 +658,11 @@ watch(selectedTab, async (val) => {
   width: 200px;
   height: 200px;
   border-radius: 50%;
+}
+
+.profile-page-header-avatar-img :deep(.base-user-avatar-img) {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
@@ -1080,6 +1091,7 @@ watch(selectedTab, async (val) => {
   .profile-page-header-avatar-img {
     width: 100px;
     height: 100px;
+    border-radius: 50%;
   }
 
   :deep(.base-tabs-item) {

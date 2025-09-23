@@ -70,7 +70,14 @@
           <DropdownMenu v-if="isLogin" ref="userMenu" :items="headerMenuItems">
             <template #trigger>
               <div class="avatar-container">
-                <img class="avatar-img" :src="avatar" alt="avatar" />
+                <BaseUserAvatar
+                  class="avatar-img"
+                  :user-id="authState.userId"
+                  :src="avatar"
+                  alt="avatar"
+                  :width="32"
+                  :disable-link="true"
+                />
                 <down />
               </div>
             </template>
@@ -93,6 +100,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import DropdownMenu from '~/components/DropdownMenu.vue'
 import ToolTip from '~/components/ToolTip.vue'
 import SearchDropdown from '~/components/SearchDropdown.vue'
+import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 import { authState, clearToken, loadCurrentUser } from '~/utils/auth'
 import { useUnreadCount } from '~/composables/useUnreadCount'
 import { useChannelsUnreadCount } from '~/composables/useChannelsUnreadCount'

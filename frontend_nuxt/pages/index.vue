@@ -91,7 +91,13 @@
               class="article-member-avatar-item"
               :to="`/users/${member.id}`"
             >
-              <BaseImage class="article-member-avatar-item-img" :src="member.avatar" alt="avatar" />
+              <BaseUserAvatar
+                class="article-member-avatar-item-img"
+                :src="member.avatar"
+                :user-id="member.id"
+                alt="avatar"
+                :disable-link="true"
+              />
             </NuxtLink>
           </div>
 
@@ -138,6 +144,7 @@ import InfiniteLoadMore from '~/components/InfiniteLoadMore.vue'
 import { getToken } from '~/utils/auth'
 import { stripMarkdown } from '~/utils/markdown'
 import { useIsMobile } from '~/utils/screen'
+import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 import TimeManager from '~/utils/time'
 import { selectedCategoryGlobal, selectedTagsGlobal } from '~/composables/postFilter'
 useHead({
@@ -383,7 +390,6 @@ watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
   selectedCategoryGlobal.value = newCategory
   selectedTagsGlobal.value = newTags
 })
-
 </script>
 
 <style scoped>
@@ -636,6 +642,11 @@ watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
 }
 
 .article-member-avatar-item-img {
+  width: 100%;
+  height: 100%;
+}
+
+.article-member-avatar-item-img :deep(.base-user-avatar-img) {
   width: 100%;
   height: 100%;
   object-fit: cover;
