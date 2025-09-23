@@ -108,7 +108,6 @@ body {
 
 .vditor-toolbar--pin {
   top: calc(var(--header-height) + 1px) !important;
-  z-index: 20;
 }
 
 .vditor-panel {
@@ -133,26 +132,6 @@ body {
 .loading-icon {
   animation: spin 1s linear infinite;
 }
-
-/* .vditor {
-  --textarea-background-color: transparent;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.vditor-reset {
-  color: var(--text-color);
-}
-
-.vditor-toolbar {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-} */
-
-/* .vditor-toolbar {
-  position: relative !important;
-} */
 
 /*************************
  * Markdown 渲染样式
@@ -333,10 +312,6 @@ body {
     min-height: 100px;
   }
 
-  .vditor-toolbar {
-    overflow-x: auto;
-  }
-
   .about-content h1,
   .info-content-text h1 {
     font-size: 20px;
@@ -354,8 +329,8 @@ body {
     margin-bottom: 3px;
   }
 
-  .vditor-toolbar--pin {
-    top: 0 !important;
+  .vditor-panel {
+    min-width: 330px;
   }
 
   .about-content li,
@@ -365,11 +340,6 @@ body {
 
   .info-content-text pre {
     line-height: 1.5;
-  }
-
-  .vditor-panel {
-    position: relative;
-    min-width: 0;
   }
 
   .d2h-file-name {
