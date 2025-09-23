@@ -53,24 +53,26 @@
       </div>
     </div>
     <div class="prize-member-container">
-      <BaseImage
+      <BaseUserAvatar
         v-for="p in lotteryParticipants"
         :key="p.id"
         class="prize-member-avatar"
-        :src="p.avatar"
-        alt="avatar"
-        @click="gotoUser(p.id)"
+        :user-id="p.id"
+        :avatar="p.avatar"
+        :username="p.username"
+        :width="30"
       />
       <div v-if="lotteryEnded && lotteryWinners.length" class="prize-member-winner">
         <medal-one class="medal-icon"></medal-one>
         <span class="prize-member-winner-name">获奖者: </span>
-        <BaseImage
+        <BaseUserAvatar
           v-for="w in lotteryWinners"
           :key="w.id"
           class="prize-member-avatar"
-          :src="w.avatar"
-          alt="avatar"
-          @click="gotoUser(w.id)"
+          :user-id="w.id"
+          :avatar="w.avatar"
+          :username="w.username"
+          :width="30"
         />
         <div v-if="lotteryWinners.length === 1" class="prize-member-winner-name">
           {{ lotteryWinners[0].username }}
@@ -105,8 +107,6 @@ const hasJoined = computed(() => {
   if (!loggedIn.value) return false
   return lotteryParticipants.value.some((p) => p.id === Number(authState.userId))
 })
-
-const gotoUser = (id) => navigateTo(`/users/${id}`, { replace: true })
 
 const config = useRuntimeConfig()
 const API_BASE_URL = config.public.apiBaseUrl
@@ -246,8 +246,6 @@ const joinLottery = async () => {
   width: 30px;
   height: 30px;
   margin-left: 3px;
-  border-radius: 50%;
-  object-fit: cover;
   cursor: pointer;
 }
 
