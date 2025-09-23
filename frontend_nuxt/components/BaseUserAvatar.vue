@@ -102,6 +102,19 @@ function onError() {
   justify-content: center;
   overflow: hidden;
   background-color: var(--avatar-placeholder-color, #f0f0f0);
+  /* 先用box-sizing: border-box，保证加border后宽高不变，圆形不变形 */
+  box-sizing: border-box;
+  border: 1.5px solid var(--normal-border-color);
+  transition: all 0.6s ease;
+}
+
+.base-user-avatar:hover {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  transform: scale(1.05);
+}
+
+.base-user-avatar:active {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
 }
 
 .base-user-avatar.is-rounded {
