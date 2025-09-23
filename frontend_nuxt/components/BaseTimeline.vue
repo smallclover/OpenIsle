@@ -3,19 +3,10 @@
     <div class="timeline-item" v-for="(item, idx) in items" :key="idx">
       <div
         class="timeline-icon"
-        :class="{ clickable: !!item.iconClick && !item.src }"
-        @click="!item.src && item.iconClick && item.iconClick()"
+        :class="{ clickable: !!item.iconClick }"
+        @click="item.iconClick && item.iconClick()"
       >
-        <BaseUserAvatar
-          v-if="item.src"
-          :class="['timeline-img', { 'is-clickable': !!item.iconClick }]"
-          :user-id="item.userId"
-          :avatar="item.src"
-          :username="item.userName || item.username"
-          :width="32"
-          :link="!item.iconClick"
-          @click.stop="item.iconClick && item.iconClick()"
-        />
+        <BaseImage v-if="item.src" :src="item.src" class="timeline-img" alt="timeline item" />
         <component
           v-else-if="item.icon && (typeof item.icon !== 'string' || !item.icon.includes(' '))"
           :is="item.icon"
@@ -73,12 +64,10 @@ export default {
 }
 
 .timeline-img {
-  width: 32px;
-  height: 32px;
-}
-
-.timeline-img.is-clickable {
-  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .timeline-emoji {

@@ -44,13 +44,7 @@
             <div v-if="item.replyTo" class="reply-preview info-content-text">
               <div class="reply-header">
                 <next class="reply-icon" />
-                <BaseUserAvatar
-                  class="reply-avatar"
-                  :user-id="item.replyTo.sender.id"
-                  :avatar="item.replyTo.sender.avatar"
-                  :username="item.replyTo.sender.username"
-                  :width="20"
-                />
+                <BaseImage class="reply-avatar" :src="item.replyTo.sender.avatar" alt="avatar" />
                 <div class="reply-author">{{ item.replyTo.sender.username }}:</div>
               </div>
               <div class="reply-content" v-html="renderMarkdown(item.replyTo.content)"></div>
@@ -248,8 +242,6 @@ async function fetchMessages(page = 0) {
 
     const newMessages = pageData.content.reverse().map((item) => ({
       ...item,
-      userId: item.sender.id,
-      userName: item.sender.username,
       src: item.sender.avatar,
       iconClick: () => {
         openUser(item.sender.id)
@@ -335,8 +327,6 @@ async function sendMessage(content, clearInput) {
     const newMessage = await response.json()
     messages.value.push({
       ...newMessage,
-      userId: newMessage.sender.id,
-      userName: newMessage.sender.username,
       src: newMessage.sender.avatar,
       iconClick: () => {
         openUser(newMessage.sender.id)
@@ -412,8 +402,6 @@ const subscribeToConversation = () => {
 
       messages.value.push({
         ...parsedMessage,
-        userId: parsedMessage.sender.id,
-        userName: parsedMessage.sender.username,
         src: parsedMessage.sender.avatar,
         iconClick: () => openUser(parsedMessage.sender.id),
       })

@@ -70,14 +70,7 @@
           <DropdownMenu v-if="isLogin" ref="userMenu" :items="headerMenuItems">
             <template #trigger>
               <div class="avatar-container">
-                <BaseUserAvatar
-                  class="avatar-img"
-                  :user-id="authState.userId"
-                  :avatar="avatar"
-                  :username="authState.username"
-                  :width="32"
-                  :link="false"
-                />
+                <img class="avatar-img" :src="avatar" alt="avatar" />
                 <down />
               </div>
             </template>
@@ -441,6 +434,7 @@ onMounted(async () => {
   height: 32px;
   border-radius: 50%;
   background-color: lightgray;
+  object-fit: cover;
 }
 
 .dropdown-icon {

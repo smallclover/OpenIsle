@@ -46,14 +46,10 @@
       </div>
 
       <div class="info-content-container author-info-container">
-        <div class="user-avatar-container">
-          <BaseUserAvatar
-            class="user-avatar-item"
-            :user-id="author.id"
-            :avatar="author.avatar"
-            :username="author.username"
-            :width="50"
-          />
+        <div class="user-avatar-container" @click="gotoProfile">
+          <div class="user-avatar-item">
+            <BaseImage class="user-avatar-item-img" :src="author.avatar" alt="avatar" />
+          </div>
           <div v-if="isMobile" class="info-content-header">
             <div class="user-name">
               {{ author.username }}
@@ -344,7 +340,6 @@ const mapComment = (
   iconClick: () => navigateTo(`/users/${c.author.id}`),
   parentUserName: parentUserName,
   parentUserAvatar: parentUserAvatar,
-  parentUserId: parentUserId,
   parentUserClick: parentUserId ? () => navigateTo(`/users/${parentUserId}`) : null,
 })
 
@@ -384,7 +379,6 @@ const mapChangeLog = (l) => ({
   id: l.id,
   kind: 'log',
   username: l.username,
-  userId: l.userId ?? l.username,
   userAvatar: l.userAvatar,
   type: l.type,
   createdAt: l.time,
@@ -869,6 +863,10 @@ const jumpToHashComment = async () => {
   }
 }
 
+const gotoProfile = () => {
+  navigateTo(`/users/${author.value.id}`, { replace: true })
+}
+
 const initPage = async () => {
   scrollTo(0, 0)
   await fetchTimeline()
@@ -962,8 +960,6 @@ onMounted(async () => {
 .user-avatar-container {
   display: flex;
   flex-direction: row;
-  align-items: center;
-  gap: 10px;
 }
 
 .scroller-middle {
@@ -1176,13 +1172,18 @@ onMounted(async () => {
 }
 
 .user-avatar-container {
-  cursor: default;
+  cursor: pointer;
 }
 
 .user-avatar-item {
   width: 50px;
   height: 50px;
-  flex-shrink: 0;
+}
+
+.user-avatar-item-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
 }
 
 .info-content {

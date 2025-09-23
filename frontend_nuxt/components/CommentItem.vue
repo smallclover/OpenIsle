@@ -26,14 +26,10 @@
           <span v-if="level >= 2" class="reply-item">
             <next class="reply-icon" />
             <span class="reply-info">
-              <BaseUserAvatar
-                v-if="comment.parentUserName"
+              <BaseImage
                 class="reply-avatar"
-                :user-id="comment.parentUserId"
-                :avatar="comment.parentUserAvatar"
-                :username="comment.parentUserName"
-                :width="20"
-                :link="Boolean(comment.parentUserId)"
+                :src="comment.parentUserAvatar || '/default-avatar.svg'"
+                alt="avatar"
                 @click="comment.parentUserClick && comment.parentUserClick()"
               />
               <span class="reply-user-name">{{ comment.parentUserName }}</span>
@@ -257,19 +253,16 @@ const submitReply = async (parentUserName, text, clear) => {
       replyList.push({
         id: data.id,
         userName: data.author.username,
-        userId: data.author.id,
         time: TimeManager.format(data.createdAt),
         avatar: data.author.avatar,
         medal: data.author.displayMedal,
         text: data.content,
         parentUserName: parentUserName,
         parentUserAvatar: props.comment.avatar,
-        parentUserId: props.comment.userId,
         reactions: [],
         reply: (data.replies || []).map((r) => ({
           id: r.id,
           userName: r.author.username,
-          userId: r.author.id,
           time: TimeManager.format(r.createdAt),
           avatar: r.author.avatar,
           text: r.content,
@@ -401,7 +394,9 @@ const handleContentClick = (e) => {
 .reply-avatar {
   width: 20px;
   height: 20px;
+  border-radius: 50%;
   margin-right: 5px;
+  cursor: pointer;
 }
 
 .reply-icon {

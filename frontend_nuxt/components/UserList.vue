@@ -2,14 +2,7 @@
   <div class="user-list">
     <BasePlaceholder v-if="users.length === 0" text="暂无用户" icon="inbox" />
     <div v-for="u in users" :key="u.id" class="user-item" @click="handleUserClick(u)">
-      <BaseUserAvatar
-        class="user-avatar"
-        :user-id="u.id"
-        :avatar="u.avatar"
-        :username="u.username"
-        :width="50"
-        :link="false"
-      />
+      <BaseImage :src="u.avatar" alt="avatar" class="user-avatar" />
       <div class="user-info">
         <div class="user-name">{{ u.username }}</div>
         <div v-if="u.introduction" class="user-intro">{{ u.introduction }}</div>
@@ -48,7 +41,9 @@ const handleUserClick = (user) => {
 .user-avatar {
   width: 50px;
   height: 50px;
+  border-radius: 50%;
   flex-shrink: 0;
+  object-fit: cover;
 }
 .user-info {
   display: flex;
