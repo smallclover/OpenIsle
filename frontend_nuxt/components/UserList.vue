@@ -27,18 +27,20 @@ const handleUserClick = (user) => {
 .user-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 .user-item {
+  padding-top: 20px;
+  padding-bottom: 20px;
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  border-bottom: 1px solid var(--normal-border-color);
 }
 .user-avatar {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   flex-shrink: 0;
   object-fit: cover;
