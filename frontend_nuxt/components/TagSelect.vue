@@ -42,7 +42,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch, nextTick } from 'vue'
 import { toast } from '~/main'
 import Dropdown from '~/components/Dropdown.vue'
 const config = useRuntimeConfig()
@@ -164,6 +164,8 @@ const loadMoreRemoteTags = async () => {
   loadMoreRequested.value = true
   try {
     await dropdownRef.value?.reload()
+    await nextTick()
+    dropdownRef.value?.scrollToBottom?.()
   } catch (e) {
     console.error('Failed to load more tags', e)
     loadMoreRequested.value = false
