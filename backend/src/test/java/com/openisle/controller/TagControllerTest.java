@@ -82,6 +82,7 @@ class TagControllerTest {
     t.setIcon("i2");
     t.setSmallIcon("s2");
     Mockito.when(tagService.searchTags(null)).thenReturn(List.of(t));
+    Mockito.when(postService.countPostsByTagIds(List.of(2L))).thenReturn(java.util.Map.of());
 
     mockMvc
       .perform(get("/api/tags"))
@@ -91,6 +92,31 @@ class TagControllerTest {
       .andExpect(jsonPath("$[0].description").value("d2"))
       .andExpect(jsonPath("$[0].icon").value("i2"))
       .andExpect(jsonPath("$[0].smallIcon").value("s2"));
+  }
+
+  @Test
+  void listTagsWithPagination() throws Exception {
+    Tag t1 = new Tag();
+    t1.setId(1L);
+    t1.setName("java");
+    Tag t2 = new Tag();
+    t2.setId(2L);
+    t2.setName("spring");
+    Mockito.when(tagService.searchTags(null)).thenReturn(List.of(t1, t2));
+    Mockito.when(postService.countPostsByTagIds(List.of(1L, 2L))).thenReturn(
+      java.util.Map.of(1L, 1L, 2L, 5L)
+    );
+
+    mockMvc
+      .perform(get("/api/tags").param("page", "1").param("pageSize", "1"))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(1)))
+      .andExpect(jsonPath("$[0].id").value(1));
+
+    mockMvc
+      .perform(get("/api/tags").param("page", "2").param("pageSize", "1"))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(0)));
   }
 
   @Test

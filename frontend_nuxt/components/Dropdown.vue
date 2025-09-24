@@ -52,6 +52,7 @@
       v-if="open && !isMobile && (loading || filteredOptions.length > 0 || showSearch)"
       :class="['dropdown-menu', menuClass]"
       v-click-outside="close"
+      ref="menuRef"
     >
       <div v-if="showSearch" class="dropdown-search">
         <search-icon class="search-icon" />
@@ -80,6 +81,7 @@
             <span>{{ o.name }}</span>
           </slot>
         </div>
+        <slot name="footer" :close="close" :loading="loading" />
       </template>
     </div>
     <Teleport to="body">
@@ -88,7 +90,7 @@
           <next class="back-icon" @click="close" />
           <span class="mobile-title">{{ placeholder }}</span>
         </div>
-        <div class="dropdown-mobile-menu">
+        <div class="dropdown-mobile-menu" ref="mobileMenuRef">
           <div v-if="showSearch" class="dropdown-search">
             <search-icon class="search-icon" />
             <input type="text" v-model="search" placeholder="搜索" />
@@ -116,6 +118,7 @@
                 <span>{{ o.name }}</span>
               </slot>
             </div>
+            <slot name="footer" :close="close" :loading="loading" />
           </template>
         </div>
       </div>
@@ -151,6 +154,8 @@ export default {
     const loaded = ref(false)
     const loading = ref(false)
     const wrapper = ref(null)
+    const menuRef = ref(null)
+    const mobileMenuRef = ref(null)
     const isMobile = useIsMobile()
 
     const toggle = () => {
@@ -198,6 +203,17 @@ export default {
       } finally {
         loading.value = false
       }
+    }
+
+    const scrollToBottom = () => {
+      const el = isMobile.value ? mobileMenuRef.value : menuRef.value
+      if (el) {
+        el.scrollTop = el.scrollHeight
+      }
+    }
+
+    const reload = async () => {
+      await loadOptions(props.remote ? search.value : undefined)
     }
 
     watch(
@@ -249,7 +265,7 @@ export default {
       return /^https?:\/\//.test(icon) || icon.startsWith('/')
     }
 
-    expose({ toggle, close })
+    expose({ toggle, close, reload, scrollToBottom })
 
     return {
       open,
@@ -259,6 +275,8 @@ export default {
       search,
       filteredOptions,
       wrapper,
+      menuRef,
+      mobileMenuRef,
       selectedLabels,
       isSelected,
       loading,
