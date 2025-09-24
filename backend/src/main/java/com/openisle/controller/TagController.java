@@ -110,9 +110,10 @@ public class TagController {
     if (postCntByTagIds == null) {
       postCntByTagIds = java.util.Collections.emptyMap();
     }
+    Map<Long, Long> finalPostCntByTagIds = postCntByTagIds;
     List<TagDto> dtos = tags
       .stream()
-      .map(t -> tagMapper.toDto(t, postCntByTagIds.getOrDefault(t.getId(), 0L)))
+      .map(t -> tagMapper.toDto(t, finalPostCntByTagIds.getOrDefault(t.getId(), 0L)))
       .sorted((a, b) -> Long.compare(b.getCount(), a.getCount()))
       .collect(Collectors.toList());
     if (page != null && pageSize != null && page >= 0 && pageSize > 0) {
