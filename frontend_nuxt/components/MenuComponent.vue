@@ -116,30 +116,42 @@
             <div v-if="isLoadingTag" class="menu-loading-container">
               <l-hatch size="28" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
             </div>
-            <div 
-                v-else 
-                v-for="t in tagData" 
-                :key="t.id" 
-                class="section-item" 
-                :class="{ selected: isTagSelected(t.id) }" 
+            <template v-else>
+              <div
+                v-for="t in tagData"
+                :key="t.id"
+                class="section-item"
+                :class="{ selected: isTagSelected(t.id) }"
                 @click="gotoTag(t)"
               >
-              <BaseImage
-                v-if="isImageIcon(t.smallIcon || t.icon)"
-                :src="t.smallIcon || t.icon"
-                class="section-item-icon"
-                :alt="t.name"
-              />
-              <component
-                v-else-if="t.smallIcon || t.icon"
-                :is="t.smallIcon || t.icon"
-                class="section-item-icon"
-              />
-              <tag-one v-else class="section-item-icon" />
-              <span class="section-item-text"
-                >{{ t.name }} <span class="section-item-text-count">x {{ t.count }}</span></span
-              >
-            </div>
+                <BaseImage
+                  v-if="isImageIcon(t.smallIcon || t.icon)"
+                  :src="t.smallIcon || t.icon"
+                  class="section-item-icon"
+                  :alt="t.name"
+                />
+                <component
+                  v-else-if="t.smallIcon || t.icon"
+                  :is="t.smallIcon || t.icon"
+                  class="section-item-icon"
+                />
+                <tag-one v-else class="section-item-icon" />
+                <span class="section-item-text"
+                  >{{ t.name }} <span class="section-item-text-count">x {{ t.count }}</span></span
+                >
+              </div>
+              <div v-if="hasMoreTags || isLoadingMoreTags" class="section-item more-item">
+                <a
+                  v-if="hasMoreTags && !isLoadingMoreTags"
+                  href="#"
+                  class="more-link"
+                  @click.prevent="loadMoreTags"
+                >
+                  查看更多
+                </a>
+                <span v-else class="more-loading">加载中...</span>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -207,15 +219,87 @@ const {
   },
 )
 
+const TAG_PAGE_SIZE = 10
+const tagPage = ref(0)
+const hasMoreTags = ref(true)
+const isLoadingMoreTags = ref(false)
+
+const buildTagUrl = (page = 0) => {
+  const base = API_BASE_URL || (import.meta.client ? window.location.origin : '')
+  const url = new URL('/api/tags', base)
+  url.searchParams.set('page', String(page))
+  url.searchParams.set('pageSize', String(TAG_PAGE_SIZE))
+  return url.toString()
+}
+
+const fetchTagPage = async (page = 0) => {
+  try {
+    return await $fetch(buildTagUrl(page))
+  } catch (e) {
+    console.error('Failed to fetch tags', e)
+    return []
+  }
+}
+
 const {
   data: tagData,
   pending: isLoadingTag,
   error: tagError,
-} = await useAsyncData('menu:tags', () => $fetch(`${API_BASE_URL}/api/tags?limit=10`), {
+} = await useAsyncData('menu:tags', () => fetchTagPage(0), {
   server: true,
   default: () => [],
   staleTime: 5 * 60 * 1000,
 })
+
+const dedupeTags = (list) => Array.from(new Map(list.map((tag) => [tag.id, tag])).values())
+
+const initializeTagState = (val) => {
+  const initial = Array.isArray(val) ? val : []
+  if (!Array.isArray(val)) {
+    tagData.value = []
+  }
+  tagPage.value = 0
+  hasMoreTags.value = initial.length === TAG_PAGE_SIZE
+}
+
+initializeTagState(tagData.value)
+
+watch(
+  tagData,
+  (val, oldVal) => {
+    const next = Array.isArray(val) ? val : []
+    if (!Array.isArray(val)) {
+      tagData.value = []
+    }
+    const shouldReset =
+      !Array.isArray(oldVal) || oldVal.length > next.length || next.length <= TAG_PAGE_SIZE
+    if (shouldReset) {
+      tagPage.value = 0
+      hasMoreTags.value = next.length === TAG_PAGE_SIZE
+    }
+  },
+  { deep: false },
+)
+
+const loadMoreTags = async () => {
+  if (isLoadingMoreTags.value || !hasMoreTags.value) return
+  isLoadingMoreTags.value = true
+  const nextPage = tagPage.value + 1
+  try {
+    const result = await fetchTagPage(nextPage)
+    const data = Array.isArray(result) ? result : []
+    const existing = Array.isArray(tagData.value) ? tagData.value : []
+    tagData.value = dedupeTags([...existing, ...data])
+    tagPage.value = nextPage
+    if (data.length < TAG_PAGE_SIZE) {
+      hasMoreTags.value = false
+    }
+  } catch (e) {
+    console.error('Failed to load more tags', e)
+  } finally {
+    isLoadingMoreTags.value = false
+  }
+}
 
 /** 其余逻辑保持不变 */
 const iconClass = computed(() => {
@@ -433,6 +517,27 @@ const gotoTag = (t) => {
   transition: background-color 0.5s ease;
 }
 
+.more-item {
+  justify-content: center;
+}
+
+.more-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.more-link:hover {
+  text-decoration: underline;
+}
+
+.more-loading {
+  font-size: 13px;
+  color: var(--menu-text-color);
+  opacity: 0.7;
+}
+
 .section-item:hover {
   background-color: var(--menu-selected-background-color-hover);
 }
@@ -440,7 +545,6 @@ const gotoTag = (t) => {
   font-weight: bold;
   background-color: var(--menu-selected-background-color);
 }
-
 
 .section-item-text-count {
   font-size: 12px;

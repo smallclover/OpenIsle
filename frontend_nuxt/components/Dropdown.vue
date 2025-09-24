@@ -80,6 +80,7 @@
             <span>{{ o.name }}</span>
           </slot>
         </div>
+        <slot name="footer" :close="close" :loading="loading" />
       </template>
     </div>
     <Teleport to="body">
@@ -116,6 +117,7 @@
                 <span>{{ o.name }}</span>
               </slot>
             </div>
+            <slot name="footer" :close="close" :loading="loading" />
           </template>
         </div>
       </div>
@@ -200,6 +202,10 @@ export default {
       }
     }
 
+    const reload = async () => {
+      await loadOptions(props.remote ? search.value : undefined)
+    }
+
     watch(
       () => props.initialOptions,
       (val) => {
@@ -249,7 +255,7 @@ export default {
       return /^https?:\/\//.test(icon) || icon.startsWith('/')
     }
 
-    expose({ toggle, close })
+    expose({ toggle, close, reload })
 
     return {
       open,
