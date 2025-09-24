@@ -85,7 +85,7 @@
           </div>
 
           <div class="article-member-avatars-container">
-            <div v-for="member in article.members">
+            <div v-for="member in article.members" class="article-member-avatar-item">
               <BaseUserAvatar
                 class="article-member-avatar-item-img"
                 :src="member.avatar"
