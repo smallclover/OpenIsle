@@ -77,6 +77,15 @@ class PostControllerTest {
   private MedalService medalService;
 
   @MockBean
+  private CategoryService categoryService;
+
+  @MockBean
+  private TagService tagService;
+
+  @MockBean
+  private PointService pointService;
+
+  @MockBean
   private com.openisle.repository.PollVoteRepository pollVoteRepository;
 
   @Test
@@ -258,6 +267,7 @@ class PostControllerTest {
       .andExpect(status().isBadRequest());
 
     verify(postService, never()).createPost(
+      any(),
       any(),
       any(),
       any(),
