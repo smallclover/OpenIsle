@@ -15,6 +15,7 @@
       <div class="common-info-content-header">
         <div class="info-content-header-left">
           <span class="user-name">{{ comment.userName }}</span>
+          <span v-if="isCommentFromPostAuthor" class="op-badge" title="楼主">OP</span>
           <medal-one class="medal-icon" />
           <NuxtLink
             v-if="comment.medal"
@@ -157,6 +158,12 @@ const lightboxImgs = ref([])
 const loggedIn = computed(() => authState.loggedIn)
 const countReplies = (list) => list.reduce((sum, r) => sum + 1 + countReplies(r.reply || []), 0)
 const replyCount = computed(() => countReplies(props.comment.reply || []))
+const isCommentFromPostAuthor = computed(() => {
+  if (props.comment.userId == null || props.postAuthorId == null) {
+    return false
+  }
+  return String(props.comment.userId) === String(props.postAuthorId)
+})
 
 const toggleReplies = () => {
   showReplies.value = !showReplies.value
@@ -424,6 +431,21 @@ const handleContentClick = (e) => {
   cursor: pointer;
   text-decoration: none;
   color: var(--text-color);
+}
+
+.op-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  padding: 0 6px;
+  height: 18px;
+  border-radius: 9px;
+  background-color: rgba(242, 100, 25, 0.12);
+  color: #f26419;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .medal-icon {
