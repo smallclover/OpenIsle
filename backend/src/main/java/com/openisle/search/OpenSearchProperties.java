@@ -18,6 +18,8 @@ public class OpenSearchProperties {
   private String indexPrefix = "openisle";
   private boolean initialize = true;
   private int highlightFragmentSize = 200;
+  private boolean reindexOnStartup = false;
+  private int reindexBatchSize = 500;
 
   private Indices indices = new Indices();
 
