@@ -1,5 +1,6 @@
 package com.openisle.model;
 
+import com.openisle.search.SearchEntityListener;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
@@ -19,6 +20,7 @@ import org.hibernate.annotations.CreationTimestamp;
 @Setter
 @NoArgsConstructor
 @Table(name = "users")
+@EntityListeners(SearchEntityListener.class)
 public class User {
 
   @Id

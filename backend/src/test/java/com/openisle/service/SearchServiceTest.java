@@ -10,6 +10,7 @@ import com.openisle.repository.PostRepository;
 import com.openisle.repository.TagRepository;
 import com.openisle.repository.UserRepository;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -27,7 +28,8 @@ class SearchServiceTest {
       postRepo,
       commentRepo,
       categoryRepo,
-      tagRepo
+      tagRepo,
+      Optional.empty()
     );
 
     Post post1 = new Post();
