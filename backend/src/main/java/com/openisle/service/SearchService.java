@@ -11,17 +11,10 @@ import com.openisle.repository.CommentRepository;
 import com.openisle.repository.PostRepository;
 import com.openisle.repository.TagRepository;
 import com.openisle.repository.UserRepository;
-import com.openisle.search.OpenSearchGateway;
-import com.openisle.search.OpenSearchGateway.PostSearchMode;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -34,26 +27,15 @@ public class SearchService {
   private final CommentRepository commentRepository;
   private final CategoryRepository categoryRepository;
   private final TagRepository tagRepository;
-  private final Optional<OpenSearchGateway> openSearchGateway;
 
   @org.springframework.beans.factory.annotation.Value("${app.snippet-length}")
   private int snippetLength;
 
   public List<User> searchUsers(String keyword) {
-    if (openSearchGateway.isPresent()) {
-      List<Long> ids = openSearchGateway.get().searchUserIds(keyword);
-      return loadAndSort(ids, userRepository::findAllById, User::getId);
-    }
     return userRepository.findByUsernameContainingIgnoreCase(keyword);
   }
 
   public List<Post> searchPosts(String keyword) {
-    if (openSearchGateway.isPresent()) {
-      List<Long> ids = openSearchGateway
-        .get()
-        .searchPostIds(keyword, PostSearchMode.TITLE_AND_CONTENT);
-      return loadAndSort(ids, idList -> postRepository.findAllById(idList), Post::getId);
-    }
     return postRepository.findByTitleContainingIgnoreCaseOrContentContainingIgnoreCaseAndStatus(
       keyword,
       keyword,
@@ -62,49 +44,26 @@ public class SearchService {
   }
 
   public List<Post> searchPostsByContent(String keyword) {
-    if (openSearchGateway.isPresent()) {
-      List<Long> ids = openSearchGateway.get().searchPostIds(keyword, PostSearchMode.CONTENT_ONLY);
-      return loadAndSort(ids, idList -> postRepository.findAllById(idList), Post::getId);
-    }
     return postRepository.findByContentContainingIgnoreCaseAndStatus(keyword, PostStatus.PUBLISHED);
   }
 
   public List<Post> searchPostsByTitle(String keyword) {
-    if (openSearchGateway.isPresent()) {
-      List<Long> ids = openSearchGateway.get().searchPostIds(keyword, PostSearchMode.TITLE_ONLY);
-      return loadAndSort(ids, idList -> postRepository.findAllById(idList), Post::getId);
-    }
     return postRepository.findByTitleContainingIgnoreCaseAndStatus(keyword, PostStatus.PUBLISHED);
   }
 
   public List<Comment> searchComments(String keyword) {
-    if (openSearchGateway.isPresent()) {
-      List<Long> ids = openSearchGateway.get().searchCommentIds(keyword);
-      return loadAndSort(ids, idList -> commentRepository.findAllById(idList), Comment::getId);
-    }
     return commentRepository.findByContentContainingIgnoreCase(keyword);
   }
 
   public List<Category> searchCategories(String keyword) {
-    if (openSearchGateway.isPresent()) {
-      List<Long> ids = openSearchGateway.get().searchCategoryIds(keyword);
-      return loadAndSort(ids, idList -> categoryRepository.findAllById(idList), Category::getId);
-    }
     return categoryRepository.findByNameContainingIgnoreCase(keyword);
   }
 
   public List<Tag> searchTags(String keyword) {
-    if (openSearchGateway.isPresent()) {
-      List<Long> ids = openSearchGateway.get().searchTagIds(keyword);
-      return loadAndSort(ids, idList -> tagRepository.findAllById(idList), Tag::getId);
-    }
     return tagRepository.findByNameContainingIgnoreCaseAndApprovedTrue(keyword);
   }
 
   public List<SearchResult> globalSearch(String keyword) {
-    if (openSearchGateway.isPresent()) {
-      return openSearchGateway.get().globalSearch(keyword, snippetLength);
-    }
     Stream<SearchResult> users = searchUsers(keyword)
       .stream()
       .map(u ->
@@ -214,18 +173,4 @@ public class SearchService {
     String extra,
     Long postId
   ) {}
-
-  private <T> List<T> loadAndSort(
-    List<Long> ids,
-    Function<Iterable<Long>, Iterable<T>> loader,
-    Function<T, Long> idExtractor
-  ) {
-    if (ids.isEmpty()) {
-      return List.of();
-    }
-    Map<Long, T> entityMap = StreamSupport.stream(loader.apply(ids).spliterator(), false).collect(
-      Collectors.toMap(idExtractor, Function.identity())
-    );
-    return ids.stream().map(entityMap::get).filter(Objects::nonNull).toList();
-  }
 }

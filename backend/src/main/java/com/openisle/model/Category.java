@@ -1,6 +1,5 @@
 package com.openisle.model;
 
-import com.openisle.search.SearchEntityListener;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,7 +10,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Table(name = "categories")
-@EntityListeners(SearchEntityListener.class)
 public class Category {
 
   @Id

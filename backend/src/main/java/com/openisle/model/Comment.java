@@ -1,6 +1,5 @@
 package com.openisle.model;
 
-import com.openisle.search.SearchEntityListener;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.Getter;
@@ -17,7 +16,6 @@ import org.hibernate.annotations.Where;
 @Table(name = "comments")
 @SQLDelete(sql = "UPDATE comments SET deleted_at = CURRENT_TIMESTAMP(6) WHERE id = ?")
 @Where(clause = "deleted_at IS NULL")
-@EntityListeners(SearchEntityListener.class)
 public class Comment {
 
   @Id

@@ -1,7 +1,6 @@
 package com.openisle.model;
 
 import com.openisle.model.Tag;
-import com.openisle.search.SearchEntityListener;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -20,7 +19,6 @@ import org.hibernate.annotations.CreationTimestamp;
 @NoArgsConstructor
 @Table(name = "posts")
 @Inheritance(strategy = InheritanceType.JOINED)
-@EntityListeners(SearchEntityListener.class)
 public class Post {
 
   @Id
