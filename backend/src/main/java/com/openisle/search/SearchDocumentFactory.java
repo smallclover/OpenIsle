@@ -5,7 +5,6 @@ import com.openisle.model.Comment;
 import com.openisle.model.Post;
 import com.openisle.model.Tag;
 import com.openisle.model.User;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
@@ -38,7 +37,7 @@ public final class SearchDocumentFactory {
       post.getCategory() != null ? post.getCategory().getName() : null,
       tags,
       post.getId(),
-      toInstant(post.getCreatedAt())
+      toEpochMillis(post.getCreatedAt())
     );
   }
 
@@ -64,7 +63,7 @@ public final class SearchDocumentFactory {
       post != null && post.getCategory() != null ? post.getCategory().getName() : null,
       tags,
       post != null ? post.getId() : null,
-      toInstant(comment.getCreatedAt())
+      toEpochMillis(comment.getCreatedAt())
     );
   }
 
@@ -81,7 +80,7 @@ public final class SearchDocumentFactory {
       null,
       Collections.emptyList(),
       null,
-      toInstant(user.getCreatedAt())
+      toEpochMillis(user.getCreatedAt())
     );
   }
 
@@ -115,11 +114,14 @@ public final class SearchDocumentFactory {
       null,
       Collections.emptyList(),
       null,
-      toInstant(tag.getCreatedAt())
+      toEpochMillis(tag.getCreatedAt())
     );
   }
 
-  private static Instant toInstant(LocalDateTime time) {
-    return time == null ? null : time.atZone(ZoneId.systemDefault()).toInstant();
+  private static Long toEpochMillis(LocalDateTime time) {
+    if (time == null) {
+      return null;
+    }
+    return time.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
   }
 }

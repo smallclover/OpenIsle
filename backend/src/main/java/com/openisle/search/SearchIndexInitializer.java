@@ -53,7 +53,10 @@ public class SearchIndexInitializer {
         .properties("category", Property.of(p -> p.keyword(k -> k)))
         .properties("tags", Property.of(p -> p.keyword(k -> k)))
         .properties("postId", Property.of(p -> p.long_(l -> l)))
-        .properties("createdAt", Property.of(p -> p.date(d -> d)))
+        .properties(
+          "createdAt",
+          Property.of(p -> p.date(d -> d.format("strict_date_optional_time||epoch_millis")))
+        )
     );
   }
 
@@ -67,7 +70,10 @@ public class SearchIndexInitializer {
         .properties("category", Property.of(p -> p.keyword(k -> k)))
         .properties("tags", Property.of(p -> p.keyword(k -> k)))
         .properties("postId", Property.of(p -> p.long_(l -> l)))
-        .properties("createdAt", Property.of(p -> p.date(d -> d)))
+        .properties(
+          "createdAt",
+          Property.of(p -> p.date(d -> d.format("strict_date_optional_time||epoch_millis")))
+        )
     );
   }
 
@@ -77,7 +83,10 @@ public class SearchIndexInitializer {
         .properties("type", Property.of(p -> p.keyword(k -> k)))
         .properties("title", Property.of(p -> p.text(t -> t)))
         .properties("content", Property.of(p -> p.text(t -> t)))
-        .properties("createdAt", Property.of(p -> p.date(d -> d)))
+        .properties(
+          "createdAt",
+          Property.of(p -> p.date(d -> d.format("strict_date_optional_time||epoch_millis")))
+        )
     );
   }
 
@@ -96,7 +105,10 @@ public class SearchIndexInitializer {
         .properties("type", Property.of(p -> p.keyword(k -> k)))
         .properties("title", Property.of(p -> p.text(t -> t)))
         .properties("content", Property.of(p -> p.text(t -> t)))
-        .properties("createdAt", Property.of(p -> p.date(d -> d)))
+        .properties(
+          "createdAt",
+          Property.of(p -> p.date(d -> d.format("strict_date_optional_time||epoch_millis")))
+        )
     );
   }
 }

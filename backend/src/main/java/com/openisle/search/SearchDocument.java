@@ -1,6 +1,5 @@
 package com.openisle.search;
 
-import java.time.Instant;
 import java.util.List;
 
 public record SearchDocument(
@@ -12,5 +11,5 @@ public record SearchDocument(
   String category,
   List<String> tags,
   Long postId,
-  Instant createdAt
+  Long createdAt
 ) {}

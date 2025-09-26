@@ -24,14 +24,12 @@ public class OpenSearchIndexer implements SearchIndexer {
         builder.index(index).id(document.entityId().toString()).document(document)
       );
       IndexResponse response = client.index(request);
-      if (log.isDebugEnabled()) {
-        log.debug(
-          "Indexed document {} into {} with result {}",
-          document.entityId(),
-          index,
-          response.result()
-        );
-      }
+      log.info(
+        "Indexed document {} into {} with result {}",
+        document.entityId(),
+        index,
+        response.result()
+      );
     } catch (IOException e) {
       log.warn("Failed to index document {} into {}", document.entityId(), index, e);
     }

@@ -176,34 +176,127 @@ public class SearchService {
   }
 
   private List<SearchResult> searchWithOpenSearch(String keyword) throws IOException {
-    OpenSearchClient client = openSearchClient.orElse(null);
-    if (client == null) {
-      return List.of();
-    }
-    String trimmed = keyword.trim();
-    SearchResponse<SearchDocument> response = client.search(
-      builder ->
-        builder
+    var client = openSearchClient.orElse(null);
+    if (client == null) return List.of();
+
+    final String qRaw = keyword == null ? "" : keyword.trim();
+    if (qRaw.isEmpty()) return List.of();
+
+    final boolean enableWildcard = qRaw.length() >= 2;
+    final String qsEscaped = escapeForQueryString(qRaw);
+
+    SearchResponse<SearchDocument> resp = client.search(
+      b ->
+        b
           .index(searchIndices())
-          .query(q ->
-            q.multiMatch(mm ->
-              mm
-                .query(trimmed)
-                .fields(List.of("title^3", "content^2", "author^2", "category", "tags"))
-                .type(TextQueryType.BestFields)
-            )
+          .trackTotalHits(t -> t.enabled(true))
+          .query(qb ->
+            qb.bool(bool -> {
+              // 1) 主召回：title/content
+              bool.should(s ->
+                s.multiMatch(mm ->
+                  mm
+                    .query(qRaw)
+                    .fields("title^3", "content^2")
+                    .type(TextQueryType.BestFields)
+                    .fuzziness("AUTO")
+                    .minimumShouldMatch("70%")
+                    .lenient(true)
+                )
+              );
+
+              // 2) 兜底：open* 前缀命中
+              if (enableWildcard) {
+                bool.should(s ->
+                  s.queryString(qs ->
+                    qs
+                      .query("(title:" + qsEscaped + "* OR content:" + qsEscaped + "*)")
+                      .analyzeWildcard(true)
+                  )
+                );
+              }
+
+              // 3) 结构化字段（keyword）
+              // term 需要 FieldValue（用 lambda 设置 stringValue）
+              bool.should(s ->
+                s.term(t ->
+                  t
+                    .field("author")
+                    .value(v -> v.stringValue(qRaw))
+                    .boost(2.0f)
+                )
+              );
+
+              if (enableWildcard) {
+                // prefix/wildcard 这里的 value 是 String，直接传即可
+                bool.should(s -> s.prefix(p -> p.field("category").value(qRaw).boost(1.2f)));
+                bool.should(s ->
+                  s.wildcard(w -> w.field("category").value("*" + qRaw + "*").boost(1.0f))
+                );
+
+                bool.should(s ->
+                  s.term(t ->
+                    t
+                      .field("tags")
+                      .value(v -> v.stringValue(qRaw))
+                      .boost(1.2f)
+                  )
+                );
+                bool.should(s ->
+                  s.wildcard(w -> w.field("tags").value("*" + qRaw + "*").boost(1.0f))
+                );
+              }
+
+              return bool.minimumShouldMatch("1");
+            })
           )
           .highlight(h ->
             h
               .preTags("<mark>")
               .postTags("</mark>")
-              .fields("content", f -> f.fragmentSize(highlightFragmentSize()).numberOfFragments(1))
               .fields("title", f -> f.fragmentSize(highlightFragmentSize()).numberOfFragments(1))
+              .fields("content", f -> f.fragmentSize(highlightFragmentSize()).numberOfFragments(1))
           )
-          .size(DEFAULT_OPEN_SEARCH_LIMIT),
+          .size(DEFAULT_OPEN_SEARCH_LIMIT > 0 ? DEFAULT_OPEN_SEARCH_LIMIT : 10),
       SearchDocument.class
     );
-    return mapHits(response.hits().hits(), trimmed);
+
+    return mapHits(resp.hits().hits(), qRaw);
+  }
+
+  /** Lucene query_string 安全转义（保留 * 由我们自己追加） */
+  private static String escapeForQueryString(String s) {
+    if (s == null || s.isEmpty()) return "";
+    StringBuilder sb = new StringBuilder(s.length() * 2);
+    for (char c : s.toCharArray()) {
+      switch (c) {
+        case '+':
+        case '-':
+        case '=':
+        case '&':
+        case '|':
+        case '>':
+        case '<':
+        case '!':
+        case '(':
+        case ')':
+        case '{':
+        case '}':
+        case '[':
+        case ']':
+        case '^':
+        case '"':
+        case '~': /* case '*': */ /* case '?': */
+        case ':':
+        case '\\':
+        case '/':
+          sb.append('\\').append(c);
+          break;
+        default:
+          sb.append(c);
+      }
+    }
+    return sb.toString();
   }
 
   private int highlightFragmentSize() {
