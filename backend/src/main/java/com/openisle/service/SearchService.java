@@ -197,7 +197,7 @@ public class SearchService {
                 s.multiMatch(mm ->
                   mm
                     .query(qRaw)
-                    .fields("title^3", "content^2")
+                    .fields("title^3", "title.py^3", "content^2", "content.py^2")
                     .type(TextQueryType.BestFields)
                     .fuzziness("AUTO")
                     .minimumShouldMatch("70%")
@@ -210,7 +210,17 @@ public class SearchService {
                 bool.should(s ->
                   s.queryString(qs ->
                     qs
-                      .query("(title:" + qsEscaped + "* OR content:" + qsEscaped + "*)")
+                      .query(
+                        "(title:" +
+                          qsEscaped +
+                          "* OR title.py:" +
+                          qsEscaped +
+                          "* OR content:" +
+                          qsEscaped +
+                          "* OR content.py:" +
+                          qsEscaped +
+                          "*)"
+                      )
                       .analyzeWildcard(true)
                   )
                 );
@@ -224,6 +234,30 @@ public class SearchService {
                     .field("author")
                     .value(v -> v.stringValue(qRaw))
                     .boost(2.0f)
+                )
+              );
+              bool.should(s ->
+                s.match(m ->
+                  m
+                    .field("author.py")
+                    .query(v -> v.stringValue(qRaw))
+                    .boost(2.0f)
+                )
+              );
+              bool.should(s ->
+                s.match(m ->
+                  m
+                    .field("category.py")
+                    .query(v -> v.stringValue(qRaw))
+                    .boost(1.2f)
+                )
+              );
+              bool.should(s ->
+                s.match(m ->
+                  m
+                    .field("tags.py")
+                    .query(v -> v.stringValue(qRaw))
+                    .boost(1.2f)
                 )
               );
 
