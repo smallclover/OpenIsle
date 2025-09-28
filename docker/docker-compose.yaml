@@ -36,8 +36,8 @@ services:
       - ./data:/usr/share/opensearch/data
       - ./snapshots:/snapshots
     ports:
-      - "9200:9200"
-      - "9600:9600"
+      - "${OPENSEARCH_PORT:-9200}:9200"
+      - "${OPENSEARCH_METRICS_PORT:-9600}:9600"
     restart: unless-stopped
 
   dashboards:
@@ -47,7 +47,7 @@ services:
       - OPENSEARCH_HOSTS=["http://opensearch:9200"]
       - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
     ports:
-      - "5601:5601"
+      - "${OPENSEARCH_DASHBOARDS_PORT:-5601}:5601"
     depends_on:
       - opensearch
     restart: unless-stopped
