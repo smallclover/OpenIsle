@@ -343,7 +343,17 @@ public class SearchService {
               .preTags("<mark>")
               .postTags("</mark>")
               .fields("title", f -> f.fragmentSize(highlightFragmentSize()).numberOfFragments(1))
+              .fields("title.py", f -> f.fragmentSize(highlightFragmentSize()).numberOfFragments(1))
               .fields("content", f -> f.fragmentSize(highlightFragmentSize()).numberOfFragments(1))
+              .fields("content.py", f ->
+                f.fragmentSize(highlightFragmentSize()).numberOfFragments(1)
+              )
+              .fields("author", f -> f.numberOfFragments(0))
+              .fields("author.py", f -> f.numberOfFragments(0))
+              .fields("category", f -> f.numberOfFragments(0))
+              .fields("category.py", f -> f.numberOfFragments(0))
+              .fields("tags", f -> f.numberOfFragments(0))
+              .fields("tags.py", f -> f.numberOfFragments(0))
           )
           .size(DEFAULT_OPEN_SEARCH_LIMIT > 0 ? DEFAULT_OPEN_SEARCH_LIMIT : 10),
       SearchDocument.class
@@ -425,8 +435,10 @@ public class SearchService {
       return null;
     }
     Map<String, List<String>> highlight = hit.highlight();
-    String highlightedContent = firstHighlight(highlight, "content");
-    String highlightedTitle = firstHighlight(highlight, "title");
+    String highlightedContent = firstHighlight(highlight, "content", "content.py");
+    String highlightedTitle = firstHighlight(highlight, "title", "title.py");
+    String highlightedAuthor = firstHighlight(highlight, "author", "author.py");
+    String highlightedCategory = firstHighlight(highlight, "category", "category.py");
     boolean highlightTitle = highlightedTitle != null && !highlightedTitle.isBlank();
     String documentType = document.type() != null ? document.type() : "";
     String effectiveType = documentType;
@@ -465,7 +477,18 @@ public class SearchService {
     String highlightedText = highlightTitle
       ? highlightedTitle
       : highlightHtml(document.title(), keyword);
-    String highlightedSubText = highlightHtml(subText, keyword);
+    String highlightedSubText;
+    if ("comment".equals(documentType)) {
+      highlightedSubText = highlightedAuthor != null && !highlightedAuthor.isBlank()
+        ? highlightedAuthor
+        : highlightHtml(subText, keyword);
+    } else if ("post".equals(documentType) || "post_title".equals(effectiveType)) {
+      highlightedSubText = highlightedCategory != null && !highlightedCategory.isBlank()
+        ? highlightedCategory
+        : highlightHtml(subText, keyword);
+    } else {
+      highlightedSubText = highlightHtml(subText, keyword);
+    }
     String highlightedExtra = snippetHtml != null ? snippetHtml : highlightHtml(snippet, keyword);
     return new SearchResult(
       effectiveType,
@@ -480,15 +503,25 @@ public class SearchService {
     );
   }
 
-  private String firstHighlight(Map<String, List<String>> highlight, String field) {
-    if (highlight == null || field == null) {
+  private String firstHighlight(Map<String, List<String>> highlight, String... fields) {
+    if (highlight == null || fields == null) {
       return null;
     }
-    List<String> values = highlight.get(field);
-    if (values == null || values.isEmpty()) {
-      return null;
+    for (String field : fields) {
+      if (field == null) {
+        continue;
+      }
+      List<String> values = highlight.get(field);
+      if (values == null || values.isEmpty()) {
+        continue;
+      }
+      for (String value : values) {
+        if (value != null && !value.isBlank()) {
+          return value;
+        }
+      }
     }
-    return values.get(0);
+    return null;
   }
 
   private String cleanHighlight(String value) {
