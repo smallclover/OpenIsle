@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch._types.FieldValue;
 import org.opensearch.client.opensearch._types.query_dsl.TextQueryType;
 import org.opensearch.client.opensearch.core.SearchResponse;
 import org.opensearch.client.opensearch.core.search.Hit;
@@ -229,6 +230,15 @@ public class SearchService {
     return openSearchProperties.isEnabled() && openSearchClient.isPresent();
   }
 
+  // 在类里加上（字段或静态常量都可）
+  private static final java.util.regex.Pattern HANS_PATTERN = java.util.regex.Pattern.compile(
+    "\\p{IsHan}"
+  );
+
+  private static boolean containsHan(String s) {
+    return s != null && HANS_PATTERN.matcher(s).find();
+  }
+
   private List<SearchResult> searchWithOpenSearch(String keyword) throws IOException {
     var client = openSearchClient.orElse(null);
     if (client == null) return List.of();
@@ -236,8 +246,7 @@ public class SearchService {
     final String qRaw = keyword == null ? "" : keyword.trim();
     if (qRaw.isEmpty()) return List.of();
 
-    final boolean enableWildcard = qRaw.length() >= 2;
-    final String qsEscaped = escapeForQueryString(qRaw);
+    final boolean hasHan = containsHan(qRaw);
 
     SearchResponse<SearchDocument> resp = client.search(
       b ->
@@ -246,105 +255,110 @@ public class SearchService {
           .trackTotalHits(t -> t.enabled(true))
           .query(qb ->
             qb.bool(bool -> {
-              // 1) 主召回：title/content
+              // ---------- 严格层 ----------
+              // 中文/任意短语（轻微符号/空白扰动）
               bool.should(s ->
-                s.multiMatch(mm ->
-                  mm
-                    .query(qRaw)
-                    .fields("title^3", "title.py^3", "content^2", "content.py^2")
-                    .type(TextQueryType.BestFields)
-                    .fuzziness("AUTO")
-                    .minimumShouldMatch("70%")
-                    .lenient(true)
-                )
+                s.matchPhrase(mp -> mp.field("title").query(qRaw).slop(2).boost(6.0f))
+              );
+              bool.should(s ->
+                s.matchPhrase(mp -> mp.field("content").query(qRaw).slop(2).boost(2.5f))
               );
 
-              // 2) 兜底：open* 前缀命中
-              if (enableWildcard) {
-                bool.should(s ->
-                  s.queryString(qs ->
-                    qs
-                      .query(
-                        "(title:" +
-                          qsEscaped +
-                          "* OR title.py:" +
-                          qsEscaped +
-                          "* OR content:" +
-                          qsEscaped +
-                          "* OR content.py:" +
-                          qsEscaped +
-                          "*)"
-                      )
-                      .analyzeWildcard(true)
-                  )
-                );
-              }
-
-              // 3) 结构化字段（keyword）
-              // term 需要 FieldValue（用 lambda 设置 stringValue）
+              // 结构化等值（.raw）
               bool.should(s ->
                 s.term(t ->
                   t
-                    .field("author")
+                    .field("author.raw")
                     .value(v -> v.stringValue(qRaw))
-                    .boost(2.0f)
+                    .boost(4.0f)
                 )
               );
               bool.should(s ->
-                s.match(m ->
-                  m
-                    .field("author.py")
-                    .query(v -> v.stringValue(qRaw))
-                    .boost(2.0f)
+                s.term(t ->
+                  t
+                    .field("category.raw")
+                    .value(v -> v.stringValue(qRaw))
+                    .boost(3.0f)
                 )
               );
               bool.should(s ->
-                s.match(m ->
-                  m
-                    .field("category.py")
-                    .query(v -> v.stringValue(qRaw))
-                    .boost(1.2f)
-                )
-              );
-              bool.should(s ->
-                s.match(m ->
-                  m
-                    .field("tags.py")
-                    .query(v -> v.stringValue(qRaw))
-                    .boost(1.2f)
+                s.term(t ->
+                  t
+                    .field("tags.raw")
+                    .value(v -> v.stringValue(qRaw))
+                    .boost(3.0f)
                 )
               );
 
-              if (enableWildcard) {
-                // prefix/wildcard 这里的 value 是 String，直接传即可
-                bool.should(s -> s.prefix(p -> p.field("category").value(qRaw).boost(1.2f)));
-                bool.should(s ->
-                  s.wildcard(w -> w.field("category").value("*" + qRaw + "*").boost(1.0f))
-                );
+              // 拼音短语（严格）
+              bool.should(s ->
+                s.matchPhrase(mp -> mp.field("title.py").query(qRaw).slop(1).boost(4.0f))
+              );
+              bool.should(s ->
+                s.matchPhrase(mp -> mp.field("content.py").query(qRaw).slop(1).boost(1.8f))
+              );
+              bool.should(s ->
+                s.matchPhrase(mp -> mp.field("author.py").query(qRaw).slop(1).boost(2.2f))
+              );
+              bool.should(s ->
+                s.matchPhrase(mp -> mp.field("category.py").query(qRaw).slop(1).boost(2.0f))
+              );
+              bool.should(s ->
+                s.matchPhrase(mp -> mp.field("tags.py").query(qRaw).slop(1).boost(2.0f))
+              );
 
+              // ---------- 放宽层（仅当包含中文时启用） ----------
+              if (hasHan) {
+                // title.zh
                 bool.should(s ->
-                  s.term(t ->
-                    t
-                      .field("tags")
-                      .value(v -> v.stringValue(qRaw))
-                      .boost(1.2f)
+                  s.match(m ->
+                    m
+                      .field("title.zh")
+                      .query(org.opensearch.client.opensearch._types.FieldValue.of(qRaw))
+                      .operator(org.opensearch.client.opensearch._types.query_dsl.Operator.Or)
+                      .minimumShouldMatch("2<-1 3<-1 4<-1 5<-2 6<-2 7<-3")
+                      .boost(3.0f)
                   )
                 );
+                // content.zh
                 bool.should(s ->
-                  s.wildcard(w -> w.field("tags").value("*" + qRaw + "*").boost(1.0f))
+                  s.match(m ->
+                    m
+                      .field("content.zh")
+                      .query(org.opensearch.client.opensearch._types.FieldValue.of(qRaw))
+                      .operator(org.opensearch.client.opensearch._types.query_dsl.Operator.Or)
+                      .minimumShouldMatch("2<-1 3<-1 4<-1 5<-2 6<-2 7<-3")
+                      .boost(1.6f)
+                  )
                 );
               }
 
               return bool.minimumShouldMatch("1");
             })
           )
-          .highlight(h ->
-            h
+          // ---------- 高亮：允许跨子字段回填 + 匹配字段组 ----------
+          .highlight(h -> {
+            var hb = h
               .preTags("<mark>")
               .postTags("</mark>")
-              .fields("title", f -> f.fragmentSize(highlightFragmentSize()).numberOfFragments(1))
+              .requireFieldMatch(false)
+              .fields("title", f ->
+                f
+                  .fragmentSize(highlightFragmentSize())
+                  .numberOfFragments(1)
+                  .matchedFields(List.of("title", "title.zh", "title.py"))
+              )
+              .fields("content", f ->
+                f
+                  .fragmentSize(highlightFragmentSize())
+                  .numberOfFragments(1)
+                  .matchedFields(List.of("content", "content.zh", "content.py"))
+              )
+              .fields("title.zh", f -> f.fragmentSize(highlightFragmentSize()).numberOfFragments(1))
+              .fields("content.zh", f ->
+                f.fragmentSize(highlightFragmentSize()).numberOfFragments(1)
+              )
               .fields("title.py", f -> f.fragmentSize(highlightFragmentSize()).numberOfFragments(1))
-              .fields("content", f -> f.fragmentSize(highlightFragmentSize()).numberOfFragments(1))
               .fields("content.py", f ->
                 f.fragmentSize(highlightFragmentSize()).numberOfFragments(1)
               )
@@ -353,8 +367,9 @@ public class SearchService {
               .fields("category", f -> f.numberOfFragments(0))
               .fields("category.py", f -> f.numberOfFragments(0))
               .fields("tags", f -> f.numberOfFragments(0))
-              .fields("tags.py", f -> f.numberOfFragments(0))
-          )
+              .fields("tags.py", f -> f.numberOfFragments(0));
+            return hb;
+          })
           .size(DEFAULT_OPEN_SEARCH_LIMIT > 0 ? DEFAULT_OPEN_SEARCH_LIMIT : 10),
       SearchDocument.class
     );
@@ -435,8 +450,20 @@ public class SearchService {
       return null;
     }
     Map<String, List<String>> highlight = hit.highlight();
-    String highlightedContent = firstHighlight(highlight, "content", "content.py");
-    String highlightedTitle = firstHighlight(highlight, "title", "title.py");
+    String highlightedContent = firstHighlight(
+      highlight,
+      "content",
+      "content.py",
+      "content.zh",
+      "content.raw"
+    );
+    String highlightedTitle = firstHighlight(
+      highlight,
+      "title",
+      "title.py",
+      "title.zh",
+      "title.raw"
+    );
     String highlightedAuthor = firstHighlight(highlight, "author", "author.py");
     String highlightedCategory = firstHighlight(highlight, "category", "category.py");
     boolean highlightTitle = highlightedTitle != null && !highlightedTitle.isBlank();
@@ -451,6 +478,7 @@ public class SearchService {
     if (snippetHtml == null && highlightTitle) {
       snippetHtml = highlightedTitle;
     }
+
     String snippet = snippetHtml != null && !snippetHtml.isBlank()
       ? cleanHighlight(snippetHtml)
       : null;
