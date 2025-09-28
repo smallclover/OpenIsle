@@ -146,7 +146,7 @@ public class SearchIndexInitializer {
     settings.put("analysis.filter.py_filter.type", JsonData.of("pinyin"));
     settings.put("analysis.filter.py_filter.keep_full_pinyin", JsonData.of(true));
     settings.put("analysis.filter.py_filter.keep_joined_full_pinyin", JsonData.of(true));
-    settings.put("analysis.filter.py_filter.keep_first_letter", JsonData.of(true));
+    settings.put("analysis.filter.py_filter.keep_first_letter", JsonData.of(false));
     settings.put("analysis.filter.py_filter.remove_duplicated_term", JsonData.of(true));
     settings.put("analysis.analyzer.py_index.type", JsonData.of("custom"));
     settings.put("analysis.analyzer.py_index.tokenizer", JsonData.of("standard"));
