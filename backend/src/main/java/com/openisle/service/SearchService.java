@@ -19,6 +19,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ import org.opensearch.client.opensearch._types.query_dsl.TextQueryType;
 import org.opensearch.client.opensearch.core.SearchResponse;
 import org.opensearch.client.opensearch.core.search.Hit;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.HtmlUtils;
 
 @Service
 @Slf4j
@@ -97,49 +100,96 @@ public class SearchService {
   }
 
   private List<SearchResult> fallbackGlobalSearch(String keyword) {
+    final String effectiveKeyword = keyword == null ? "" : keyword.trim();
     Stream<SearchResult> users = searchUsers(keyword)
       .stream()
       .map(u ->
-        new SearchResult("user", u.getId(), u.getUsername(), u.getIntroduction(), null, null)
+        new SearchResult(
+          "user",
+          u.getId(),
+          u.getUsername(),
+          u.getIntroduction(),
+          null,
+          null,
+          highlightHtml(u.getUsername(), effectiveKeyword),
+          highlightHtml(u.getIntroduction(), effectiveKeyword),
+          null
+        )
       );
 
     Stream<SearchResult> categories = searchCategories(keyword)
       .stream()
       .map(c ->
-        new SearchResult("category", c.getId(), c.getName(), null, c.getDescription(), null)
+        new SearchResult(
+          "category",
+          c.getId(),
+          c.getName(),
+          null,
+          c.getDescription(),
+          null,
+          highlightHtml(c.getName(), effectiveKeyword),
+          null,
+          highlightHtml(c.getDescription(), effectiveKeyword)
+        )
       );
 
     Stream<SearchResult> tags = searchTags(keyword)
       .stream()
-      .map(t -> new SearchResult("tag", t.getId(), t.getName(), null, t.getDescription(), null));
+      .map(t ->
+        new SearchResult(
+          "tag",
+          t.getId(),
+          t.getName(),
+          null,
+          t.getDescription(),
+          null,
+          highlightHtml(t.getName(), effectiveKeyword),
+          null,
+          highlightHtml(t.getDescription(), effectiveKeyword)
+        )
+      );
 
     // Merge post results while removing duplicates between search by content
     // and search by title
     List<SearchResult> mergedPosts = Stream.concat(
       searchPosts(keyword)
         .stream()
-        .map(p ->
-          new SearchResult(
+        .map(p -> {
+          String snippet = extractSnippet(p.getContent(), keyword, false);
+          return new SearchResult(
             "post",
             p.getId(),
             p.getTitle(),
             p.getCategory() != null ? p.getCategory().getName() : null,
-            extractSnippet(p.getContent(), keyword, false),
-            null
-          )
-        ),
+            snippet,
+            null,
+            highlightHtml(p.getTitle(), effectiveKeyword),
+            highlightHtml(
+              p.getCategory() != null ? p.getCategory().getName() : null,
+              effectiveKeyword
+            ),
+            highlightHtml(snippet, effectiveKeyword)
+          );
+        }),
       searchPostsByTitle(keyword)
         .stream()
-        .map(p ->
-          new SearchResult(
+        .map(p -> {
+          String snippet = extractSnippet(p.getContent(), keyword, true);
+          return new SearchResult(
             "post_title",
             p.getId(),
             p.getTitle(),
             p.getCategory() != null ? p.getCategory().getName() : null,
-            extractSnippet(p.getContent(), keyword, true),
-            null
-          )
-        )
+            snippet,
+            null,
+            highlightHtml(p.getTitle(), effectiveKeyword),
+            highlightHtml(
+              p.getCategory() != null ? p.getCategory().getName() : null,
+              effectiveKeyword
+            ),
+            highlightHtml(snippet, effectiveKeyword)
+          );
+        })
     )
       .collect(
         java.util.stream.Collectors.toMap(
@@ -155,16 +205,20 @@ public class SearchService {
 
     Stream<SearchResult> comments = searchComments(keyword)
       .stream()
-      .map(c ->
-        new SearchResult(
+      .map(c -> {
+        String snippet = extractSnippet(c.getContent(), keyword, false);
+        return new SearchResult(
           "comment",
           c.getId(),
           c.getPost().getTitle(),
           c.getAuthor().getUsername(),
-          extractSnippet(c.getContent(), keyword, false),
-          c.getPost().getId()
-        )
-      );
+          snippet,
+          c.getPost().getId(),
+          highlightHtml(c.getPost().getTitle(), effectiveKeyword),
+          highlightHtml(c.getAuthor().getUsername(), effectiveKeyword),
+          highlightHtml(snippet, effectiveKeyword)
+        );
+      });
 
     return Stream.of(users, categories, tags, mergedPosts.stream(), comments)
       .flatMap(s -> s)
@@ -379,15 +433,23 @@ public class SearchService {
     if ("post".equals(documentType) && highlightTitle) {
       effectiveType = "post_title";
     }
-    String snippet = highlightedContent != null && !highlightedContent.isBlank()
-      ? cleanHighlight(highlightedContent)
+    String snippetHtml = highlightedContent != null && !highlightedContent.isBlank()
+      ? highlightedContent
       : null;
-    if (snippet == null && highlightTitle) {
-      snippet = cleanHighlight(highlightedTitle);
+    if (snippetHtml == null && highlightTitle) {
+      snippetHtml = highlightedTitle;
     }
+    String snippet = snippetHtml != null && !snippetHtml.isBlank()
+      ? cleanHighlight(snippetHtml)
+      : null;
     boolean fromStart = "post_title".equals(effectiveType);
     if (snippet == null || snippet.isBlank()) {
       snippet = fallbackSnippet(document.content(), keyword, fromStart);
+      if (snippetHtml == null) {
+        snippetHtml = highlightHtml(snippet, keyword);
+      }
+    } else if (snippetHtml == null) {
+      snippetHtml = highlightHtml(snippet, keyword);
     }
     if (snippet == null) {
       snippet = "";
@@ -400,13 +462,21 @@ public class SearchService {
       subText = document.author();
       postId = document.postId();
     }
+    String highlightedText = highlightTitle
+      ? highlightedTitle
+      : highlightHtml(document.title(), keyword);
+    String highlightedSubText = highlightHtml(subText, keyword);
+    String highlightedExtra = snippetHtml != null ? snippetHtml : highlightHtml(snippet, keyword);
     return new SearchResult(
       effectiveType,
       document.entityId(),
       document.title(),
       subText,
       snippet,
-      postId
+      postId,
+      highlightedText,
+      highlightedSubText,
+      highlightedExtra
     );
   }
 
@@ -462,12 +532,45 @@ public class SearchService {
     return snippet;
   }
 
+  private String highlightHtml(String text, String keyword) {
+    if (text == null) {
+      return null;
+    }
+    String normalizedKeyword = keyword == null ? "" : keyword.trim();
+    if (normalizedKeyword.isEmpty()) {
+      return HtmlUtils.htmlEscape(text);
+    }
+    Pattern pattern = Pattern.compile(
+      Pattern.quote(normalizedKeyword),
+      Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE
+    );
+    Matcher matcher = pattern.matcher(text);
+    if (!matcher.find()) {
+      return HtmlUtils.htmlEscape(text);
+    }
+    matcher.reset();
+    StringBuilder sb = new StringBuilder();
+    int lastEnd = 0;
+    while (matcher.find()) {
+      sb.append(HtmlUtils.htmlEscape(text.substring(lastEnd, matcher.start())));
+      sb.append("<mark>");
+      sb.append(HtmlUtils.htmlEscape(matcher.group()));
+      sb.append("</mark>");
+      lastEnd = matcher.end();
+    }
+    sb.append(HtmlUtils.htmlEscape(text.substring(lastEnd)));
+    return sb.toString();
+  }
+
   public record SearchResult(
     String type,
     Long id,
     String text,
     String subText,
     String extra,
-    Long postId
+    Long postId,
+    String highlightedText,
+    String highlightedSubText,
+    String highlightedExtra
   ) {}
 }

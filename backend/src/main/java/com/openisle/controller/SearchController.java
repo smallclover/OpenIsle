@@ -115,6 +115,9 @@ public class SearchController {
         dto.setSubText(r.subText());
         dto.setExtra(r.extra());
         dto.setPostId(r.postId());
+        dto.setHighlightedText(r.highlightedText());
+        dto.setHighlightedSubText(r.highlightedSubText());
+        dto.setHighlightedExtra(r.highlightedExtra());
         return dto;
       })
       .collect(Collectors.toList());

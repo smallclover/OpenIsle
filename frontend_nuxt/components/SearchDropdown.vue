@@ -26,9 +26,20 @@
         <div class="search-option-item">
           <component :is="iconMap[option.type]" class="result-icon" />
           <div class="result-body">
-            <div class="result-main" v-html="highlight(option.text)"></div>
-            <div v-if="option.subText" class="result-sub" v-html="highlight(option.subText)"></div>
-            <div v-if="option.extra" class="result-extra" v-html="highlight(option.extra)"></div>
+            <div
+              class="result-main"
+              v-html="renderHighlight(option.highlightedText, option.text)"
+            ></div>
+            <div
+              v-if="option.subText"
+              class="result-sub"
+              v-html="renderHighlight(option.highlightedSubText, option.subText)"
+            ></div>
+            <div
+              v-if="option.extra"
+              class="result-extra"
+              v-html="renderHighlight(option.highlightedExtra, option.extra)"
+            ></div>
           </div>
         </div>
       </template>
@@ -70,16 +81,30 @@ const fetchResults = async (kw) => {
     subText: r.subText,
     extra: r.extra,
     postId: r.postId,
+    highlightedText: r.highlightedText,
+    highlightedSubText: r.highlightedSubText,
+    highlightedExtra: r.highlightedExtra,
   }))
   return results.value
 }
 
-const highlight = (text) => {
-  text = stripMarkdown(text)
-  if (!keyword.value) return text
-  const reg = new RegExp(keyword.value, 'gi')
-  const res = text.replace(reg, (m) => `<span class="highlight">${m}</span>`)
-  return res
+const escapeHtml = (value = '') =>
+  String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+
+const renderHighlight = (highlighted, fallback) => {
+  if (highlighted) {
+    return highlighted
+  }
+  const plain = stripMarkdown(fallback || '')
+  if (!plain) {
+    return ''
+  }
+  return escapeHtml(plain)
 }
 
 const iconMap = {
@@ -168,7 +193,7 @@ defineExpose({
   padding: 10px 20px;
 }
 
-:deep(.highlight) {
+:deep(mark) {
   color: var(--primary-color);
 }
 

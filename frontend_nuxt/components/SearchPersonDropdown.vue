@@ -32,11 +32,14 @@
             :disable-link="true"
           />
           <div class="result-body">
-            <div class="result-main" v-html="highlight(option.username)"></div>
+            <div
+              class="result-main"
+              v-html="renderHighlight(option.highlightedUsername, option.username)"
+            ></div>
             <div
               v-if="option.introduction"
               class="result-sub"
-              v-html="highlight(option.introduction)"
+              v-html="renderHighlight(option.highlightedIntroduction, option.introduction)"
             ></div>
           </div>
         </div>
@@ -79,15 +82,29 @@ const fetchResults = async (kw) => {
     username: u.username,
     avatar: u.avatar,
     introduction: u.introduction,
+    highlightedUsername: u.highlightedText,
+    highlightedIntroduction: u.highlightedSubText || u.highlightedExtra,
   }))
   return results.value
 }
 
-const highlight = (text) => {
-  text = stripMarkdown(text || '')
-  if (!keyword.value) return text
-  const reg = new RegExp(keyword.value, 'gi')
-  return text.replace(reg, (m) => `<span class="highlight">${m}</span>`)
+const escapeHtml = (value = '') =>
+  String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+
+const renderHighlight = (highlighted, fallback) => {
+  if (highlighted) {
+    return highlighted
+  }
+  const plain = stripMarkdown(fallback || '')
+  if (!plain) {
+    return ''
+  }
+  return escapeHtml(plain)
 }
 
 watch(selected, async (val) => {
@@ -170,7 +187,7 @@ defineExpose({
   padding: 10px 20px;
 }
 
-:deep(.highlight) {
+:deep(mark) {
   color: var(--primary-color);
 }
 
