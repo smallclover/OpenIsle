@@ -12,4 +12,7 @@ public class SearchResultDto {
   private String subText;
   private String extra;
   private Long postId;
+  private String highlightedText;
+  private String highlightedSubText;
+  private String highlightedExtra;
 }
