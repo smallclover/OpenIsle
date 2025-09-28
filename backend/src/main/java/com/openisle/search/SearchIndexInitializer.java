@@ -52,8 +52,6 @@ public class SearchIndexInitializer {
     }
   }
 
-  // SearchIndexInitializer.java —— 只贴需要替换/新增的方法
-
   private TypeMapping postMapping() {
     return TypeMapping.of(builder ->
       builder
@@ -122,8 +120,6 @@ public class SearchIndexInitializer {
         )
     );
   }
-
-  // SearchIndexInitializer.java —— 只贴需要替换/新增的方法
 
   /** 文本字段：.raw（keyword 精确） + .py（拼音短语精确） + .zh（ICU+2~3gram 召回） */
   private Property textWithRawAndPinyin() {
