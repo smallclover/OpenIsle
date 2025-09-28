@@ -5,16 +5,20 @@ services:
     container_name: openisle-mysql
     restart: always
     env_file:
-      - ../backend/open-isle.env
-      - ./.env
+      - ../.env
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
-      - "${MYSQL_PORT}:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       - ../backend/src/main/resources/db/init:/docker-entrypoint-initdb.d
     networks:
       - openisle-network
-  
+
   # OpenSearch Service
   opensearch:
     build:
@@ -52,6 +56,35 @@ services:
       - opensearch
     restart: unless-stopped
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: openisle-rabbitmq
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - openisle-network
+
+  redis:
+    image: redis:7
+    container_name: openisle-redis
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - openisle-network
 
   # Java spring boot service
   springboot:
@@ -59,18 +92,60 @@ services:
     container_name: openisle-springboot
     working_dir: /app
     env_file:
-      - ../backend/open-isle.env
-      - ./.env
-    environment:
-      - MYSQL_URL=jdbc:mysql://mysql:${MYSQL_PORT}/${MYSQL_DATABASE}?useUnicode=yes&characterEncoding=UTF-8&useInformationSchema=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - ../.env
     ports:
-      - "${SERVER_PORT}:8080"
+      - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"
     volumes:
       - ../backend:/app
       - maven-repo:/root/.m2
     depends_on:
       - mysql
+      - redis
+      - rabbitmq
     command: mvn clean spring-boot:run -Dmaven.test.skip=true
+    networks:
+      - openisle-network
+
+  websocket-service:
+    image: maven:3.9-eclipse-temurin-17
+    container_name: openisle-websocket
+    working_dir: /app
+    env_file:
+      - ../.env
+    environment:
+      SERVER_PORT: ${WEBSOCKET_PORT}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      WEBSITE_URL: ${WEBSITE_URL}
+    ports:
+      - "${WEBSOCKET_PORT:-8082}:${WEBSOCKET_PORT:-8082}"
+    volumes:
+      - ../websocket_service:/app
+      - websocket-maven-repo:/root/.m2
+    depends_on:
+      - rabbitmq
+    command: mvn clean spring-boot:run -Dmaven.test.skip=true
+    networks:
+      - openisle-network
+
+  frontend:
+    image: node:20
+    container_name: openisle-frontend
+    working_dir: /app
+    env_file:
+      - ../.env
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ../frontend_nuxt:/app
+      - frontend-node-modules:/app/node_modules
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      - springboot
+      - websocket-service
     networks:
       - openisle-network
 
@@ -81,3 +156,7 @@ networks:
 volumes:
   mysql-data:
   maven-repo:
+  redis-data:
+  rabbitmq-data:
+  websocket-maven-repo:
+  frontend-node-modules:
