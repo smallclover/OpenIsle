@@ -13,12 +13,18 @@ services:
       - ../backend/src/main/resources/db/init:/docker-entrypoint-initdb.d
     networks:
       - openisle-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
 
   # OpenSearch Service
   opensearch:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: opensearch.Dockerfile
     container_name: opensearch
     environment:
       - cluster.name=os-single
@@ -38,6 +44,14 @@ services:
       - "${OPENSEARCH_PORT:-9200}:9200"
       - "${OPENSEARCH_METRICS_PORT:-9600}:9600"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9200/_cluster/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    networks:
+      - openisle-network
 
   dashboards:
     image: opensearchproject/opensearch-dashboards:3.0.0
@@ -50,6 +64,8 @@ services:
     depends_on:
       - opensearch
     restart: unless-stopped
+    networks:
+      - openisle-network 
 
   rabbitmq:
     image: rabbitmq:3.13-management
@@ -85,16 +101,26 @@ services:
     working_dir: /app
     env_file:
       - ../.env
+    environment:
+      - MYSQL_HOST=mysql   
+      - OPENSEARCH_HOST=opensearch
+      - RABBITMQ_HOST=rabbitmq
     ports:
       - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"
     volumes:
       - ../backend:/app
       - maven-repo:/root/.m2
     depends_on:
-      - mysql
-      - redis
-      - rabbitmq
-      - websocket-service
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+      websocket-service:
+        condition: service_started
+      opensearch:
+        condition: service_healthy
     command: mvn clean spring-boot:run -Dmaven.test.skip=true
     networks:
       - openisle-network
@@ -116,9 +142,9 @@ services:
     networks:
       - openisle-network
 
-  frontend:
+  frontend_dev:
     image: node:20
-    container_name: openisle-frontend
+    container_name: openisle-frontend-dev
     working_dir: /app
     env_file:
       - ../.env
@@ -133,6 +159,30 @@ services:
       - websocket-service
     networks:
       - openisle-network
+    profiles:
+      - dev
+
+  frontend_service:
+    build:
+      context: ..
+      dockerfile: frontend-service.Dockerfile
+    container_name: openisle-frontend-service
+    working_dir: /app
+    env_file:
+      - ../.env
+    volumes:
+      - ../frontend_nuxt:/app
+      - frontend-service-node-modules:/app/node_modules
+      - frontend-static:/var/www/openisle
+    ports:
+      - "${FRONTEND_SERVICE_PORT:-3001}:3000"
+    depends_on:
+      - springboot
+      - websocket-service
+    networks:
+      - openisle-network
+    profiles:
+      - service
 
 networks:
   openisle-network:
@@ -145,3 +195,5 @@ volumes:
   rabbitmq-data:
   websocket-maven-repo:
   frontend-node-modules:
+  frontend-service-node-modules:
+  frontend-static:
