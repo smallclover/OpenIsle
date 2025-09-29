@@ -14,7 +14,17 @@ services:
     networks:
       - openisle-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p$MYSQL_ROOT_PASSWORD"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "127.0.0.1",
+          "-u",
+          "root",
+          "-p$MYSQL_ROOT_PASSWORD",
+        ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -36,7 +46,7 @@ services:
       - cluster.blocks.create_index=false
     ulimits:
       memlock: { soft: -1, hard: -1 }
-      nofile:  { soft: 65536, hard: 65536 }
+      nofile: { soft: 65536, hard: 65536 }
     volumes:
       - ./data:/usr/share/opensearch/data
       - ./snapshots:/snapshots
@@ -45,7 +55,11 @@ services:
       - "${OPENSEARCH_METRICS_PORT:-9600}:9600"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9200/_cluster/health >/dev/null"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://127.0.0.1:9200/_cluster/health >/dev/null",
+        ]
       interval: 10s
       timeout: 5s
       retries: 30
@@ -65,7 +79,7 @@ services:
       - opensearch
     restart: unless-stopped
     networks:
-      - openisle-network 
+      - openisle-network
 
   rabbitmq:
     image: rabbitmq:3.13-management
@@ -89,7 +103,6 @@ services:
       start_period: 30s
     networks:
       - openisle-network
-
 
   redis:
     image: redis:7
@@ -218,6 +231,41 @@ services:
       - openisle-network
     profiles:
       - service
+
+  loopback_8080:
+    image: alpine/socat
+    container_name: loopback-8080
+    # 监听“frontend_dev 容器自身的” 127.0.0.1:8080 → 转发到 springboot:8080
+    command: ["-d","-d","-ly","TCP4-LISTEN:8080,bind=127.0.0.1,reuseaddr,fork","TCP4:springboot:8080"]
+    depends_on:
+      springboot:
+        condition: service_started
+    network_mode: "service:frontend_dev"
+    profiles: ["dev"]
+    healthcheck:
+      test: ["CMD","sh","-c","nc -z 127.0.0.1 8080"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+  
+  loopback_8082:
+    image: alpine/socat
+    container_name: loopback-8082
+    # 监听 127.0.0.1:8082 → 转发到 websocket-service:8082（WS 纯 TCP 可直接过）
+    command: ["-d","-d","-ly","TCP4-LISTEN:8082,bind=127.0.0.1,reuseaddr,fork","TCP4:websocket-service:8082"]
+    depends_on:
+      websocket-service:
+        condition: service_started
+    network_mode: "service:frontend_dev"
+    profiles: ["dev"]
+    healthcheck:
+      test: ["CMD","sh","-c","nc -z 127.0.0.1 8082"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
 
 networks:
   openisle-network:
