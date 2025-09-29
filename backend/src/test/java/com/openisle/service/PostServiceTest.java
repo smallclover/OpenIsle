@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import com.openisle.exception.RateLimitException;
 import com.openisle.model.*;
 import com.openisle.repository.*;
+import com.openisle.search.SearchIndexEventPublisher;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +44,7 @@ class PostServiceTest {
     PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
     PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
     RedisTemplate redisTemplate = mock(RedisTemplate.class);
+    SearchIndexEventPublisher searchIndexEventPublisher = mock(SearchIndexEventPublisher.class);
 
     PostService service = new PostService(
       postRepo,
@@ -69,7 +71,8 @@ class PostServiceTest {
       postChangeLogService,
       pointHistoryRepository,
       PublishMode.DIRECT,
-      redisTemplate
+      redisTemplate,
+      searchIndexEventPublisher
     );
     when(context.getBean(PostService.class)).thenReturn(service);
 
@@ -121,6 +124,7 @@ class PostServiceTest {
     PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
     PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
     RedisTemplate redisTemplate = mock(RedisTemplate.class);
+    SearchIndexEventPublisher searchIndexEventPublisher = mock(SearchIndexEventPublisher.class);
 
     PostService service = new PostService(
       postRepo,
@@ -147,7 +151,8 @@ class PostServiceTest {
       postChangeLogService,
       pointHistoryRepository,
       PublishMode.DIRECT,
-      redisTemplate
+      redisTemplate,
+      searchIndexEventPublisher
     );
     when(context.getBean(PostService.class)).thenReturn(service);
 
@@ -212,6 +217,7 @@ class PostServiceTest {
     PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
     PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
     RedisTemplate redisTemplate = mock(RedisTemplate.class);
+    SearchIndexEventPublisher searchIndexEventPublisher = mock(SearchIndexEventPublisher.class);
 
     PostService service = new PostService(
       postRepo,
@@ -238,7 +244,8 @@ class PostServiceTest {
       postChangeLogService,
       pointHistoryRepository,
       PublishMode.DIRECT,
-      redisTemplate
+      redisTemplate,
+      searchIndexEventPublisher
     );
     when(context.getBean(PostService.class)).thenReturn(service);
 
@@ -295,6 +302,7 @@ class PostServiceTest {
     PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
     PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
     RedisTemplate redisTemplate = mock(RedisTemplate.class);
+    SearchIndexEventPublisher searchIndexEventPublisher = mock(SearchIndexEventPublisher.class);
 
     PostService service = new PostService(
       postRepo,
@@ -321,7 +329,8 @@ class PostServiceTest {
       postChangeLogService,
       pointHistoryRepository,
       PublishMode.DIRECT,
-      redisTemplate
+      redisTemplate,
+      searchIndexEventPublisher
     );
     when(context.getBean(PostService.class)).thenReturn(service);
 
@@ -389,6 +398,7 @@ class PostServiceTest {
     PostChangeLogService postChangeLogService = mock(PostChangeLogService.class);
     PointHistoryRepository pointHistoryRepository = mock(PointHistoryRepository.class);
     RedisTemplate redisTemplate = mock(RedisTemplate.class);
+    SearchIndexEventPublisher searchIndexEventPublisher = mock(SearchIndexEventPublisher.class);
 
     PostService service = new PostService(
       postRepo,
@@ -415,7 +425,8 @@ class PostServiceTest {
       postChangeLogService,
       pointHistoryRepository,
       PublishMode.DIRECT,
-      redisTemplate
+      redisTemplate,
+      searchIndexEventPublisher
     );
     when(context.getBean(PostService.class)).thenReturn(service);
 

@@ -68,9 +68,9 @@ class SearchControllerTest {
     c.setContent("nice");
     Mockito.when(searchService.globalSearch("n")).thenReturn(
       List.of(
-        new SearchService.SearchResult("user", 1L, "bob", null, null, null),
-        new SearchService.SearchResult("post", 2L, "hello", null, null, null),
-        new SearchService.SearchResult("comment", 3L, "nice", null, null, null)
+        new SearchService.SearchResult("user", 1L, "bob", null, null, null, null, null, null),
+        new SearchService.SearchResult("post", 2L, "hello", null, null, null, null, null, null),
+        new SearchService.SearchResult("comment", 3L, "nice", null, null, null, null, null, null)
       )
     );
 
