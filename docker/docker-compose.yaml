@@ -71,15 +71,25 @@ services:
     image: rabbitmq:3.13-management
     container_name: openisle-rabbitmq
     restart: unless-stopped
-    env_file:
-      - ../.env
+    environment:
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
     ports:
       - "${RABBITMQ_PORT:-5672}:5672"
       - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+      - ./rabbitmq/conf/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq/conf/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
     networks:
       - openisle-network
+
 
   redis:
     image: redis:7
@@ -101,6 +111,9 @@ services:
     working_dir: /app
     env_file:
       - ../.env
+    environment:
+      SPRING_HEALTH_PATH: ${SPRING_HEALTH_PATH:-/actuator/health}
+      SERVER_PORT: ${SERVER_PORT:-8080}
     ports:
       - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"
     volumes:
@@ -117,7 +130,16 @@ services:
         condition: service_started
       opensearch:
         condition: service_healthy
-    command: mvn clean spring-boot:run -Dmaven.test.skip=true
+    command: >
+      sh -c "apt-get update && apt-get install -y --no-install-recommends curl &&
+             mvn clean spring-boot:run -Dmaven.test.skip=true"
+    # healthcheck:
+    #   test: ["CMD-SHELL",
+    #          "curl -fsS http://127.0.0.1:${SERVER_PORT:-8080}${SPRING_HEALTH_PATH:-/actuator/health} | grep -q '\"status\"\\s*:\\s*\"UP\"'"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 30
+    #   start_period: 90s
     networks:
       - openisle-network
 
@@ -127,14 +149,27 @@ services:
     working_dir: /app
     env_file:
       - ../.env
+    environment:
+      WS_HEALTH_PATH: ${WS_HEALTH_PATH:-/actuator/health}
+      WEBSOCKET_PORT: ${WEBSOCKET_PORT:-8082}
     ports:
       - "${WEBSOCKET_PORT:-8082}:${WEBSOCKET_PORT:-8082}"
     volumes:
       - ../websocket_service:/app
       - websocket-maven-repo:/root/.m2
     depends_on:
-      - rabbitmq
-    command: mvn clean spring-boot:run -Dmaven.test.skip=true
+      rabbitmq:
+        condition: service_healthy
+    command: >
+      sh -c "apt-get update && apt-get install -y --no-install-recommends curl &&
+             mvn clean spring-boot:run -Dmaven.test.skip=true"
+    # healthcheck:
+    #   test: ["CMD-SHELL",
+    #          "curl -fsS http://127.0.0.1:${WEBSOCKET_PORT:-8082}${WS_HEALTH_PATH:-/actuator/health} | grep -q '\"status\"\\s*:\\s*\"UP\"'"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 30
+    #   start_period: 90s
     networks:
       - openisle-network
 
@@ -151,8 +186,10 @@ services:
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
-      - springboot
-      - websocket-service
+      springboot:
+        condition: service_started
+      websocket-service:
+        condition: service_started
     networks:
       - openisle-network
     profiles:
@@ -173,8 +210,10 @@ services:
     ports:
       - "${FRONTEND_SERVICE_PORT:-3001}:3000"
     depends_on:
-      - springboot
-      - websocket-service
+      springboot:
+        condition: service_started
+      websocket-service:
+        condition: service_started
     networks:
       - openisle-network
     profiles:
