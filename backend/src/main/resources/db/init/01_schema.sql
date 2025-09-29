@@ -1,9 +1,8 @@
 USE `openisle`;
-
 SET NAMES utf8mb4;
+
 SET FOREIGN_KEY_CHECKS = 0;
 
--- users 表
 CREATE TABLE IF NOT EXISTS `users` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `approved` bit(1) DEFAULT NULL,
@@ -26,7 +25,6 @@ CREATE TABLE IF NOT EXISTS `users` (
   UNIQUE KEY `UK_users_username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- categories 表
 CREATE TABLE IF NOT EXISTS `categories` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `description` text,
@@ -37,7 +35,6 @@ CREATE TABLE IF NOT EXISTS `categories` (
   UNIQUE KEY `UK_categories_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- tags 表（依赖 users.id 外键）
 CREATE TABLE IF NOT EXISTS `tags` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `approved` bit(1) DEFAULT NULL,
