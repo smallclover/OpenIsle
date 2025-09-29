@@ -101,10 +101,6 @@ services:
     working_dir: /app
     env_file:
       - ../.env
-    environment:
-      - MYSQL_HOST=mysql   
-      - OPENSEARCH_HOST=opensearch
-      - RABBITMQ_HOST=rabbitmq
     ports:
       - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"
     volumes:

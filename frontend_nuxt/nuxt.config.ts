@@ -9,7 +9,9 @@ export default defineNuxtConfig({
   modules: ['@nuxt/image'],
   runtimeConfig: {
     public: {
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || '',
+      apiBaseUrl: process.server
+        ? process.env.NUXT_PUBLIC_API_BASE_URL_SSR
+        : process.env.NUXT_PUBLIC_API_BASE_URL,
       websocketUrl: process.env.NUXT_PUBLIC_WEBSOCKET_URL || '',
       websiteBaseUrl: process.env.NUXT_PUBLIC_WEBSITE_BASE_URL || '',
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || '',
