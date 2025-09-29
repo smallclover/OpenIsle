@@ -179,6 +179,8 @@ public class SecurityConfig {
           .permitAll()
           .requestMatchers(HttpMethod.POST, "/api/point-goods")
           .permitAll()
+          .requestMatchers("/actuator/**")
+          .permitAll()
           .requestMatchers(HttpMethod.POST, "/api/categories/**")
           .hasAuthority("ADMIN")
           .requestMatchers(HttpMethod.POST, "/api/tags/**")
