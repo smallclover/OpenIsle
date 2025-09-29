@@ -137,12 +137,22 @@ services:
       rabbitmq:
         condition: service_started
       websocket-service:
-        condition: service_started
+        condition: service_healthy
       opensearch:
         condition: service_healthy
     command: >
       sh -c "apt-get update && apt-get install -y --no-install-recommends curl &&
              mvn clean spring-boot:run -Dmaven.test.skip=true"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://127.0.0.1:${SERVER_PORT:-8080}${SPRING_HEALTH_PATH:-/actuator/health} || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
     networks:
       - openisle-network
 
@@ -166,6 +176,16 @@ services:
     command: >
       sh -c "apt-get update && apt-get install -y --no-install-recommends curl &&
              mvn clean spring-boot:run -Dmaven.test.skip=true"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://127.0.0.1:${WEBSOCKET_PORT:-8082}${WS_HEALTH_PATH:-/actuator/health} || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
     networks:
       - openisle-network
 
@@ -183,9 +203,9 @@ services:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
       springboot:
-        condition: service_started
+        condition: service_healthy
       websocket-service:
-        condition: service_started
+        condition: service_healthy
     networks:
       - openisle-network
     profiles:
@@ -207,9 +227,9 @@ services:
       - "${FRONTEND_SERVICE_PORT:-3001}:3000"
     depends_on:
       springboot:
-        condition: service_started
+        condition: service_healthy
       websocket-service:
-        condition: service_started
+        condition: service_healthy
     networks:
       - openisle-network
     profiles:
@@ -229,7 +249,7 @@ services:
       ]
     depends_on:
       springboot:
-        condition: service_started
+        condition: service_healthy
     network_mode: "service:frontend_dev"
     profiles: ["dev"]
     healthcheck:
@@ -253,7 +273,7 @@ services:
       ]
     depends_on:
       websocket-service:
-        condition: service_started
+        condition: service_healthy
     network_mode: "service:frontend_dev"
     profiles: ["dev"]
     healthcheck:
