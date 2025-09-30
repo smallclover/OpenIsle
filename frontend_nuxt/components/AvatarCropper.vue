@@ -119,7 +119,7 @@ export default {
 
 .cropper-btn {
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: 10px;
   color: var(--primary-color);
   border: none;
   background: transparent;
@@ -128,7 +128,7 @@ export default {
 
 .cropper-btn.primary {
   background: var(--primary-color);
-  color: var(--text-color);
+  color: #ffff;
   border-color: var(--primary-color);
 }
 
