@@ -26,7 +26,6 @@ services:
       retries: 30
       start_period: 20s
 
-
   # OpenSearch Service
   opensearch:
     build:
@@ -53,10 +52,8 @@ services:
     restart: unless-stopped
     healthcheck:
       test:
-        [
-          "CMD-SHELL",
-          "curl -fsS http://127.0.0.1:9200/_cluster/health >/dev/null",
-        ]
+        - CMD-SHELL
+        - curl -fsS http://127.0.0.1:9200/_cluster/health >/dev/null
       interval: 10s
       timeout: 5s
       retries: 30
@@ -68,8 +65,8 @@ services:
     image: opensearchproject/opensearch-dashboards:3.0.0
     container_name: os-dashboards
     environment:
-      - OPENSEARCH_HOSTS=["http://opensearch:9200"]
-      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+      OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: "true"
     ports:
       - "${OPENSEARCH_DASHBOARDS_PORT:-5601}:5601"
     depends_on:
@@ -83,7 +80,7 @@ services:
     container_name: openisle-rabbitmq
     restart: unless-stopped
     environment:
-      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
+      RABBITMQ_DEFAULT_VHOST: "${RABBITMQ_VHOST:-/}"
     ports:
       - "${RABBITMQ_PORT:-5672}:5672"
       - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
@@ -144,11 +141,7 @@ services:
       sh -c "apt-get update && apt-get install -y --no-install-recommends curl &&
              mvn clean spring-boot:run -Dmaven.test.skip=true"
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -fsS http://127.0.0.1:${SERVER_PORT:-8080}${SPRING_HEALTH_PATH:-/actuator/health} || exit 1",
-        ]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:${SERVER_PORT:-8080}${SPRING_HEALTH_PATH:-/actuator/health} || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 30
@@ -178,11 +171,7 @@ services:
       sh -c "apt-get update && apt-get install -y --no-install-recommends curl &&
              mvn clean spring-boot:run -Dmaven.test.skip=true"
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -fsS http://127.0.0.1:${WEBSOCKET_PORT:-8082}${WS_HEALTH_PATH:-/actuator/health} || exit 1",
-        ]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:${WEBSOCKET_PORT:-8082}${WS_HEALTH_PATH:-/actuator/health} || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 30
@@ -212,16 +201,15 @@ services:
     profiles:
       - dev
 
-   frontend_service:
+  frontend_service:
     build:
-      context: ..                 # 仓库根目录（包含 frontend_nuxt/）
+      context: ..
       dockerfile: docker/frontend-service.Dockerfile
       args:
-        # 由 .env（或 --env-file）提供，默认 staging；正式环境脚本会传 production
         NUXT_ENV: ${NUXT_ENV:-staging}
     container_name: openisle-frontend
     env_file:
-      - ../.env                   # 或者在脚本里指定 .env.staging / .env.production
+      - ../.env
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
@@ -236,13 +224,11 @@ services:
     container_name: loopback-8080
     # 监听“frontend_dev 容器自身的” 127.0.0.1:8080 → 转发到 springboot:8080
     command:
-      [
-        "-d",
-        "-d",
-        "-ly",
-        "TCP4-LISTEN:8080,bind=127.0.0.1,reuseaddr,fork",
-        "TCP4:springboot:8080",
-      ]
+      - -d
+      - -d
+      - -ly
+      - TCP4-LISTEN:8080,bind=127.0.0.1,reuseaddr,fork
+      - TCP4:springboot:8080
     depends_on:
       springboot:
         condition: service_healthy
@@ -260,13 +246,11 @@ services:
     container_name: loopback-8082
     # 监听 127.0.0.1:8082 → 转发到 websocket-service:8082（WS 纯 TCP 可直接过）
     command:
-      [
-        "-d",
-        "-d",
-        "-ly",
-        "TCP4-LISTEN:8082,bind=127.0.0.1,reuseaddr,fork",
-        "TCP4:websocket-service:8082",
-      ]
+      - -d
+      - -d
+      - -ly
+      - TCP4-LISTEN:8082,bind=127.0.0.1,reuseaddr,fork
+      - TCP4:websocket-service:8082
     depends_on:
       websocket-service:
         condition: service_healthy
