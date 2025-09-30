@@ -2,7 +2,7 @@ services:
   # MySQL service
   mysql:
     image: mysql:8.0
-    container_name: openisle-mysql
+    container_name: ${COMPOSE_PROJECT_NAME}-openisle-mysql
     restart: always
     env_file:
       - ${ENV_FILE:-../.env}
@@ -32,7 +32,7 @@ services:
     build:
       context: .
       dockerfile: opensearch.Dockerfile
-    container_name: opensearch
+    container_name: ${COMPOSE_PROJECT_NAME}-opensearch
     environment:
       - cluster.name=os-single
       - node.name=os-node-1
@@ -45,8 +45,8 @@ services:
       memlock: { soft: -1, hard: -1 }
       nofile: { soft: 65536, hard: 65536 }
     volumes:
-      - ./data:/usr/share/opensearch/data
-      - ./snapshots:/snapshots
+      - ${OPENSEARCH_DATA_DIR:-./data}:/usr/share/opensearch/data
+      - ${OPENSEARCH_SNAPSHOT_DIR:-./snapshots}:/snapshots
     ports:
       - "${OPENSEARCH_PORT:-9200}:9200"
       - "${OPENSEARCH_METRICS_PORT:-9600}:9600"
@@ -64,7 +64,7 @@ services:
 
   dashboards:
     image: opensearchproject/opensearch-dashboards:3.0.0
-    container_name: os-dashboards
+    container_name: ${COMPOSE_PROJECT_NAME}-os-dashboards
     environment:
       OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
       DISABLE_SECURITY_DASHBOARDS_PLUGIN: "true"
@@ -78,7 +78,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:3.13-management
-    container_name: openisle-rabbitmq
+    container_name: ${COMPOSE_PROJECT_NAME}-openisle-rabbitmq
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_VHOST: "${RABBITMQ_VHOST:-/}"
@@ -101,7 +101,7 @@ services:
 
   redis:
     image: redis:7
-    container_name: openisle-redis
+    container_name: ${COMPOSE_PROJECT_NAME}-openisle-redis
     restart: unless-stopped
     env_file:
       - ${ENV_FILE:-../.env}
@@ -115,7 +115,7 @@ services:
   # Java spring boot service (开发便捷镜像，后续可换成打包镜像)
   springboot:
     image: maven:3.9-eclipse-temurin-17
-    container_name: openisle-springboot
+    container_name: ${COMPOSE_PROJECT_NAME}-openisle-springboot
     working_dir: /app
     env_file:
       - ${ENV_FILE:-../.env}
@@ -156,7 +156,7 @@ services:
 
   websocket-service:
     image: maven:3.9-eclipse-temurin-17
-    container_name: openisle-websocket
+    container_name: ${COMPOSE_PROJECT_NAME}-openisle-websocket
     working_dir: /app
     env_file:
       - ${ENV_FILE:-../.env}
@@ -187,7 +187,7 @@ services:
 
   frontend_dev:
     image: node:20
-    container_name: openisle-frontend-dev
+    container_name: ${COMPOSE_PROJECT_NAME}-openisle-frontend-dev
     working_dir: /app
     env_file:
       - ${ENV_FILE:-../.env}
@@ -213,7 +213,7 @@ services:
       dockerfile: docker/frontend-service.Dockerfile
       args:
         NUXT_ENV: ${NUXT_ENV:-staging}
-    container_name: openisle-frontend
+    container_name: ${COMPOSE_PROJECT_NAME}-openisle-frontend
     env_file:
       - ${ENV_FILE:-../.env}
     ports:
@@ -227,7 +227,7 @@ services:
 
   loopback_8080:
     image: alpine/socat
-    container_name: loopback-8080
+    container_name: ${COMPOSE_PROJECT_NAME}-loopback-8080
     # 监听“frontend_dev 容器自身的” 127.0.0.1:8080 → 转发到 springboot:8080
     command:
       - -d
@@ -249,7 +249,7 @@ services:
 
   loopback_8082:
     image: alpine/socat
-    container_name: loopback-8082
+    container_name: ${COMPOSE_PROJECT_NAME}-loopback-8082
     # 监听 127.0.0.1:8082 → 转发到 websocket-service:8082（WS 纯 TCP 可直接过）
     command:
       - -d
@@ -271,14 +271,23 @@ services:
 
 networks:
   openisle-network:
+    name: "${COMPOSE_PROJECT_NAME}_net"
     driver: bridge
 
 volumes:
   mysql-data:
+    name: "${COMPOSE_PROJECT_NAME}_mysql-data"
   maven-repo:
+    name: "${COMPOSE_PROJECT_NAME}_maven-repo"
   redis-data:
+    name: "${COMPOSE_PROJECT_NAME}_redis-data"
   rabbitmq-data:
+    name: "${COMPOSE_PROJECT_NAME}_rabbitmq-data"
   websocket-maven-repo:
+    name: "${COMPOSE_PROJECT_NAME}_websocket-maven-repo"
   frontend-node-modules:
+    name: "${COMPOSE_PROJECT_NAME}_frontend-node-modules"
   frontend-service-node-modules:
+    name: "${COMPOSE_PROJECT_NAME}_frontend-service-node-modules"
   frontend-static:
+    name: "${COMPOSE_PROJECT_NAME}_frontend-static"
