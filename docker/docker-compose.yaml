@@ -5,7 +5,7 @@ services:
     container_name: openisle-mysql
     restart: always
     env_file:
-      - ../.env
+      - ${ENV_FILE:-../.env}
     command: >
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_0900_ai_ci
@@ -103,7 +103,7 @@ services:
     container_name: openisle-redis
     restart: unless-stopped
     env_file:
-      - ../.env
+      - ${ENV_FILE:-../.env}
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
@@ -111,13 +111,13 @@ services:
     networks:
       - openisle-network
 
-  # Java spring boot service
+  # Java spring boot service (开发便捷镜像，后续可换成打包镜像)
   springboot:
     image: maven:3.9-eclipse-temurin-17
     container_name: openisle-springboot
     working_dir: /app
     env_file:
-      - ../.env
+      - ${ENV_FILE:-../.env}
     environment:
       SPRING_HEALTH_PATH: ${SPRING_HEALTH_PATH:-/actuator/health}
       SERVER_PORT: ${SERVER_PORT:-8080}
@@ -154,7 +154,7 @@ services:
     container_name: openisle-websocket
     working_dir: /app
     env_file:
-      - ../.env
+      - ${ENV_FILE:-../.env}
     environment:
       WS_HEALTH_PATH: ${WS_HEALTH_PATH:-/actuator/health}
       WEBSOCKET_PORT: ${WEBSOCKET_PORT:-8082}
@@ -184,7 +184,7 @@ services:
     container_name: openisle-frontend-dev
     working_dir: /app
     env_file:
-      - ../.env
+      - ${ENV_FILE:-../.env}
     command: sh -c "npm install && npm run dev"
     volumes:
       - ../frontend_nuxt:/app
@@ -209,7 +209,7 @@ services:
         NUXT_ENV: ${NUXT_ENV:-staging}
     container_name: openisle-frontend
     env_file:
-      - ../.env
+      - ${ENV_FILE:-../.env}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
