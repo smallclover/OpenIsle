@@ -212,29 +212,24 @@ services:
     profiles:
       - dev
 
-  frontend_service:
+   frontend_service:
     build:
-      context: ..
-      dockerfile: frontend-service.Dockerfile
-    container_name: openisle-frontend-service
-    working_dir: /app
+      context: ..                 # 仓库根目录（包含 frontend_nuxt/）
+      dockerfile: docker/frontend-service.Dockerfile
+      args:
+        # 由 .env（或 --env-file）提供，默认 staging；正式环境脚本会传 production
+        NUXT_ENV: ${NUXT_ENV:-staging}
+    container_name: openisle-frontend
     env_file:
-      - ../.env
-    volumes:
-      - ../frontend_nuxt:/app
-      - frontend-service-node-modules:/app/node_modules
-      - frontend-static:/var/www/openisle
+      - ../.env                   # 或者在脚本里指定 .env.staging / .env.production
     ports:
-      - "${FRONTEND_SERVICE_PORT:-3001}:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
       springboot:
         condition: service_healthy
       websocket-service:
         condition: service_healthy
-    networks:
-      - openisle-network
-    profiles:
-      - service
+    restart: unless-stopped
 
   loopback_8080:
     image: alpine/socat
