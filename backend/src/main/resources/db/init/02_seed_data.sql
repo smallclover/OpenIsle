@@ -12,9 +12,9 @@ INSERT INTO `users` (`id`,`approved`,`avatar`,`created_at`,`display_medal`,`emai
 (3,b'1','', '2025-09-02 17:21:21.617666','PIONEER','usermail1@openisle.com',40,NULL,'$2a$10$dux.NXwW09cCsdZ05BgcnOtxVqqjcmnbj3.8xcxGl/iiIlv06y7Oe',NULL,40,'测试测试测试……','USER','user2',NULL,b'1');
 
 INSERT INTO `categories` (`id`,`description`,`icon`,`name`,`small_icon`) VALUES
-(1,'测试用分类1','1','测试用分类1',NULL),
-(2,'测试用分类2','2','测试用分类2',NULL),
-(3,'测试用分类3','3','测试用分类3',NULL);
+(1,'测试用分类1','star','测试用分类1',NULL),
+(2,'测试用分类2','star','测试用分类2',NULL),
+(3,'测试用分类3','star','测试用分类3',NULL);
 
 INSERT INTO `tags` (`id`,`approved`,`created_at`,`description`,`icon`,`name`,`small_icon`,`creator_id`) VALUES
 (1,b'1','2025-09-02 10:51:56.000000','测试用标签1',NULL,'测试用标签1',NULL,NULL),

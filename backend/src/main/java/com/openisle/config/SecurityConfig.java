@@ -234,6 +234,7 @@ public class SecurityConfig {
             uri.startsWith("/api/channels") ||
             uri.startsWith("/api/sitemap.xml") ||
             uri.startsWith("/api/medals") ||
+            uri.startsWith("/actuator") ||
             uri.startsWith("/api/rss"));
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
