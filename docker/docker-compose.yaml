@@ -28,6 +28,7 @@ services:
 
   # OpenSearch Service
   opensearch:
+    user: "1000:1000"
     build:
       context: .
       dockerfile: opensearch.Dockerfile
