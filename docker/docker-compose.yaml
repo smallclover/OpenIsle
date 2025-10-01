@@ -127,6 +127,7 @@ services:
       OPENSEARCH_PORT: 9200
       MYSQL_PORT: 3306
       REDIS_PORT: 6379
+      JAVA_OPTS: "-Duser.timezone=Asia/Shanghai"
     ports:
       - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"
     volumes:
