@@ -4,7 +4,7 @@ set -euo pipefail
 # 可用法：
 #   ./deploy-staging.sh
 #   ./deploy-staging.sh feature/docker
-deploy_branch="${1:-feature/docker}"
+deploy_branch="${1:-main}"
 
 repo_dir="/opt/openisle/OpenIsle-staging"
 compose_file="${repo_dir}/docker/docker-compose.yaml"
