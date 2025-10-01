@@ -2,25 +2,37 @@ services:
   # MySQL service
   mysql:
     image: mysql:8.0
-    container_name: openisle-mysql
+    container_name: ${COMPOSE_PROJECT_NAME}-openisle-mysql
     restart: always
     env_file:
-      - ../backend/open-isle.env
-      - ./.env
+      - ${ENV_FILE:-../.env}
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_0900_ai_ci
+      --default-time-zone=+08:00
+      --skip-character-set-client-handshake
     ports:
-      - "${MYSQL_PORT}:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-      - ../backend/src/main/resources/db/init:/docker-entrypoint-initdb.d
+      - ../backend/src/main/resources/db/init:/docker-entrypoint-initdb.d:ro
+      - ./mysql/conf.d:/etc/mysql/conf.d:ro
     networks:
       - openisle-network
-  
+    healthcheck:
+      test: ["CMD","mysqladmin","ping","-h","127.0.0.1","-u","root","-p$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
   # OpenSearch Service
   opensearch:
+    user: "1000:1000"
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: opensearch
+      dockerfile: opensearch.Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME}-opensearch
     environment:
       - cluster.name=os-single
       - node.name=os-node-1
@@ -31,53 +43,253 @@ services:
       - cluster.blocks.create_index=false
     ulimits:
       memlock: { soft: -1, hard: -1 }
-      nofile:  { soft: 65536, hard: 65536 }
+      nofile: { soft: 65536, hard: 65536 }
     volumes:
-      - ./data:/usr/share/opensearch/data
-      - ./snapshots:/snapshots
+      - ${OPENSEARCH_DATA_DIR:-./data}:/usr/share/opensearch/data
+      - ${OPENSEARCH_SNAPSHOT_DIR:-./snapshots}:/snapshots
     ports:
       - "${OPENSEARCH_PORT:-9200}:9200"
       - "${OPENSEARCH_METRICS_PORT:-9600}:9600"
     restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fsS http://127.0.0.1:9200/_cluster/health >/dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    networks:
+      - openisle-network
 
   dashboards:
     image: opensearchproject/opensearch-dashboards:3.0.0
-    container_name: os-dashboards
+    container_name: ${COMPOSE_PROJECT_NAME}-os-dashboards
     environment:
-      - OPENSEARCH_HOSTS=["http://opensearch:9200"]
-      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+      OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: "true"
     ports:
       - "${OPENSEARCH_DASHBOARDS_PORT:-5601}:5601"
     depends_on:
       - opensearch
     restart: unless-stopped
+    networks:
+      - openisle-network
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: ${COMPOSE_PROJECT_NAME}-openisle-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_VHOST: "${RABBITMQ_VHOST:-/}"
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./rabbitmq/conf/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq/conf/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    networks:
+      - openisle-network
 
-  # Java spring boot service
+  redis:
+    image: redis:7
+    container_name: ${COMPOSE_PROJECT_NAME}-openisle-redis
+    restart: unless-stopped
+    env_file:
+      - ${ENV_FILE:-../.env}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - openisle-network
+
+  # Java spring boot service (开发便捷镜像，后续可换成打包镜像)
   springboot:
     image: maven:3.9-eclipse-temurin-17
-    container_name: openisle-springboot
+    container_name: ${COMPOSE_PROJECT_NAME}-openisle-springboot
     working_dir: /app
     env_file:
-      - ../backend/open-isle.env
-      - ./.env
+      - ${ENV_FILE:-../.env}
     environment:
-      - MYSQL_URL=jdbc:mysql://mysql:${MYSQL_PORT}/${MYSQL_DATABASE}?useUnicode=yes&characterEncoding=UTF-8&useInformationSchema=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      TZ: "Asia/Shanghai"  
+      SPRING_HEALTH_PATH: ${SPRING_HEALTH_PATH:-/actuator/health}
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      RABBITMQ_PORT: 5672
+      OPENSEARCH_PORT: 9200
+      MYSQL_PORT: 3306
+      REDIS_PORT: 6379
+      JAVA_OPTS: "-Duser.timezone=Asia/Shanghai"
     ports:
-      - "${SERVER_PORT}:8080"
+      - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"
     volumes:
       - ../backend:/app
       - maven-repo:/root/.m2
     depends_on:
-      - mysql
-    command: mvn clean spring-boot:run -Dmaven.test.skip=true
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+      websocket-service:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+    command: >
+      sh -c "apt-get update && apt-get install -y --no-install-recommends curl &&
+             mvn clean spring-boot:run -Dmaven.test.skip=true"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:${SERVER_PORT:-8080}${SPRING_HEALTH_PATH:-/actuator/health} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
     networks:
       - openisle-network
 
+  websocket-service:
+    image: maven:3.9-eclipse-temurin-17
+    container_name: ${COMPOSE_PROJECT_NAME}-openisle-websocket
+    working_dir: /app
+    env_file:
+      - ${ENV_FILE:-../.env}
+    environment:
+      WS_HEALTH_PATH: ${WS_HEALTH_PATH:-/actuator/health}
+      WEBSOCKET_PORT: ${WEBSOCKET_PORT:-8082}
+      SERVER_PORT: ${WEBSOCKET_PORT:-8082}
+      RABBITMQ_PORT: 5672
+    ports:
+      - "${WEBSOCKET_PORT:-8082}:${WEBSOCKET_PORT:-8082}"
+    volumes:
+      - ../websocket_service:/app
+      - websocket-maven-repo:/root/.m2
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    command: >
+      sh -c "apt-get update && apt-get install -y --no-install-recommends curl &&
+             mvn clean spring-boot:run -Dmaven.test.skip=true"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:${WEBSOCKET_PORT:-8082}${WS_HEALTH_PATH:-/actuator/health} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    networks:
+      - openisle-network
+
+  frontend_dev:
+    image: node:20
+    container_name: ${COMPOSE_PROJECT_NAME}-openisle-frontend-dev
+    working_dir: /app
+    env_file:
+      - ${ENV_FILE:-../.env}
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ../frontend_nuxt:/app
+      - frontend-node-modules:/app/node_modules
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      springboot:
+        condition: service_healthy
+      websocket-service:
+        condition: service_healthy
+    networks:
+      - openisle-network
+    profiles:
+      - dev
+
+  frontend_service:
+    build:
+      context: ..
+      dockerfile: docker/frontend-service.Dockerfile
+      args:
+        NUXT_ENV: ${NUXT_ENV:-staging}
+    container_name: ${COMPOSE_PROJECT_NAME}-openisle-frontend
+    env_file:
+      - ${ENV_FILE:-../.env}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      springboot:
+        condition: service_healthy
+      websocket-service:
+        condition: service_healthy
+    restart: unless-stopped
+
+  loopback_8080:
+    image: alpine/socat
+    container_name: ${COMPOSE_PROJECT_NAME}-loopback-8080
+    # 监听“frontend_dev 容器自身的” 127.0.0.1:8080 → 转发到 springboot:8080
+    command:
+      - -d
+      - -d
+      - -ly
+      - TCP4-LISTEN:8080,bind=127.0.0.1,reuseaddr,fork
+      - TCP4:springboot:8080
+    depends_on:
+      springboot:
+        condition: service_healthy
+    network_mode: "service:frontend_dev"
+    profiles: ["dev"]
+    healthcheck:
+      test: ["CMD", "sh", "-c", "nc -z 127.0.0.1 8080"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  loopback_8082:
+    image: alpine/socat
+    container_name: ${COMPOSE_PROJECT_NAME}-loopback-8082
+    # 监听 127.0.0.1:8082 → 转发到 websocket-service:8082（WS 纯 TCP 可直接过）
+    command:
+      - -d
+      - -d
+      - -ly
+      - TCP4-LISTEN:8082,bind=127.0.0.1,reuseaddr,fork
+      - TCP4:websocket-service:8082
+    depends_on:
+      websocket-service:
+        condition: service_healthy
+    network_mode: "service:frontend_dev"
+    profiles: ["dev"]
+    healthcheck:
+      test: ["CMD", "sh", "-c", "nc -z 127.0.0.1 8082"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
 networks:
   openisle-network:
+    name: "${COMPOSE_PROJECT_NAME}_net"
     driver: bridge
 
 volumes:
   mysql-data:
+    name: "${COMPOSE_PROJECT_NAME}_mysql-data"
   maven-repo:
+    name: "${COMPOSE_PROJECT_NAME}_maven-repo"
+  redis-data:
+    name: "${COMPOSE_PROJECT_NAME}_redis-data"
+  rabbitmq-data:
+    name: "${COMPOSE_PROJECT_NAME}_rabbitmq-data"
+  websocket-maven-repo:
+    name: "${COMPOSE_PROJECT_NAME}_websocket-maven-repo"
+  frontend-node-modules:
+    name: "${COMPOSE_PROJECT_NAME}_frontend-node-modules"
+  frontend-service-node-modules:
+    name: "${COMPOSE_PROJECT_NAME}_frontend-service-node-modules"
+  frontend-static:
+    name: "${COMPOSE_PROJECT_NAME}_frontend-static"

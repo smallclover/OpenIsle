@@ -97,6 +97,8 @@ public class SecurityConfig {
         "http://localhost:8081",
         "http://localhost:8082",
         "http://localhost:3000",
+        "http://frontend_dev:3000",
+        "http://frontend_service:3000",
         "http://localhost:3001",
         "http://localhost",
         "http://30.211.97.238:3000",
@@ -177,6 +179,8 @@ public class SecurityConfig {
           .permitAll()
           .requestMatchers(HttpMethod.POST, "/api/point-goods")
           .permitAll()
+          .requestMatchers("/actuator/**")
+          .permitAll()
           .requestMatchers(HttpMethod.POST, "/api/categories/**")
           .hasAuthority("ADMIN")
           .requestMatchers(HttpMethod.POST, "/api/tags/**")
@@ -230,6 +234,7 @@ public class SecurityConfig {
             uri.startsWith("/api/channels") ||
             uri.startsWith("/api/sitemap.xml") ||
             uri.startsWith("/api/medals") ||
+            uri.startsWith("/actuator") ||
             uri.startsWith("/api/rss"));
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {

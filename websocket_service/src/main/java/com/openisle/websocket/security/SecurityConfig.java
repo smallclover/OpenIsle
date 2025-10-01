@@ -43,6 +43,8 @@ public class SecurityConfig {
                 "http://30.211.97.238",
                 "http://192.168.7.98",
                 "http://192.168.7.98:3000",
+                "http://frontend_dev:3000",
+                "http://frontend_service:3000",
                 websiteUrl,
                 websiteUrl.replace("://www.", "://")
         ));
