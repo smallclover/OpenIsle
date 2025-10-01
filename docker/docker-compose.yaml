@@ -114,6 +114,7 @@ services:
 
   # Java spring boot service (开发便捷镜像，后续可换成打包镜像)
   springboot:
+    TZ: "Asia/Shanghai"  
     image: maven:3.9-eclipse-temurin-17
     container_name: ${COMPOSE_PROJECT_NAME}-openisle-springboot
     working_dir: /app
