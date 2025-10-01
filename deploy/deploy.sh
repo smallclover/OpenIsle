@@ -2,15 +2,14 @@
 set -euo pipefail
 
 # 可用法：
-#   ./deploy-staging.sh
-#   ./deploy-staging.sh feature/docker
+#   ./deploy.sh
+#   ./deploy.sh feature/docker
 deploy_branch="${1:-feature/docker}"
 
-repo_dir="/opt/openisle/OpenIsle-staging"
+repo_dir="/opt/openisle/OpenIsle"
 compose_file="${repo_dir}/docker/docker-compose.yaml"
-# 使用仓库根目录的 .env（CI 预先写好），也可以改成绝对路径
 env_file="${repo_dir}/.env"
-project="openisle_staging"
+project="openisle"
 
 echo "👉 Enter repo..."
 cd "$repo_dir"
@@ -22,7 +21,7 @@ git reset --hard "origin/$deploy_branch"
 
 echo "👉 Ensuring env file: $env_file"
 if [ ! -f "$env_file" ]; then
-  echo "❌ ${env_file} not found. Create it based on .env.example (with staging domains)."
+  echo "❌ ${env_file} not found. Create it based on .env.example (with domains)."
   exit 1
 fi
 
@@ -36,11 +35,11 @@ docker compose -f "$compose_file" --env-file "$env_file" config >/dev/null
 echo "👉 Pull base images (for image-based services)..."
 docker compose -f "$compose_file" --env-file "$env_file" pull --ignore-pull-failures
 
-echo "👉 Build images (staging)..."
+echo "👉 Build images ..."
 # 前端 + OpenSearch 都是自建镜像；--pull 更新其基础镜像
 docker compose -f "$compose_file" --env-file "$env_file" \
   build --pull \
-  --build-arg NUXT_ENV=staging \
+  --build-arg NUXT_ENV=production \
   frontend_service opensearch
 
 echo "👉 Recreate & start all target services (no dev profile)..."
@@ -54,4 +53,4 @@ docker compose -f "$compose_file" --env-file "$env_file" ps
 echo "👉 Pruning dangling images..."
 docker image prune -f
 
-echo "✅ Staging stack deployed at $(date)"
+echo "✅ Stack deployed at $(date)"
