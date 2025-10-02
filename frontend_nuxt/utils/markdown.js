@@ -157,6 +157,7 @@ const SANITIZE_CFG = {
     'th',
     'video',
     'source',
+    'iframe',
   ],
   // 允许的属性
   allowedAttributes: {
@@ -180,6 +181,16 @@ const SANITIZE_CFG = {
       'crossorigin',
     ],
     source: ['src', 'type'],
+    iframe: [
+      'src',
+      'title',
+      'width',
+      'height',
+      'allow',
+      'allowfullscreen',
+      'frameborder',
+      'referrerpolicy',
+    ],
   },
   // 允许的类名（保留你的样式钩子）
   allowedClasses: {
