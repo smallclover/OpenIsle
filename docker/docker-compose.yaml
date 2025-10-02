@@ -45,8 +45,8 @@ services:
       memlock: { soft: -1, hard: -1 }
       nofile: { soft: 65536, hard: 65536 }
     volumes:
-      - ${OPENSEARCH_DATA_DIR:-./data}:/usr/share/opensearch/data
-      - ${OPENSEARCH_SNAPSHOT_DIR:-./snapshots}:/snapshots
+      - opensearch-data:/usr/share/opensearch/data
+      - opensearch-snapshots:/snapshots
     ports:
       - "${OPENSEARCH_PORT:-9200}:9200"
       - "${OPENSEARCH_METRICS_PORT:-9600}:9600"
@@ -293,3 +293,7 @@ volumes:
     name: "${COMPOSE_PROJECT_NAME}_frontend-service-node-modules"
   frontend-static:
     name: "${COMPOSE_PROJECT_NAME}_frontend-static"
+  opensearch-data:
+    name: "${COMPOSE_PROJECT_NAME}_opensearch-data"
+  opensearch-snapshots:
+    name: "${COMPOSE_PROJECT_NAME}_opensearch-snapshots"
