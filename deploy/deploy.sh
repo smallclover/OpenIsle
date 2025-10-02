@@ -40,13 +40,12 @@ echo "👉 Build images ..."
 docker compose -f "$compose_file" --env-file "$env_file" \
   build --pull \
   --build-arg NUXT_ENV=production \
-  frontend_service opensearch
+  frontend_service
 
 echo "👉 Recreate & start all target services (no dev profile)..."
 docker compose -f "$compose_file" --env-file "$env_file" \
-  up -d --force-recreate --remove-orphans \
-  # mysql redis rabbitmq opensearch dashboards websocket-service springboot frontend_service
-  mysql redis rabbitmq dashboards websocket-service springboot frontend_service
+  up -d --force-recreate --remove-orphans --no-deps \
+  mysql redis rabbitmq websocket-service springboot frontend_service
 
 echo "👉 Current status:"
 docker compose -f "$compose_file" --env-file "$env_file" ps
