@@ -184,16 +184,6 @@
                   }}</NuxtLink>
                   参与，获得 {{ item.amount }} 积分
                 </template>
-                <template v-else-if="item.type === 'ADMIN_GRANT' && item.fromUserId">
-                  管理员
-                  <NuxtLink :to="`/users/${item.fromUserId}`" class="timeline-link">{{
-                    item.fromUserName
-                  }}</NuxtLink>
-                  赠送了 {{ item.amount }} 积分
-                </template>
-                <template v-else-if="item.type === 'ADMIN_GRANT'">
-                  管理员赠送了 {{ item.amount }} 积分
-                </template>
                 <template v-else-if="item.type === 'SYSTEM_ONLINE'"> 积分历史系统上线 </template>
                 <paper-money-two /> 你目前的积分是 {{ item.balance }}
               </div>
@@ -239,7 +229,6 @@ const pointRules = [
   '评论被点赞：每次 10 积分',
   '邀请好友加入可获得 500 积分/次，注意需要使用邀请链接注册',
   '文章被收录至精选：每次 500 积分',
-  '管理员赠送：特殊活动可由管理员手动赠送积分',
 ]
 
 const goods = ref([])
@@ -261,7 +250,6 @@ const iconMap = {
   LOTTERY_REWARD: 'fireworks',
   POST_LIKE_CANCELLED: 'clear-icon',
   COMMENT_LIKE_CANCELLED: 'clear-icon',
-  ADMIN_GRANT: 'paper-money-two',
 }
 
 const loadTrend = async () => {

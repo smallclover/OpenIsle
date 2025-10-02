@@ -65,35 +65,6 @@
           <div class="setting-title">注册模式</div>
           <Dropdown v-model="registerMode" :fetch-options="fetchRegisterModes" />
         </div>
-        <div class="form-row grant-row">
-          <div class="setting-title">发放积分</div>
-          <div class="grant-form">
-            <BaseInput
-              v-model="grantUsername"
-              placeholder="请输入用户名"
-              class="grant-input"
-              @input="grantError = ''"
-            />
-            <BaseInput
-              v-model="grantAmount"
-              type="number"
-              placeholder="积分数量"
-              class="grant-input amount"
-              @input="grantError = ''"
-            />
-            <button
-              type="button"
-              class="grant-button"
-              :class="{ disabled: isGrantingPoints }"
-              :disabled="isGrantingPoints"
-              @click="grantPoint"
-            >
-              {{ isGrantingPoints ? '发放中...' : '发放' }}
-            </button>
-          </div>
-          <div v-if="grantError" class="grant-error-message">{{ grantError }}</div>
-          <div class="setting-description">积分会立即发放给目标用户，并记录在积分历史中</div>
-        </div>
       </div>
       <div class="buttons">
         <div v-if="isSaving" class="save-button disabled">保存中...</div>
@@ -131,10 +102,6 @@ const registerMode = ref('DIRECT')
 const isLoadingPage = ref(false)
 const isSaving = ref(false)
 const frosted = ref(true)
-const grantUsername = ref('')
-const grantAmount = ref('')
-const grantError = ref('')
-const isGrantingPoints = ref(false)
 
 onMounted(async () => {
   isLoadingPage.value = true
@@ -215,55 +182,6 @@ const loadAdminConfig = async () => {
     }
   } catch (e) {
     // ignore
-  }
-}
-
-const grantPoint = async () => {
-  if (isGrantingPoints.value) return
-  const username = grantUsername.value.trim()
-  if (!username) {
-    grantError.value = '用户名不能为空'
-    toast.error(grantError.value)
-    return
-  }
-  const amount = Number(grantAmount.value)
-  if (!Number.isInteger(amount) || amount <= 0) {
-    grantError.value = '积分数量必须为正整数'
-    toast.error(grantError.value)
-    return
-  }
-  isGrantingPoints.value = true
-  try {
-    const token = getToken()
-    const res = await fetch(`${API_BASE_URL}/api/admin/points/grant`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ username, amount }),
-    })
-    let data = null
-    try {
-      data = await res.json()
-    } catch (e) {
-      // ignore body parse errors
-    }
-    if (res.ok) {
-      toast.success(`已为 ${username} 发放 ${amount} 积分`)
-      grantUsername.value = ''
-      grantAmount.value = ''
-      grantError.value = ''
-    } else {
-      const message = data?.error || '发放失败'
-      grantError.value = message
-      toast.error(message)
-    }
-  } catch (e) {
-    grantError.value = '发放失败，请稍后再试'
-    toast.error(grantError.value)
-  } finally {
-    isGrantingPoints.value = false
   }
 }
 const save = async () => {
@@ -403,51 +321,6 @@ const save = async () => {
 
 .dropdown-row {
   max-width: 200px;
-}
-
-.grant-row {
-  max-width: 100%;
-}
-
-.grant-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-}
-
-.grant-input {
-  flex: 1 1 180px;
-}
-
-.grant-input.amount {
-  max-width: 140px;
-}
-
-.grant-button {
-  background-color: var(--primary-color);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-}
-
-.grant-button.disabled,
-.grant-button:disabled {
-  cursor: not-allowed;
-  background-color: var(--primary-color-disabled);
-}
-
-.grant-button:not(.disabled):hover {
-  background-color: var(--primary-color-hover);
-}
-
-.grant-error-message {
-  color: red;
-  font-size: 14px;
-  margin-top: 8px;
 }
 
 .switch-row {

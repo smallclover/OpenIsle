@@ -72,16 +72,6 @@ export default {
         file: 'https://openisle-1307107697.cos.ap-guangzhou.myqcloud.com/assert/about/privacy.md',
       },
       {
-        key: 'points',
-        label: '积分说明',
-        content: `# 积分说明
-
-- 积分可用于兑换商品、参与抽奖等社区玩法。
-- 管理员可以通过后台新增的积分模块为用户发放奖励积分。
-- 每次发放都会记录在积分历史中，方便你查看积分来源。
-`,
-      },
-      {
         key: 'api',
         label: 'API与调试',
       },
@@ -98,21 +88,11 @@ export default {
       return `${token.value.slice(0, 20)}...${token.value.slice(-10)}`
     })
 
-    const loadContent = async (tab) => {
-      if (!tab || tab.key === 'api') return
-      if (tab.content) {
-        isFetching.value = false
-        content.value = tab.content
-        return
-      }
-      if (!tab.file) {
-        isFetching.value = false
-        content.value = ''
-        return
-      }
+    const loadContent = async (file) => {
+      if (!file) return
       try {
         isFetching.value = true
-        const res = await fetch(tab.file)
+        const res = await fetch(file)
         if (res.ok) {
           content.value = await res.text()
         } else {
@@ -130,15 +110,15 @@ export default {
       if (initTab && tabs.find((t) => t.key === initTab)) {
         selectedTab.value = initTab
         const tab = tabs.find((t) => t.key === initTab)
-        if (tab) loadContent(tab)
+        if (tab && tab.file) loadContent(tab.file)
       } else {
-        loadContent(tabs[0])
+        loadContent(tabs[0].file)
       }
     })
 
     watch(selectedTab, (name) => {
       const tab = tabs.find((t) => t.key === name)
-      if (tab) loadContent(tab)
+      if (tab && tab.file) loadContent(tab.file)
       router.replace({ query: { ...route.query, tab: name } })
     })
 
@@ -147,8 +127,6 @@ export default {
       (name) => {
         if (name && name !== selectedTab.value && tabs.find((t) => t.key === name)) {
           selectedTab.value = name
-          const tab = tabs.find((t) => t.key === name)
-          if (tab) loadContent(tab)
         }
       },
     )

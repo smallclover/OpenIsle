@@ -43,22 +43,6 @@ public class PointService {
     return addPoint(user, 500, PointHistoryType.FEATURE, post, null, null);
   }
 
-  public int grantPointByAdmin(String adminName, String targetUsername, int amount) {
-    if (amount <= 0) {
-      throw new FieldException("amount", "积分必须为正数");
-    }
-    if (targetUsername == null || targetUsername.isBlank()) {
-      throw new FieldException("username", "用户名不能为空");
-    }
-    String normalizedUsername = targetUsername.trim();
-    User admin = userRepository.findByUsername(adminName).orElseThrow();
-    User target = userRepository
-      .findByUsername(normalizedUsername)
-      .orElseThrow(() -> new FieldException("username", "用户不存在"));
-    addPoint(target, amount, PointHistoryType.ADMIN_GRANT, null, null, admin);
-    return target.getPoint();
-  }
-
   public void processLotteryJoin(User participant, LotteryPost post) {
     int cost = post.getPointCost();
     if (cost > 0) {
