@@ -45,7 +45,8 @@ docker compose -f "$compose_file" --env-file "$env_file" \
 echo "👉 Recreate & start all target services (no dev profile)..."
 docker compose -f "$compose_file" --env-file "$env_file" \
   up -d --force-recreate --remove-orphans \
-  mysql redis rabbitmq opensearch dashboards websocket-service springboot frontend_service
+  # mysql redis rabbitmq opensearch dashboards websocket-service springboot frontend_service
+  mysql redis rabbitmq dashboards websocket-service springboot frontend_service
 
 echo "👉 Current status:"
 docker compose -f "$compose_file" --env-file "$env_file" ps
