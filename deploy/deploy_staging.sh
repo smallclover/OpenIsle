@@ -8,7 +8,6 @@ deploy_branch="${1:-main}"
 
 repo_dir="/opt/openisle/OpenIsle-staging"
 compose_file="${repo_dir}/docker/docker-compose.yaml"
-# 使用仓库根目录的 .env（CI 预先写好），也可以改成绝对路径
 env_file="${repo_dir}/.env"
 project="openisle_staging"
 
@@ -41,12 +40,12 @@ echo "👉 Build images (staging)..."
 docker compose -f "$compose_file" --env-file "$env_file" \
   build --pull \
   --build-arg NUXT_ENV=staging \
-  frontend_service opensearch
+  frontend_service
 
 echo "👉 Recreate & start all target services (no dev profile)..."
 docker compose -f "$compose_file" --env-file "$env_file" \
-  up -d --force-recreate --remove-orphans \
-  mysql redis rabbitmq opensearch dashboards websocket-service springboot frontend_service
+  up -d --force-recreate --remove-orphans --no-deps \
+  mysql redis rabbitmq websocket-service springboot frontend_service
 
 echo "👉 Current status:"
 docker compose -f "$compose_file" --env-file "$env_file" ps
