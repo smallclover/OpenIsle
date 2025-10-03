@@ -59,7 +59,7 @@ cd OpenIsle
 
    该命令会创建名为 `frontend_dev` 的容器并运行 `npm run dev`，浏览器访问 http://127.0.0.1:3000 即可查看页面。
 
-   如需强制重新创建所有容器，可执行：
+   修改代码后，可以强制重新创建所有容器，执行：
 
    ```shell
    docker compose \
@@ -149,17 +149,7 @@ npm run dev
 
 前端默认读取 `.env` 中的接口地址，可通过修改以下变量快速切换到预发或正式环境：
 
-1. 复制对应模板：
-
-   ```shell
-   # 使用预发配置
-   cp .env.staging.example .env
-
-   # 或者使用正式环境配置
-   cp .env.production.example .env
-   ```
-
-2. 按需覆盖关键变量：
+1. 按需覆盖关键变量：
 
    ```ini
    NUXT_PUBLIC_API_BASE_URL=https://www.staging.open-isle.com
@@ -168,7 +158,7 @@ npm run dev
 
    将 `staging` 替换为 `www` 即可连接正式环境。其他变量（如 OAuth Client ID、站点地址等）可根据需求调整。
 
-3. 已经存在 `.env` 时，可直接编辑上述变量并重启 `npm run dev` 让配置生效。
+2. 已经存在 `.env` 时，可直接编辑上述变量并重启 `npm run dev` 让配置生效。
 
 ## 其他配置
 
