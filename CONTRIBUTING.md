@@ -47,10 +47,26 @@ cd OpenIsle
    docker compose \
      -f docker/docker-compose.yaml \
      --env-file .env \
+     --profile dev build
+   ```
+
+   ```shell
+   docker compose \
+     -f docker/docker-compose.yaml \
+     --env-file .env \
      --profile dev up -d
    ```
 
    该命令会创建名为 `frontend_dev` 的容器并运行 `npm run dev`，浏览器访问 http://127.0.0.1:3000 即可查看页面。
+
+   如需强制重新创建所有容器，可执行：
+
+   ```shell
+   docker compose \
+     -f docker/docker-compose.yaml \
+     --env-file .env \
+     --profile dev up -d --force-recreate
+   ```
 
 3. 查看服务状态：
 
