@@ -19,4 +19,4 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: root
           key: ${{ secrets.SSH_KEY }}
-          script: bash /opt/openisle/deploy.sh
+          script: bash /opt/openisle/OpenIsle/deploy.sh

@@ -23,7 +23,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: root
           key: ${{ secrets.SSH_KEY }}
-          script: bash /opt/openisle/deploy-staging.sh
+          script: bash /opt/openisle/OpenIsle/deploy_staging.sh
 
   deploy-docs:
     needs: build-and-deploy
