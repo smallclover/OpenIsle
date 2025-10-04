@@ -366,7 +366,11 @@ const changeLogIcon = (l) => {
       return 'unlock'
     }
   } else if (l.type === 'PINNED') {
-    return 'pin-icon'
+    if(l.newPinnedAt){
+      return 'pin'
+    }else{
+      return 'clear-icon'
+    }
   } else if (l.type === 'FEATURED') {
     if (l.newFeatured) {
       return 'star'
