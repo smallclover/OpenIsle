@@ -341,6 +341,16 @@ body {
   .info-content-text pre {
     line-height: 1.5;
   }
+  
+  /*处理iframe视频标签*/
+  .info-content-text iframe {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9; /* 保持 16:9 比例 */
+    border: none;
+    display: block;
+  }
 
   .d2h-file-name {
     font-size: 14px !important;
