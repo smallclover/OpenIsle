@@ -124,25 +124,7 @@ IDEA 打开 `backend/` 文件夹。
 
 ![运行画面](assets/contributing/backend_img_4.png)
 
-## 启动前端服务
-
-> [!IMPORTANT]
-> **⚠️ 环境要求：Node.js 版本最低 20.0.0（因为 Nuxt 框架要求）**
-
-```shell
-cd frontend_nuxt/
-```
-
-安装依赖并启动开发服务器：
-
-```shell
-npm install --verbose
-npm run dev
-```
-
-默认情况下，浏览器访问 http://127.0.0.1:3000 即可访问前端页面。
-
-### 连接预发或正式环境
+## 前端连接预发或正式环境
 
 前端默认读取 `.env` 中的接口地址，可通过修改以下变量快速切换到预发或正式环境：
 
@@ -154,7 +136,6 @@ npm run dev
    ```
    将 `staging` 替换为 `www` 即可连接正式环境。其他变量（如 OAuth Client ID、站点地址等）可根据需求调整。
 
-2. 已经存在 `.env` 时，可直接编辑上述变量并重启 `npm run dev` 让配置生效。
 
 ## 其他配置
 
