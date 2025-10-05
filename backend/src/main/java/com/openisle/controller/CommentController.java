@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -131,6 +132,7 @@ public class CommentController {
             c.getId(),
             "comment",
             c.getCreatedAt(),
+            c.getPinnedAt(),
             c // payload 是 CommentDto
           )
         )
@@ -145,17 +147,39 @@ public class CommentController {
             l.getId(),
             "log",
             l.getTime(), // 注意字段名不一样
+            null,
             l // payload 是 PostChangeLogDto
           )
         )
         .toList()
     );
     // 排序
-    Comparator<TimelineItemDto<?>> comparator = Comparator.comparing(TimelineItemDto::getCreatedAt);
+    Comparator<TimelineItemDto<?>> pinnedOrderComparator = (a, b) -> {
+      LocalDateTime aPinned = a.getPinnedAt();
+      LocalDateTime bPinned = b.getPinnedAt();
+      if (aPinned == null && bPinned == null) {
+        return 0;
+      }
+      if (aPinned == null) {
+        return 1;
+      }
+      if (bPinned == null) {
+        return -1;
+      }
+      return bPinned.compareTo(aPinned);
+    };
+
+    Comparator<TimelineItemDto<?>> comparator = Comparator.<TimelineItemDto<?>, Boolean>comparing(
+      item -> item.getPinnedAt() == null
+    ).thenComparing(pinnedOrderComparator);
+
+    Comparator<TimelineItemDto<?>> createdAtComparator = Comparator.comparing(
+      TimelineItemDto::getCreatedAt
+    );
     if (CommentSort.NEWEST.equals(sort)) {
-      comparator = comparator.reversed();
+      createdAtComparator = createdAtComparator.reversed();
     }
-    itemDtoList.sort(comparator);
+    itemDtoList.sort(comparator.thenComparing(createdAtComparator));
     log.debug("listComments returning {} comments", itemDtoList.size());
     return itemDtoList;
   }
