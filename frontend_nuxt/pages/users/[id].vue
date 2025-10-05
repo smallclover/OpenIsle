@@ -849,7 +849,8 @@ watch(selectedTab, async (val) => {
   display: flex;
   flex-direction: column;
   padding: 20px;
-  gap: 20px;
+  row-gap: 40px;     /* 行间距 */
+  column-gap: 20px;  /* 列间距 */
 }
 
 .summary-title {
@@ -888,10 +889,10 @@ watch(selectedTab, async (val) => {
 }
 
 .summary-divider {
-  margin-top: 20px;
   display: flex;
   flex-direction: row;
-  gap: 20px;
+  row-gap: 40px;     /* 行间距 */
+  column-gap: 20px;  /* 列间距 */
   width: 100%;
   flex-wrap: wrap;
 }
