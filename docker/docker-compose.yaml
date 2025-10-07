@@ -226,6 +226,8 @@ services:
       websocket-service:
         condition: service_healthy
     restart: unless-stopped
+    profiles: ["staging", "prod"]
+
 
   loopback_8080:
     image: alpine/socat
