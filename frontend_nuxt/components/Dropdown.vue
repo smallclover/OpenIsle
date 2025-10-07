@@ -62,26 +62,29 @@
         <l-hatch size="20" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
       </div>
       <template v-else>
-        <div
-          v-for="o in filteredOptions"
-          :key="o.id"
-          @click="select(o.id)"
-          :class="['dropdown-option', optionClass, { selected: isSelected(o.id) }]"
-        >
-          <slot name="option" :option="o" :isSelected="isSelected(o.id)">
-            <template v-if="o.icon">
-              <BaseImage
-                v-if="isImageIcon(o.icon)"
-                :src="o.icon"
-                class="option-icon"
-                :alt="o.name"
-              />
-              <component v-else :is="o.icon" class="option-icon" :size="16" />
-            </template>
-            <span>{{ o.name }}</span>
-          </slot>
-        </div>
-        <slot name="footer" :close="close" :loading="loading" />
+        <div v-if="filteredOptions.length === 0" class="dropdown-empty">没有搜索结果</div>
+        <template v-else>
+          <div
+            v-for="o in filteredOptions"
+            :key="o.id"
+            @click="select(o.id)"
+            :class="['dropdown-option', optionClass, { selected: isSelected(o.id) }]"
+          >
+            <slot name="option" :option="o" :isSelected="isSelected(o.id)">
+              <template v-if="o.icon">
+                <BaseImage
+                  v-if="isImageIcon(o.icon)"
+                  :src="o.icon"
+                  class="option-icon"
+                  :alt="o.name"
+                />
+                <component v-else :is="o.icon" class="option-icon" :size="16" />
+              </template>
+              <span>{{ o.name }}</span>
+            </slot>
+          </div>
+          <slot name="footer" :close="close" :loading="loading" />
+        </template>
       </template>
     </div>
     <Teleport to="body">
@@ -99,26 +102,29 @@
             <l-hatch size="20" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
           </div>
           <template v-else>
-            <div
-              v-for="o in filteredOptions"
-              :key="o.id"
-              @click="select(o.id)"
-              :class="['dropdown-option', optionClass, { selected: isSelected(o.id) }]"
-            >
-              <slot name="option" :option="o" :isSelected="isSelected(o.id)">
-                <template v-if="o.icon">
-                  <BaseImage
-                    v-if="isImageIcon(o.icon)"
-                    :src="o.icon"
-                    class="option-icon"
-                    :alt="o.name"
-                  />
-                  <component v-else :is="o.icon" class="option-icon" :size="16" />
-                </template>
-                <span>{{ o.name }}</span>
-              </slot>
-            </div>
-            <slot name="footer" :close="close" :loading="loading" />
+            <div v-if="filteredOptions.length === 0" class="dropdown-empty">没有搜索结果</div>
+            <template v-else>
+              <div
+                v-for="o in filteredOptions"
+                :key="o.id"
+                @click="select(o.id)"
+                :class="['dropdown-option', optionClass, { selected: isSelected(o.id) }]"
+              >
+                <slot name="option" :option="o" :isSelected="isSelected(o.id)">
+                  <template v-if="o.icon">
+                    <BaseImage
+                      v-if="isImageIcon(o.icon)"
+                      :src="o.icon"
+                      class="option-icon"
+                      :alt="o.name"
+                    />
+                    <component v-else :is="o.icon" class="option-icon" :size="16" />
+                  </template>
+                  <span>{{ o.name }}</span>
+                </slot>
+              </div>
+              <slot name="footer" :close="close" :loading="loading" />
+            </template>
           </template>
         </div>
       </div>
@@ -382,6 +388,13 @@ export default {
   display: flex;
   justify-content: center;
   padding: 10px 0;
+}
+
+.dropdown-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--muted-text-color, #8c8c8c);
+  font-size: 14px;
 }
 
 .dropdown-mobile-page {
