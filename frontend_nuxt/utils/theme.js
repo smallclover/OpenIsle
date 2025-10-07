@@ -93,9 +93,8 @@ function getCircle(event) {
 
 function withViewTransition(event, applyFn, direction = true) {
   if (typeof document !== 'undefined' && document.startViewTransition) {
-    const transition = document.startViewTransition(async () => {
+    const transition = document.startViewTransition(() => {
       applyFn()
-      await nextTick()
     })
 
     transition.ready
@@ -111,6 +110,7 @@ function withViewTransition(event, applyFn, direction = true) {
           {
             duration: 400,
             easing: 'ease-in-out',
+            fill: 'both',
             pseudoElement: direction
               ? '::view-transition-new(root)'
               : '::view-transition-old(root)',
