@@ -49,7 +49,11 @@
       </slot>
     </div>
     <div
-      v-if="open && !isMobile && (loading || filteredOptions.length > 0 || showSearch)"
+      v-if="
+        open &&
+        !isMobile &&
+        (loading || filteredOptions.length > 0 || showSearch || (remote && search))
+      "
       :class="['dropdown-menu', menuClass]"
       v-click-outside="close"
       ref="menuRef"
@@ -289,6 +293,7 @@ export default {
       isImageIcon,
       setSearch,
       isMobile,
+      remote: props.remote,
     }
   },
 }
