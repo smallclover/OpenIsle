@@ -11,12 +11,17 @@ on:
 permissions:
   contents: write
 
+# 文档发布自己的排队锁，不影响服务器部署
+concurrency:
+  group: openisle-docs
+  cancel-in-progress: false
+
 jobs:
   build-docs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 

@@ -2,22 +2,27 @@ name: Staging CI & CD
 
 on:
   push:
-    branches: [main]
+    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
   contents: write
 
+# 与生产部署共用同一把锁，确保服务器上始终串行（跨工作流也互斥）
+concurrency:
+  group: openisle-server
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     environment: Deploy
-    if: ${{ !github.event.repository.fork }} # 只有非 fork 才执行
+    if: ${{ !github.event.repository.fork }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to Server
+      - name: Deploy to Server (staging)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
