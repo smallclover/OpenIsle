@@ -537,16 +537,22 @@ watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
 .article-comments,
 .header-item.comments {
   width: 5%;
+  justify-content: flex-end;
+  text-align: right;
 }
 
 .article-views,
 .header-item.views {
   width: 5%;
+  justify-content: flex-end;
+  text-align: right;  
 }
 
 .article-time,
 .header-item.activity {
   width: 10%;
+  justify-content: flex-end;
+  text-align: left;  
 }
 
 .article-item-title {
