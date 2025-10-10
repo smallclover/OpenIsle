@@ -5,11 +5,18 @@
       <div class="reason-description">
         为了我们社区的良性发展，请填写注册理由，我们将根据你的理由审核你的注册, 谢谢!
       </div>
-      <div class="reason-input-container">
-        <BaseInput textarea rows="4" v-model="reason" placeholder="20个字以上"></BaseInput>
-        <div class="char-count">{{ reason.length }}/20</div>
+      <div class="input-wrapper">
+        <div class="reason-input-container">
+          <BaseInput
+            textarea
+            rows="4"
+            v-model="reason"
+            placeholder="请输入至少20个字符"
+          ></BaseInput>
+          <div class="char-count">{{ reason.length }}/20</div>
+        </div>
+        <div v-if="error" class="error-message">{{ error }}</div>
       </div>
-      <div v-if="error" class="error-message">{{ error }}</div>
       <div v-if="!isWaitingForRegister" class="signup-page-button-primary" @click="submit">
         提交
       </div>
@@ -38,8 +45,9 @@ onMounted(async () => {
 })
 
 const submit = async () => {
-  if (!reason.value || reason.value.trim().length < 20) {
-    error.value = '请至少输入20个字'
+  const trimmedReason = reason.value.trim()
+  if (!trimmedReason || trimmedReason.length < 20) {
+    error.value = '请至少输入20个字符'
     return
   }
 
@@ -98,16 +106,29 @@ const submit = async () => {
   width: 400px;
 }
 
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.reason-input-container {
+  position: relative;
+}
+
 .char-count {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
   font-size: 12px;
   color: #888;
-  width: 100%;
-  text-align: right;
+  background-color: transparent;
+  pointer-events: none;
 }
 
 .error-message {
   color: red;
   font-size: 14px;
+  margin-top: 8px;
 }
 
 .signup-page-button-primary {
