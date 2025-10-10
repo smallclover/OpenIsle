@@ -179,7 +179,9 @@ body {
 
 .info-content-text pre .line-numbers {
   counter-reset: line-number 0;
-  width: 2em;
+  white-space: nowrap;        /* 禁止数字换行 */
+  font-variant-numeric: tabular-nums; /* 数字等宽 */
+  /* width: 2em; */
   font-size: 13px;
   position: sticky;
   flex-shrink: 0;
