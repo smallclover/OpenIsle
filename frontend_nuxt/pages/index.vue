@@ -75,8 +75,8 @@
               <star v-if="!article.rssExcluded" class="featured-icon" />
               {{ article.title }}
             </NuxtLink>
-            <NuxtLink class="article-item-description main-item">
-              {{ sanitizeDescription(article.description) }}
+            <NuxtLink class="article-item-description main-item" :to="`/posts/${article.id}`">
+              <div v-html="sanitizeDescription(article.description)"></div>
             </NuxtLink>
             <div class="article-info-container main-item">
               <ArticleCategory :category="article.category" />
@@ -378,8 +378,27 @@ onBeforeUnmount(() => {
 /** 供 InfiniteLoadMore 重建用的 key：筛选/Tab 改变即重建内部状态 */
 const ioKey = computed(() => asyncKey.value.join('::'))
 
-/** 其他工具函数 **/
-const sanitizeDescription = (text) => stripMarkdown(text)
+// 在首页摘要加载贴吧表情包
+const sanitizeDescription = (text) => {
+  if (!text) return ''
+
+  // 1️⃣ 先把 Markdown 转成纯文本
+  const plain = stripMarkdown(text)
+
+  // 2️⃣ 替换 :tieba123: 为 <img>
+  const withEmoji = plain.replace(/:tieba(\d+):/g, (match, num) => {
+    const key = `tieba${num}`
+    const file = tiebaEmoji[key]
+    return file
+      ? `<img loading="lazy" class="emoji" src="${file}" alt="${key}">`
+      : match // 没有匹配到图片则保留原样
+  })
+
+  // 3️⃣ 可选：截断纯文本长度（防止撑太长）
+  const truncated = withEmoji.length > 500 ? withEmoji.slice(0, 500) + '…' : withEmoji
+
+  return truncated
+}
 
 // 页面选项同步到全局状态
 watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
