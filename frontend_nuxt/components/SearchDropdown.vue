@@ -202,6 +202,7 @@ defineExpose({
 }
 
 .result-body {
+  line-height: 1;  
   display: flex;
   flex-direction: column;
 }
