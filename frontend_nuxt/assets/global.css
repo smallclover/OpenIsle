@@ -205,6 +205,7 @@ body {
   border-radius: 4px;
   background-color: var(--code-highlight-background-color);
   color: var(--text-color);
+  white-space: pre; /* 禁止自动换行 */
 }
 
 .copy-code-btn {
