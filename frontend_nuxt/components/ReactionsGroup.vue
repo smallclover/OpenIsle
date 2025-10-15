@@ -35,18 +35,6 @@
         </template>
       </div>
     </div>
-    <div class="make-reaction-container">
-      <div
-        v-if="props.contentType !== 'message'"
-        class="make-reaction-item like-reaction"
-        @click="toggleReaction('LIKE')"
-      >
-        <like v-if="!userReacted('LIKE')" />
-        <like v-else theme="filled" />
-        <span class="reactions-count" v-if="likeCount">{{ likeCount }}</span>
-      </div>
-      <slot></slot>
-    </div>
     <div
       v-if="panelVisible"
       class="reactions-panel"
@@ -102,8 +90,6 @@ const counts = computed(() => {
 })
 
 const totalCount = computed(() => Object.values(counts.value).reduce((a, b) => a + b, 0))
-const likeCount = computed(() => counts.value['LIKE'] || 0)
-
 const userReacted = (type) =>
   reactions.value.some((r) => r.type === type && r.user === authState.username)
 
@@ -152,7 +138,7 @@ const displayedReactions = computed(() => {
     .map((type) => ({ type }))
 })
 
-const panelTypes = computed(() => sortedReactionTypes.value.filter((t) => t !== 'LIKE'))
+const panelTypes = computed(() => sortedReactionTypes.value)
 
 const panelVisible = ref(false)
 let hideTimer = null
@@ -246,6 +232,10 @@ const toggleReaction = async (type) => {
 onMounted(async () => {
   await initialize()
 })
+
+defineExpose({
+  toggleReaction,
+})
 </script>
 
 <style>
@@ -253,11 +243,7 @@ onMounted(async () => {
   position: relative;
   display: flex;
   flex-direction: row;
-  gap: 10px;
   align-items: center;
-  width: 100%;
-  justify-content: space-between;
-  flex-wrap: wrap;
 }
 
 .reactions-viewer {
@@ -293,32 +279,6 @@ onMounted(async () => {
 .reactions-viewer-item-placeholder-text {
   font-size: 14px;
   padding-left: 5px;
-}
-
-.make-reaction-container {
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-}
-
-.make-reaction-item {
-  cursor: pointer;
-  padding: 4px;
-  opacity: 0.5;
-  border-radius: 8px;
-  font-size: 20px;
-}
-
-.like-reaction {
-  color: #ff0000;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 5px;
-}
-
-.make-reaction-item:hover {
-  background-color: #ffe2e2;
 }
 
 .reactions-count {
