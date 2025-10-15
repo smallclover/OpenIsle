@@ -756,7 +756,7 @@ function goBack() {
 .message-reaction-row {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
   margin-top: 6px;

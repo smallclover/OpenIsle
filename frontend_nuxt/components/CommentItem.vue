@@ -392,15 +392,6 @@ const handleContentClick = (e) => {
 </script>
 
 <style scoped>
-.article-footer-container {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 6px;
-}
-
 .comment-reaction-actions {
   display: flex;
   flex-direction: row;

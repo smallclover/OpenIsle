@@ -1272,7 +1272,7 @@ onMounted(async () => {
 .article-footer-container {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  justify-content: space-between;
   gap: 10px;
   margin-top: 0px;
   flex-wrap: wrap;
