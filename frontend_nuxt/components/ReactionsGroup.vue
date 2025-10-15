@@ -38,6 +38,8 @@
     <div
       v-if="panelVisible"
       class="reactions-panel"
+      ref="reactionsPanelRef"
+      :style="panelInlineStyle"
       @mouseenter="cancelHide"
       @mouseleave="scheduleHide"
     >
@@ -57,7 +59,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { toast } from '~/main'
 import { authState, getToken } from '~/utils/auth'
 import { reactionEmojiMap } from '~/utils/reactions'
@@ -141,6 +143,8 @@ const displayedReactions = computed(() => {
 const panelTypes = computed(() => sortedReactionTypes.value)
 
 const panelVisible = ref(false)
+const reactionsPanelRef = ref(null)
+const panelInlineStyle = ref({})
 let hideTimer = null
 const openPanel = () => {
   clearTimeout(hideTimer)
@@ -155,6 +159,33 @@ const scheduleHide = () => {
 const cancelHide = () => {
   clearTimeout(hideTimer)
 }
+
+const updatePanelInlineStyle = () => {
+  if (!panelVisible.value) return
+  const panelEl = reactionsPanelRef.value
+  if (!panelEl) return
+  const parentEl = panelEl.closest('.reactions-container')?.parentElement
+  if (!parentEl) return
+  const parentWidth = parentEl.clientWidth - 20
+  panelInlineStyle.value = {
+    width: 'max-content',
+    maxWidth: `${parentWidth}px`,
+  }
+}
+
+watch(panelVisible, async (visible) => {
+  if (visible) {
+    await nextTick()
+    updatePanelInlineStyle()
+  }
+})
+
+watch(panelTypes, async () => {
+  if (panelVisible.value) {
+    await nextTick()
+    updatePanelInlineStyle()
+  }
+})
 
 const toggleReaction = async (type) => {
   const token = getToken()
@@ -231,10 +262,15 @@ const toggleReaction = async (type) => {
 
 onMounted(async () => {
   await initialize()
+  window.addEventListener('resize', updatePanelInlineStyle)
 })
 
 defineExpose({
   toggleReaction,
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updatePanelInlineStyle)
 })
 </script>
 
@@ -288,7 +324,7 @@ defineExpose({
 
 .reactions-panel {
   position: absolute;
-  bottom: 50px;
+  bottom: 40px;
   background-color: var(--background-color);
   border: 1px solid var(--normal-border-color);
   border-radius: 20px;
