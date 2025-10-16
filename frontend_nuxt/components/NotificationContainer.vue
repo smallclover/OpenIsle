@@ -54,6 +54,7 @@ export default {
 
 .has-read-button {
   font-size: 12px;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
