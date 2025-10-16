@@ -109,7 +109,7 @@ function onError() {
 }
 
 .base-user-avatar:hover {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 24px rgba(251, 138, 138, 0.1);
   transform: scale(1.05);
 }
 

@@ -1,41 +1,47 @@
 <template>
   <div class="donate-container">
-    <div class="donate-viewer">
-      <div class="donate-viewer-item-container" @mouseenter="cancelHide" @mouseleave="scheduleHide">
-        <BaseItemGroup :items="donateItems" :overlap="10" :expanded-gap="2" :direction="vertical">
-          <template #item="{ item }">
-            <BaseUserAvatar
-              :user-id="1"
-              :src="avatar"
-              alt="avatar"
-              :width="25"
-              :disable-link="true"
-            />
-          </template>
-        </BaseItemGroup>
+    <ToolTip content="打赏作者" placement="bottom">
+      <div class="donate-viewer" @click="openPanel">
+        <div
+          class="donate-viewer-item-container"
+          @mouseenter="cancelHide"
+          @mouseleave="scheduleHide"
+        >
+          <BaseItemGroup :items="donateItems" :overlap="10" :expanded-gap="2" :direction="vertical">
+            <template #item="{ item }">
+              <BaseUserAvatar
+                :user-id="1"
+                :src="avatar"
+                alt="avatar"
+                :width="20"
+                :disable-link="true"
+              />
+            </template>
+          </BaseItemGroup>
+          <div class="donate-counts-text">100</div>
+        </div>
+      </div>
+    </ToolTip>
+    <div
+      v-if="panelVisible"
+      class="donate-panel"
+      ref="donatePanelRef"
+      :style="panelInlineStyle"
+      @mouseenter="cancelHide"
+      @mouseleave="scheduleHide"
+    >
+      <div class="donate-option">
+        <financing class="donate-option-icon" />
+        <div class="donate-counts-text">10</div>
+      </div>
+      <div class="donate-option">
+        <financing class="donate-option-icon" />
+        <div class="donate-counts-text">30</div>
+      </div>
+      <div class="donate-option selected">
+        <financing class="donate-option-icon" />
         <div class="donate-counts-text">100</div>
       </div>
-    </div>
-  </div>
-  <div
-    v-if="panelVisible"
-    class="donate-panel"
-    ref="reactionsPanelRef"
-    :style="panelInlineStyle"
-    @mouseenter="cancelHide"
-    @mouseleave="scheduleHide"
-  >
-    <div class="donate-option">
-      <financing />
-      <div class="donate-counts-text">100</div>
-    </div>
-    <div class="donate-option">
-      <financing />
-      <div class="donate-counts-text">300</div>
-    </div>
-    <div class="donate-option">
-      <financing />
-      <div class="donate-counts-text">500</div>
     </div>
   </div>
 </template>
@@ -49,7 +55,7 @@ const props = defineProps({})
 
 const avatar = ref('')
 const panelVisible = ref(false)
-const reactionsPanelRef = ref(null)
+const donatePanelRef = ref(null)
 const panelInlineStyle = ref({})
 const donateItems = ref([
   {
@@ -67,6 +73,11 @@ const donateItems = ref([
 ])
 let hideTimer = null
 
+const openPanel = () => {
+  clearTimeout(hideTimer)
+  panelVisible.value = true
+}
+
 const scheduleHide = () => {
   clearTimeout(hideTimer)
   hideTimer = setTimeout(() => {
@@ -79,9 +90,9 @@ const cancelHide = () => {
 
 const updatePanelInlineStyle = () => {
   if (!panelVisible.value) return
-  const panelEl = reactionsPanelRef.value
+  const panelEl = donatePanelRef.value
   if (!panelEl) return
-  const parentEl = panelEl.closest('.reactions-container')?.parentElement
+  const parentEl = panelEl.closest('.donate-container')?.parentElement.parentElement
   if (!parentEl) return
   const parentWidth = parentEl.clientWidth - 20
   panelInlineStyle.value = {
@@ -117,10 +128,67 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.donate-container {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
 .donate-viewer-item-container {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 2px;
+}
+
+.donate-viewer {
+  border-radius: 13px;
+  padding: 3px;
+  padding-right: 6px;
+  cursor: pointer;
+  transition: background-color 0.5s ease;
+}
+
+.donate-viewer:hover {
+  background-color: var(--secondary-color-hover);
+}
+
+.donate-counts-text {
+  color: var(--primary-color);
+  font-size: 14px;
+}
+
+.donate-panel {
+  position: absolute;
+  bottom: 35px;
+  background-color: var(--background-color);
+  border: 1px solid var(--normal-border-color);
+  border-radius: 20px;
+  padding: 5px 10px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  z-index: 10;
+  gap: 5px;
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+}
+
+.donate-option {
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+}
+
+.donate-option:hover {
+  background-color: var(--normal-light-background-color);
+}
+
+.donate-option-icon {
+  color: var(--primary-color);
 }
 </style>

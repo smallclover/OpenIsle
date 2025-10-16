@@ -1280,12 +1280,12 @@ onMounted(async () => {
   gap: 10px;
   margin-top: 0px;
   flex-wrap: wrap;
+  margin-bottom: 10px;
 }
 
 .option-container {
   display: flex;
   flex-direction: row;
-  gap: 10px;
   align-items: center;
   flex-wrap: wrap;
 }

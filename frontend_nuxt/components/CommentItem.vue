@@ -488,6 +488,16 @@ const handleContentClick = (e) => {
   font-weight: bold;
 }
 
+.article-footer-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 0px;
+  flex-wrap: wrap;
+  margin-bottom: 0px;
+}
+
 .medal-name {
   font-size: 12px;
   margin-left: 1px;

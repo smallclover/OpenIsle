@@ -18,9 +18,11 @@
             <div>{{ counts[r.type] }}</div>
           </div>
 
-          <div class="reactions-viewer-item placeholder" @click="openPanel">
-            <sly-face-whit-smile class="reactions-viewer-item-placeholder-icon" />
-          </div>
+          <ToolTip content="发表心情" placement="bottom">
+            <div class="reactions-viewer-item placeholder" @click="openPanel">
+              <sly-face-whit-smile class="reactions-viewer-item-placeholder-icon" />
+            </div>
+          </ToolTip>
         </template>
         <template v-else-if="displayedReactions.length">
           <div
@@ -324,7 +326,7 @@ onBeforeUnmount(() => {
 
 .reactions-panel {
   position: absolute;
-  bottom: 40px;
+  bottom: 35px;
   background-color: var(--background-color);
   border: 1px solid var(--normal-border-color);
   border-radius: 20px;
