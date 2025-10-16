@@ -45,6 +45,7 @@ export default {
   font-size: 12px;
   cursor: pointer;
   margin-left: 10px;
+  white-space: nowrap;
 }
 
 .mark-read-button:hover {
