@@ -205,7 +205,6 @@ body {
   border-radius: 4px;
   background-color: var(--code-highlight-background-color);
   color: var(--text-color);
-  white-space: pre; /* 禁止自动换行 */
 }
 
 .copy-code-btn {
@@ -370,7 +369,10 @@ body {
   .d2h-code-line {
     padding-left: 10px !important;
   }
-
+  /* 手机端不换行 */
+  .info-content-text code {
+    white-space: pre; /* 禁止自动换行 */
+  }
   /* .d2h-diff-table {
     font-size: 6px !important;
   }
