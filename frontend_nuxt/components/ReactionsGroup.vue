@@ -164,7 +164,7 @@ const updatePanelInlineStyle = () => {
   if (!panelVisible.value) return
   const panelEl = reactionsPanelRef.value
   if (!panelEl) return
-  const parentEl = panelEl.closest('.reactions-container')?.parentElement
+  const parentEl = panelEl.closest('.reactions-container')?.parentElement?.parentElement
   if (!parentEl) return
   const parentWidth = parentEl.clientWidth - 20
   panelInlineStyle.value = {
@@ -357,7 +357,6 @@ onBeforeUnmount(() => {
   border: 1px solid var(--normal-border-color);
   border-radius: 10px;
   margin-right: 5px;
-  margin-bottom: 5px;
   font-size: 14px;
   color: var(--text-color);
   align-items: center;

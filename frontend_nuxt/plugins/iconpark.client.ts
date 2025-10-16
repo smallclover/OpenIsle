@@ -80,6 +80,7 @@ import {
   Dislike,
   CheckOne,
   Share,
+  Financing,
 } from '@icon-park/vue-next'
 
 export default defineNuxtPlugin((nuxtApp) => {
@@ -163,4 +164,5 @@ export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.component('Dislike', Dislike)
   nuxtApp.vueApp.component('CheckOne', CheckOne)
   nuxtApp.vueApp.component('Share', Share)
+  nuxtApp.vueApp.component('Financing', Financing)
 })

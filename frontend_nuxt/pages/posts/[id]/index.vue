@@ -92,12 +92,15 @@
           ></div>
 
           <div class="article-footer-container">
-            <ReactionsGroup
-              ref="postReactionsGroupRef"
-              v-model="postReactions"
-              content-type="post"
-              :content-id="postId"
-            />
+            <div class="option-container">
+              <ReactionsGroup
+                ref="postReactionsGroupRef"
+                v-model="postReactions"
+                content-type="post"
+                :content-id="postId"
+              />
+              <DonateGroup />
+            </div>
             <div class="article-footer-actions">
               <div
                 class="reaction-action like-action"
@@ -211,6 +214,7 @@ import PostChangeLogItem from '~/components/PostChangeLogItem.vue'
 import ArticleTags from '~/components/ArticleTags.vue'
 import ArticleCategory from '~/components/ArticleCategory.vue'
 import ReactionsGroup from '~/components/ReactionsGroup.vue'
+import DonateGroup from '~/components/DonateGroup.vue'
 import DropdownMenu from '~/components/DropdownMenu.vue'
 import PostLottery from '~/components/PostLottery.vue'
 import PostPoll from '~/components/PostPoll.vue'
@@ -1275,6 +1279,14 @@ onMounted(async () => {
   justify-content: space-between;
   gap: 10px;
   margin-top: 0px;
+  flex-wrap: wrap;
+}
+
+.option-container {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
   flex-wrap: wrap;
 }
 
