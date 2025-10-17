@@ -92,7 +92,7 @@
           ></div>
 
           <div class="article-footer-container">
-            <div class="option-container">
+            <div class="article-option-container">
               <ReactionsGroup
                 ref="postReactionsGroupRef"
                 v-model="postReactions"
@@ -1286,7 +1286,7 @@ onMounted(async () => {
   margin-bottom: 10px;
 }
 
-.option-container {
+.article-option-container {
   display: flex;
   flex-direction: row;
   align-items: center;
