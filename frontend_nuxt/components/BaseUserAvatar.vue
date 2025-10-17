@@ -15,7 +15,7 @@ import { computed, ref, watch } from 'vue'
 import { useAttrs } from 'vue'
 import BaseImage from './BaseImage.vue'
 
-const DEFAULT_AVATAR = '/default-avatar.svg'
+const DEFAULT_AVATAR = '/default-avatar.jpg'
 
 const props = defineProps({
   userId: {

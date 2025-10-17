@@ -1,6 +1,6 @@
 <template>
   <div class="donate-container">
-    <ToolTip content="打赏作者" placement="bottom">
+    <ToolTip content="打赏作者" placement="bottom" v-if="donateItems.length > 0">
       <div class="donate-viewer" @click="openPanel">
         <div
           class="donate-viewer-item-container"
@@ -22,6 +22,11 @@
         </div>
       </div>
     </ToolTip>
+    <ToolTip content="赞赏作者" placement="bottom" v-else>
+      <div class="donate-viewer-item placeholder" @click="openPanel">
+        <financing class="donate-viewer-item-placeholder-icon" />
+      </div>
+    </ToolTip>
     <div
       v-if="panelVisible"
       class="donate-panel"
@@ -38,7 +43,7 @@
         <financing class="donate-option-icon" />
         <div class="donate-counts-text">30</div>
       </div>
-      <div class="donate-option selected">
+      <div class="donate-option">
         <financing class="donate-option-icon" />
         <div class="donate-counts-text">100</div>
       </div>
@@ -47,6 +52,7 @@
 </template>
 
 <script setup>
+import { Finance } from '@icon-park/vue-next'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const emit = defineEmits(['update:modelValue'])
@@ -58,18 +64,18 @@ const panelVisible = ref(false)
 const donatePanelRef = ref(null)
 const panelInlineStyle = ref({})
 const donateItems = ref([
-  {
-    id: 1,
-    count: 100,
-  },
-  {
-    id: 2,
-    count: 300,
-  },
-  {
-    id: 3,
-    count: 500,
-  },
+  // {
+  //   id: 1,
+  //   count: 100,
+  // },
+  // {
+  //   id: 2,
+  //   count: 300,
+  // },
+  // {
+  //   id: 3,
+  //   count: 500,
+  // },
 ])
 let hideTimer = null
 
@@ -172,6 +178,29 @@ onBeforeUnmount(() => {
   z-index: 10;
   gap: 5px;
   box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+}
+
+.donate-viewer-item.placeholder {
+  display: flex;
+  cursor: pointer;
+  flex-direction: row;
+  padding: 2px 10px;
+  gap: 5px;
+  border: 1px solid var(--normal-border-color);
+  border-radius: 10px;
+  margin-right: 5px;
+  font-size: 14px;
+  color: var(--text-color);
+  align-items: center;
+  background-color: var(--normal-light-background-color);
+}
+
+.donate-viewer-item {
+  font-size: 16px;
+}
+
+.donate-viewer-item-placeholder-icon {
+  opacity: 0.5;
 }
 
 .donate-option {
