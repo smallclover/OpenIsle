@@ -1,9 +1,9 @@
 <template>
   <div class="home-page">
-    <div v-if="!isMobile" class="search-container">
+    <!-- <div v-if="!isMobile" class="search-container">
       <div class="search-title">一切可能，从此刻启航，在此遇见灵感与共鸣</div>
-      <!-- <SearchDropdown /> -->
-    </div>
+      <SearchDropdown />
+    </div> -->
 
     <div class="topic-container">
       <div class="topic-item-container">
