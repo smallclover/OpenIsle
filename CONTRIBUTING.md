@@ -73,6 +73,12 @@ cd OpenIsle
    docker compose -f docker/docker-compose.yaml --env-file .env --profile dev down
    ```
 
+5. 开发时若需要**重置所有容器及其挂载的数据卷**，可以执行：
+   ```shell
+   docker compose -f docker/docker-compose.yaml --env-file .env --profile dev down -v
+   ```
+   `-v` 参数会在关闭容器的同时移除通过 `volumes` 声明的挂载卷，适用于希望清理数据库、缓存等持久化数据，确保下一次启动时获得全新环境的场景。
+
 如需自定义 Node 依赖缓存、数据库持久化等，可参考 `docker/docker-compose.yaml` 中各卷的定义进行调整。
 
 ## 启动后端服务
