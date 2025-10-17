@@ -17,7 +17,7 @@
           <input
             class="text-input"
             v-model="keyword"
-            placeholder="Search"
+            placeholder="键盘点击「/」以触发搜索"
             @input="setSearch(keyword)"
           />
         </div>
