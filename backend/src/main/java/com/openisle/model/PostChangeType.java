@@ -10,4 +10,5 @@ public enum PostChangeType {
   FEATURED,
   VOTE_RESULT,
   LOTTERY_RESULT,
+  DONATE,
 }

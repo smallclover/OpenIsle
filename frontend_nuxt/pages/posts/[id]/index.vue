@@ -412,6 +412,8 @@ const changeLogIcon = (l) => {
     return 'check-one'
   } else if (l.type === 'LOTTERY_RESULT') {
     return 'gift'
+  } else if (l.type === 'DONATE') {
+    return 'financing'
   } else {
     return 'info'
   }
@@ -436,6 +438,7 @@ const mapChangeLog = (l) => ({
   newCategory: l.newCategory,
   oldTags: l.oldTags,
   newTags: l.newTags,
+  amount: l.amount,
   icon: changeLogIcon(l),
 })
 

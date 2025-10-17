@@ -25,6 +25,7 @@ public class PointService {
   private final CommentRepository commentRepository;
   private final PointHistoryRepository pointHistoryRepository;
   private final NotificationService notificationService;
+  private final PostChangeLogService postChangeLogService;
 
   public int awardForPost(String userName, Long postId) {
     User user = userRepository.findByUsername(userName).orElseThrow();
@@ -304,6 +305,7 @@ public class PointService {
       null,
       String.valueOf(amount)
     );
+    postChangeLogService.recordDonation(post, donor, amount);
     DonationResponse response = buildDonationResponse(post);
     response.setBalance(donor.getPoint());
     return response;
@@ -322,19 +324,38 @@ public class PointService {
       );
     List<DonationDto> donations = histories
       .stream()
-      .map(history -> {
-        DonationDto dto = new DonationDto();
-        User donor = history.getFromUser();
-        if (donor != null) {
-          dto.setUserId(donor.getId());
-          dto.setUsername(donor.getUsername());
-          dto.setAvatar(donor.getAvatar());
-        }
-        dto.setAmount(history.getAmount());
-        dto.setCreatedAt(history.getCreatedAt());
-        return dto;
-      })
-      .collect(Collectors.toList());
+      .collect(Collectors.collectingAndThen(Collectors.toMap(
+          history -> {
+            User donor = history.getFromUser();
+            if (donor != null && donor.getId() != null) {
+              return "user:" + donor.getId();
+            }
+            return "history:" + history.getId();
+          },
+          history -> {
+            DonationDto dto = new DonationDto();
+            User donor = history.getFromUser();
+            if (donor != null) {
+              dto.setUserId(donor.getId());
+              dto.setUsername(donor.getUsername());
+              dto.setAvatar(donor.getAvatar());
+            }
+            dto.setAmount(history.getAmount());
+            dto.setCreatedAt(history.getCreatedAt());
+            return dto;
+          },
+          (left, right) -> {
+            left.setAmount(left.getAmount() + right.getAmount());
+            if (
+              left.getCreatedAt() == null ||
+              (right.getCreatedAt() != null && right.getCreatedAt().isAfter(left.getCreatedAt()))
+            ) {
+              left.setCreatedAt(right.getCreatedAt());
+            }
+            return left;
+          },
+          java.util.LinkedHashMap::new
+        ), map -> new java.util.ArrayList<>(map.values())));
     Long total = pointHistoryRepository.sumAmountByPostAndType(
       post,
       PointHistoryType.DONATE_RECEIVED

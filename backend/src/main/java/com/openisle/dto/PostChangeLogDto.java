@@ -29,4 +29,5 @@ public class PostChangeLogDto {
   private LocalDateTime newPinnedAt;
   private Boolean oldFeatured;
   private Boolean newFeatured;
+  private Integer amount;
 }
