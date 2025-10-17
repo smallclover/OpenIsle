@@ -302,4 +302,18 @@ watch(
 .donate-option-icon {
   color: var(--primary-color);
 }
+
+@media (max-width: 768px) {
+  .donate-viewer-item.placeholder {
+    padding: 4px 8px;
+    gap: 3px;
+    border: 1px solid var(--normal-border-color);
+    border-radius: 10px;
+    margin-right: 3px;
+    margin-bottom: 3px;
+    font-size: 12px;
+    color: var(--text-color);
+    align-items: center;
+  }
+}
 </style>

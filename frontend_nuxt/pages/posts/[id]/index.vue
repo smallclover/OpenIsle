@@ -1382,6 +1382,7 @@ onMounted(async () => {
 
   .article-footer-container {
     margin-top: 0;
+    margin-bottom: 0px;
   }
 
   .loading-container {
