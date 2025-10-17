@@ -84,7 +84,7 @@
           >
             <div class="conversation-avatar">
               <BaseImage
-                :src="ch.avatar || '/default-avatar.jpg'"
+                :src="ch.avatar"
                 :alt="ch.name"
                 class="avatar-img"
                 @error="handleAvatarError"
@@ -194,7 +194,7 @@ function formatTime(timeString) {
 
 // 头像加载失败处理
 function handleAvatarError(event) {
-  event.target.src = '/default-avatar.jpg'
+  event.target.src = null
 }
 
 async function fetchChannels() {

@@ -1,5 +1,5 @@
 import { toast } from '../main'
-import { setToken, loadCurrentUser } from './auth'
+import { setToken } from './auth'
 import { registerPush } from './push'
 
 export function telegramAuthorize(inviteToken = '') {
@@ -34,7 +34,6 @@ export async function telegramExchange(authData, inviteToken = '', reason = '') 
     const data = await res.json()
     if (res.ok && data.token) {
       setToken(data.token)
-      await loadCurrentUser()
       toast.success('登录成功')
       registerPush?.()
       return { success: true, needReason: false }
