@@ -78,7 +78,9 @@
             <div class="header-icon-item" @click="goToMessages">
               <message-emoji class="header-icon" />
               <span class="header-label">消息</span>
-              <span v-if="unreadMessageCount > 0" class="unread-badge">{{ unreadMessageCount }}</span>
+              <span v-if="unreadMessageCount > 0" class="unread-badge">{{
+                unreadMessageCount
+              }}</span>
               <span v-else-if="hasChannelUnread" class="unread-dot"></span>
             </div>
           </ToolTip>
@@ -89,10 +91,9 @@
                 <BaseUserAvatar
                   class="avatar-img"
                   :user-id="authState.userId"
-                  :src="avatar"
-                  alt="avatar"
-                  :width="32"
+                  :src="authState.avatar"
                   :disable-link="true"
+                  :width="32"
                 />
                 <down />
               </div>
@@ -117,7 +118,7 @@ import DropdownMenu from '~/components/DropdownMenu.vue'
 import ToolTip from '~/components/ToolTip.vue'
 import SearchDropdown from '~/components/SearchDropdown.vue'
 import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
-import { authState, clearToken, loadCurrentUser } from '~/utils/auth'
+import { authState, clearToken } from '~/utils/auth'
 import { useUnreadCount } from '~/composables/useUnreadCount'
 import { useChannelsUnreadCount } from '~/composables/useChannelsUnreadCount'
 import { useIsMobile } from '~/utils/screen'
@@ -139,13 +140,11 @@ const isLogin = computed(() => authState.loggedIn)
 const isMobile = useIsMobile()
 const { count: unreadMessageCount, fetchUnreadCount } = useUnreadCount()
 const { hasUnread: hasChannelUnread, fetchChannelUnread } = useChannelsUnreadCount()
-const avatar = ref('')
 const showSearch = ref(false)
 const searchDropdown = ref(null)
 const userMenu = ref(null)
 const menuBtn = ref(null)
 const isCopying = ref(false)
-
 const onlineCount = ref(0)
 
 // 心跳检测
@@ -208,7 +207,7 @@ const copyInviteLink = async () => {
   const token = getToken()
   if (!token) {
     toast.error('请先登录')
-    isCopying.value = false   // 🔥 修复：未登录时立即复原状态
+    isCopying.value = false // 🔥 修复：未登录时立即复原状态
     return
   }
   try {
@@ -252,17 +251,7 @@ const copyRssLink = async () => {
 }
 
 const goToProfile = async () => {
-  if (!authState.loggedIn) {
-    navigateTo('/login', { replace: true })
-    return
-  }
-  let id = authState.username || authState.userId
-  if (!id) {
-    const user = await loadCurrentUser()
-    if (user) {
-      id = user.username || user.id
-    }
-  }
+  let id = authState.username || authState.id
   if (id) {
     navigateTo(`/users/${id}`, { replace: true })
   }
@@ -306,14 +295,6 @@ const iconClass = computed(() => {
 })
 
 onMounted(async () => {
-  const updateAvatar = async () => {
-    if (authState.loggedIn) {
-      const user = await loadCurrentUser()
-      if (user && user.avatar) {
-        avatar.value = user.avatar
-      }
-    }
-  }
   const updateUnread = async () => {
     if (authState.loggedIn) {
       fetchUnreadCount()
@@ -323,16 +304,7 @@ onMounted(async () => {
     }
   }
 
-  await updateAvatar()
   await updateUnread()
-
-  watch(
-    () => authState.loggedIn,
-    async (isLoggedIn) => {
-      await updateAvatar()
-      await updateUnread()
-    },
-  )
 
   // 新增的在线人数逻辑
   sendPing()
@@ -482,7 +454,6 @@ onMounted(async () => {
   cursor: pointer;
 }
 
-
 .invite_text:hover {
   opacity: 0.8;
   text-decoration: underline;
@@ -543,7 +514,10 @@ onMounted(async () => {
   color: var(--primary-color);
   cursor: pointer;
   position: relative;
-  transition: color 0.25s ease, transform 0.15s ease, opacity 0.2s ease;
+  transition:
+    color 0.25s ease,
+    transform 0.15s ease,
+    opacity 0.2s ease;
 }
 
 .header-icon-item:hover {
@@ -572,14 +546,13 @@ onMounted(async () => {
   position: absolute;
   top: -4px;
   right: -6px;
-  color: var(--primary-color);  /* 🔹 使用主题主色 */
-  background: none;             /* 🔹 去掉背景 */
-  font-size: 11px;              /* 字体稍微大一点以便清晰 */
-  font-weight: 600;             /* 加一点权重让数字更醒目 */
+  color: var(--primary-color); /* 🔹 使用主题主色 */
+  background: none; /* 🔹 去掉背景 */
+  font-size: 11px; /* 字体稍微大一点以便清晰 */
+  font-weight: 600; /* 加一点权重让数字更醒目 */
   line-height: 1;
-  padding: 0;                   /* 去掉内边距 */
+  padding: 0; /* 去掉内边距 */
 }
-
 
 @keyframes rss-glow {
   0% {

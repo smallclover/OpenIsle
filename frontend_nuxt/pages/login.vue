@@ -40,7 +40,7 @@
 
 <script setup>
 import { toast } from '~/main'
-import { setToken, loadCurrentUser } from '~/utils/auth'
+import { setToken } from '~/utils/auth'
 import BaseInput from '~/components/BaseInput.vue'
 import ThirdPartyAuth from '~/components/ThirdPartyAuth.vue'
 import { registerPush } from '~/utils/push'
@@ -61,7 +61,6 @@ const submitLogin = async () => {
     const data = await res.json()
     if (res.ok && data.token) {
       setToken(data.token)
-      await loadCurrentUser()
       toast.success('登录成功')
       registerPush()
       await navigateTo('/', { replace: true })

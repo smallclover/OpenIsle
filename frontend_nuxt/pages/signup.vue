@@ -70,7 +70,7 @@
 <script setup>
 import BaseInput from '~/components/BaseInput.vue'
 import { toast } from '~/main'
-import { loadCurrentUser, setToken } from '~/utils/auth'
+import { setToken } from '~/utils/auth'
 import ThirdPartyAuth from '~/components/ThirdPartyAuth.vue'
 
 const route = useRoute()
@@ -172,7 +172,6 @@ const verifyCode = async () => {
       if (data.reason_code === 'VERIFIED_AND_APPROVED') {
         toast.success('注册成功')
         setToken(data.token)
-        loadCurrentUser()
         navigateTo('/', { replace: true })
       } else if (data.reason_code === 'VERIFIED') {
         if (registerMode.value === 'WHITELIST') {
