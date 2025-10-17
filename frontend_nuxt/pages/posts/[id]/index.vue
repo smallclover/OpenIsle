@@ -92,11 +92,29 @@
           ></div>
 
           <div class="article-footer-container">
-            <ReactionsGroup v-model="postReactions" content-type="post" :content-id="postId">
-              <div class="make-reaction-item copy-link" @click="copyPostLink">
+            <div class="option-container">
+              <ReactionsGroup
+                ref="postReactionsGroupRef"
+                v-model="postReactions"
+                content-type="post"
+                :content-id="postId"
+              />
+              <DonateGroup :post-id="postId" :author-id="author.id" :is-author="isAuthor" />
+            </div>
+            <div class="article-footer-actions">
+              <div
+                class="reaction-action like-action"
+                :class="{ selected: postLikedByMe }"
+                @click="togglePostLike"
+              >
+                <like v-if="!postLikedByMe" />
+                <like v-else theme="filled" />
+                <span v-if="postLikeCount" class="reaction-count">{{ postLikeCount }}</span>
+              </div>
+              <div class="reaction-action copy-link" @click="copyPostLink">
                 <link-icon />
               </div>
-            </ReactionsGroup>
+            </div>
           </div>
         </div>
       </div>
@@ -196,6 +214,7 @@ import PostChangeLogItem from '~/components/PostChangeLogItem.vue'
 import ArticleTags from '~/components/ArticleTags.vue'
 import ArticleCategory from '~/components/ArticleCategory.vue'
 import ReactionsGroup from '~/components/ReactionsGroup.vue'
+import DonateGroup from '~/components/DonateGroup.vue'
 import DropdownMenu from '~/components/DropdownMenu.vue'
 import PostLottery from '~/components/PostLottery.vue'
 import PostPoll from '~/components/PostPoll.vue'
@@ -223,6 +242,18 @@ const postContent = ref('')
 const category = ref('')
 const tags = ref([])
 const postReactions = ref([])
+const postReactionsGroupRef = ref(null)
+const postLikeCount = computed(
+  () => postReactions.value.filter((reaction) => reaction.type === 'LIKE').length,
+)
+const postLikedByMe = computed(() =>
+  postReactions.value.some(
+    (reaction) => reaction.type === 'LIKE' && reaction.user === authState.username,
+  ),
+)
+const togglePostLike = () => {
+  postReactionsGroupRef.value?.toggleReaction('LIKE')
+}
 const comments = ref([])
 const changeLogs = ref([])
 const status = ref('PUBLISHED')
@@ -366,9 +397,9 @@ const changeLogIcon = (l) => {
       return 'unlock'
     }
   } else if (l.type === 'PINNED') {
-    if(l.newPinnedAt){
+    if (l.newPinnedAt) {
       return 'pin'
-    }else{
+    } else {
       return 'clear-icon'
     }
   } else if (l.type === 'FEATURED') {
@@ -381,6 +412,8 @@ const changeLogIcon = (l) => {
     return 'check-one'
   } else if (l.type === 'LOTTERY_RESULT') {
     return 'gift'
+  } else if (l.type === 'DONATE') {
+    return 'financing'
   } else {
     return 'info'
   }
@@ -405,6 +438,7 @@ const mapChangeLog = (l) => ({
   newCategory: l.newCategory,
   oldTags: l.oldTags,
   newTags: l.newTags,
+  amount: l.amount,
   icon: changeLogIcon(l),
 })
 
@@ -1245,35 +1279,61 @@ onMounted(async () => {
 .article-footer-container {
   display: flex;
   flex-direction: row;
+  justify-content: space-between;
   gap: 10px;
   margin-top: 0px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
 }
 
-.reactions-viewer {
+.option-container {
   display: flex;
   flex-direction: row;
-  gap: 20px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
-.reactions-viewer-item-container {
-  display: flex;
-  flex-direction: row;
-  gap: 2px;
-  align-items: center;
-}
-
-.reactions-viewer-item {
-  font-size: 16px;
-}
-
-.make-reaction-container {
+.article-footer-actions {
   display: flex;
   flex-direction: row;
   gap: 10px;
+  align-items: center;
 }
 
-.copy-link:hover {
+.reaction-action {
+  cursor: pointer;
+  padding: 4px 10px;
+  opacity: 0.6;
+  border-radius: 10px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.reaction-action:hover {
+  opacity: 1;
+  background-color: var(--normal-light-background-color);
+}
+
+.reaction-action.like-action {
+  color: #ff0000;
+}
+
+.reaction-action.selected {
+  opacity: 1;
+  background-color: var(--normal-light-background-color);
+}
+
+.reaction-count {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.reaction-action.copy-link:hover {
   background-color: #e2e2e2;
 }
 

@@ -53,8 +53,8 @@ cd OpenIsle
      --profile dev up -d
    ```
    该命令会创建名为 `frontend_dev` 的容器并运行 `npm run dev`，浏览器访问 http://127.0.0.1:3000 即可查看页面。
-
-   修改代码后，可以强制重新创建所有容器，执行：
+   修改前端代码，页面会热更新。
+   如果修改后端代码，可以重启后端容器, 或是环境变量中指向IDEA，采用IDEA编译运行也可以哦。
 
    ```shell
    docker compose \

@@ -115,6 +115,15 @@ public class PostChangeLogService {
     logRepository.save(log);
   }
 
+  public void recordDonation(Post post, User donor, int amount) {
+    PostDonateChangeLog log = new PostDonateChangeLog();
+    log.setPost(post);
+    log.setUser(donor);
+    log.setType(PostChangeType.DONATE);
+    log.setAmount(amount);
+    logRepository.save(log);
+  }
+
   public void deleteLogsForPost(Post post) {
     logRepository.deleteByPost(post);
   }

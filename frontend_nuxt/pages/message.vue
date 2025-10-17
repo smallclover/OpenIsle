@@ -542,6 +542,27 @@
                       被收录为精选
                     </NotificationContainer>
                   </template>
+                  <template v-else-if="item.type === 'DONATION'">
+                    <NotificationContainer :item="item" :markRead="markRead">
+                      <NuxtLink
+                        class="notif-content-text"
+                        @click="markRead(item.id)"
+                        :to="`/users/${item.fromUser.id}`"
+                      >
+                        {{ item.fromUser.username }}
+                      </NuxtLink>
+                      在帖子
+                      <NuxtLink
+                        class="notif-content-text"
+                        @click="markRead(item.id)"
+                        :to="`/posts/${item.post.id}`"
+                      >
+                        {{ stripMarkdownLength(item.post.title, 100) }}
+                      </NuxtLink>
+                      打赏了你
+                      <template v-if="item.content"> ，获得 {{ item.content }} 积分 </template>
+                    </NotificationContainer>
+                  </template>
                   <template v-else-if="item.type === 'POST_DELETED'">
                     <NotificationContainer :item="item" :markRead="markRead">
                       管理员

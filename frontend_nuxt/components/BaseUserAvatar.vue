@@ -15,7 +15,7 @@ import { computed, ref, watch } from 'vue'
 import { useAttrs } from 'vue'
 import BaseImage from './BaseImage.vue'
 
-const DEFAULT_AVATAR = '/default-avatar.svg'
+const DEFAULT_AVATAR = '/default-avatar.jpg'
 
 const props = defineProps({
   userId: {
@@ -109,7 +109,7 @@ function onError() {
 }
 
 .base-user-avatar:hover {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 24px rgba(251, 138, 138, 0.1);
   transform: scale(1.05);
 }
 

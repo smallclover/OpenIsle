@@ -61,14 +61,31 @@
                 @click="handleContentClick"
               ></div>
             </div>
-            <ReactionsGroup
-              :model-value="item.reactions"
-              content-type="message"
-              :content-id="item.id"
-              @update:modelValue="(v) => (item.reactions = v)"
-            >
-              <div @click="setReply(item)" class="reply-btn"><next /> 写个回复...</div>
-            </ReactionsGroup>
+            <div class="message-reaction-row">
+              <ReactionsGroup
+                :ref="(el) => setMessageReactionRef(item.id, el)"
+                :model-value="item.reactions"
+                content-type="message"
+                :content-id="item.id"
+                @update:modelValue="(v) => (item.reactions = v)"
+              />
+              <div class="message-reaction-actions">
+                <div
+                  class="reaction-action like-action"
+                  :class="{ selected: isMessageLiked(item) }"
+                  @click="toggleMessageLike(item)"
+                >
+                  <like v-if="!isMessageLiked(item)" />
+                  <like v-else theme="filled" />
+                  <span v-if="getMessageLikeCount(item)" class="reaction-count">{{
+                    getMessageLikeCount(item)
+                  }}</span>
+                </div>
+                <div @click="setReply(item)" class="reaction-action reply-btn">
+                  <next /> 写个回复...
+                </div>
+              </div>
+            </div>
           </template>
         </BaseTimeline>
         <div class="empty-container">
@@ -178,6 +195,32 @@ const otherParticipant = computed(() => {
 
 function setReply(message) {
   replyTo.value = message
+}
+
+const messageReactionRefs = new Map()
+function setMessageReactionRef(id, el) {
+  if (el) {
+    messageReactionRefs.set(id, el)
+  } else {
+    messageReactionRefs.delete(id)
+  }
+}
+
+function getMessageLikeCount(message) {
+  return (message.reactions || []).filter((reaction) => reaction.type === 'LIKE').length
+}
+
+function isMessageLiked(message) {
+  const username = currentUser.value?.username
+  if (!username) return false
+  return (message.reactions || []).some(
+    (reaction) => reaction.type === 'LIKE' && reaction.user === username,
+  )
+}
+
+function toggleMessageLike(message) {
+  const group = messageReactionRefs.get(message.id)
+  group?.toggleReaction('LIKE')
 }
 
 /** 改造：滚动函数 —— smooth & instant */
@@ -710,6 +753,55 @@ function goBack() {
   background-color: var(--normal-light-background-color);
 }
 
+.message-reaction-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.message-reaction-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.reaction-action {
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  opacity: 0.6;
+  font-size: 16px;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.reaction-action:hover {
+  opacity: 1;
+  background-color: var(--normal-light-background-color);
+}
+
+.reaction-action.like-action {
+  color: #ff0000;
+}
+
+.reaction-action.selected {
+  opacity: 1;
+  background-color: var(--normal-light-background-color);
+}
+
+.reaction-count {
+  font-size: 14px;
+  font-weight: bold;
+}
+
 .reply-header {
   display: flex;
   flex-direction: row;
@@ -723,14 +815,8 @@ function goBack() {
 }
 
 .reply-btn {
-  cursor: pointer;
-  padding: 4px;
-  opacity: 0.6;
   font-size: 12px;
-}
-
-.reply-btn:hover {
-  opacity: 1;
+  color: var(--primary-color);
 }
 
 .active-reply {

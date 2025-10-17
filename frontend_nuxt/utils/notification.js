@@ -31,6 +31,7 @@ const iconMap = {
   MENTION: 'HashtagKey',
   POST_DELETED: 'ClearIcon',
   POST_FEATURED: 'Star',
+  DONATION: 'PaperMoneyTwo',
 }
 
 export async function fetchUnreadCount() {
@@ -327,6 +328,18 @@ function createFetchNotifications() {
           arr.push({
             ...n,
             icon: iconMap[n.type],
+            iconClick: () => {
+              if (n.post) {
+                markNotificationRead(n.id)
+                navigateTo(`/posts/${n.post.id}`, { replace: true })
+              }
+            },
+          })
+        } else if (n.type === 'DONATION') {
+          arr.push({
+            ...n,
+            src: n.fromUser ? n.fromUser.avatar : null,
+            icon: n.fromUser ? undefined : iconMap[n.type],
             iconClick: () => {
               if (n.post) {
                 markNotificationRead(n.id)
