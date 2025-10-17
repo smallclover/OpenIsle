@@ -18,6 +18,7 @@
             class="text-input"
             v-model="keyword"
             placeholder="键盘点击「/」以触发搜索"
+            ref="searchInput"
             @input="setSearch(keyword)"
           />
         </div>
@@ -48,7 +49,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import Dropdown from '~/components/Dropdown.vue'
 import { stripMarkdown } from '~/utils/markdown'
 import { useIsMobile } from '~/utils/screen'
@@ -61,7 +62,47 @@ const keyword = ref('')
 const selected = ref(null)
 const results = ref([])
 const dropdown = ref(null)
+const searchInput = ref(null)
 const isMobile = useIsMobile()
+
+const isEditableElement = (el) => {
+  if (!el) return false
+  if (el.isContentEditable) return true
+  const tagName = el.tagName ? el.tagName.toLowerCase() : ''
+  if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
+    return true
+  }
+  const role = el.getAttribute ? el.getAttribute('role') : null
+  return role === 'textbox'
+}
+
+const focusSearchInput = () => {
+  if (!searchInput.value) return
+  dropdown.value?.openMenu?.()
+  if (typeof searchInput.value.focus === 'function') {
+    try {
+      searchInput.value.focus({ preventScroll: true })
+    } catch (e) {
+      searchInput.value.focus()
+    }
+  }
+}
+
+const handleGlobalSlash = (event) => {
+  if (event.defaultPrevented) return
+  if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) return
+  if (isEditableElement(document.activeElement)) return
+  event.preventDefault()
+  focusSearchInput()
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleGlobalSlash)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleGlobalSlash)
+})
 
 const toggle = () => {
   dropdown.value.toggle()

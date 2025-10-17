@@ -168,9 +168,19 @@ export default {
     const mobileMenuRef = ref(null)
     const isMobile = useIsMobile()
 
+    const openMenu = () => {
+      if (!open.value) {
+        open.value = true
+      }
+    }
+
     const toggle = () => {
-      open.value = !open.value
-      if (!open.value) emit('close')
+      if (open.value) {
+        open.value = false
+        emit('close')
+      } else {
+        open.value = true
+      }
     }
 
     const close = () => {
@@ -275,7 +285,7 @@ export default {
       return /^https?:\/\//.test(icon) || icon.startsWith('/')
     }
 
-    expose({ toggle, close, reload, scrollToBottom })
+    expose({ toggle, close, reload, scrollToBottom, openMenu })
 
     return {
       open,
