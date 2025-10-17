@@ -144,8 +144,7 @@ defineExpose({
 
 <style scoped>
 .search-dropdown {
-  margin-top: 20px;
-  width: 500px;
+  width: 300px;
 }
 
 .search-mobile-trigger {
@@ -154,7 +153,7 @@ defineExpose({
 }
 
 .search-input {
-  padding: 10px;
+  padding: 2px 10px;
   display: flex;
   align-items: center;
   width: 100%;
@@ -202,7 +201,7 @@ defineExpose({
 }
 
 .result-body {
-  line-height: 1;  
+  line-height: 1;
   display: flex;
   flex-direction: column;
 }
