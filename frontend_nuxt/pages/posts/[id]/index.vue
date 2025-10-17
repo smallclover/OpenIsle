@@ -99,7 +99,7 @@
                 content-type="post"
                 :content-id="postId"
               />
-              <DonateGroup />
+              <DonateGroup :post-id="postId" :author-id="author.id" :is-author="isAuthor" />
             </div>
             <div class="article-footer-actions">
               <div

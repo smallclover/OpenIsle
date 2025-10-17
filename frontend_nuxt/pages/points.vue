@@ -184,6 +184,27 @@
                   }}</NuxtLink>
                   参与，获得 {{ item.amount }} 积分
                 </template>
+                <template v-else-if="item.type === 'DONATE_SENT'">
+                  你在文章
+                  <NuxtLink :to="`/posts/${item.postId}`" class="timeline-link">{{
+                    item.postTitle
+                  }}</NuxtLink>
+                  中打赏了
+                  <NuxtLink :to="`/users/${item.fromUserId}`" class="timeline-link">{{
+                    item.fromUserName
+                  }}</NuxtLink>
+                  ，消耗 {{ -item.amount }} 积分
+                </template>
+                <template v-else-if="item.type === 'DONATE_RECEIVED'">
+                  <NuxtLink :to="`/users/${item.fromUserId}`" class="timeline-link">{{
+                    item.fromUserName
+                  }}</NuxtLink>
+                  在文章
+                  <NuxtLink :to="`/posts/${item.postId}`" class="timeline-link">{{
+                    item.postTitle
+                  }}</NuxtLink>
+                  中打赏了你，获得 {{ item.amount }} 积分
+                </template>
                 <template v-else-if="item.type === 'SYSTEM_ONLINE'"> 积分历史系统上线 </template>
                 <paper-money-two /> 你目前的积分是 {{ item.balance }}
               </div>
@@ -248,6 +269,8 @@ const iconMap = {
   FEATURE: 'star',
   LOTTERY_JOIN: 'medal-one',
   LOTTERY_REWARD: 'fireworks',
+  DONATE_SENT: 'paper-money-two',
+  DONATE_RECEIVED: 'paper-money-two',
   POST_LIKE_CANCELLED: 'clear-icon',
   COMMENT_LIKE_CANCELLED: 'clear-icon',
 }

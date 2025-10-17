@@ -48,6 +48,8 @@ public enum NotificationType {
   POLL_RESULT_PARTICIPANT,
   /** Your post was featured */
   POST_FEATURED,
+  /** Someone donated to your post */
+  DONATION,
   /** You were mentioned in a post or comment */
   MENTION,
 }

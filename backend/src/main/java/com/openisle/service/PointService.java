@@ -1,5 +1,7 @@
 package com.openisle.service;
 
+import com.openisle.dto.DonationDto;
+import com.openisle.dto.DonationResponse;
 import com.openisle.exception.FieldException;
 import com.openisle.model.*;
 import com.openisle.repository.*;
@@ -8,8 +10,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +24,7 @@ public class PointService {
   private final PostRepository postRepository;
   private final CommentRepository commentRepository;
   private final PointHistoryRepository pointHistoryRepository;
+  private final NotificationService notificationService;
 
   public int awardForPost(String userName, Long postId) {
     User user = userRepository.findByUsername(userName).orElseThrow();
@@ -271,5 +276,76 @@ public class PointService {
   public int recalculateUserPoints(String userName) {
     User user = userRepository.findByUsername(userName).orElseThrow();
     return recalculateUserPoints(user);
+  }
+
+  @Transactional
+  public DonationResponse donateToPost(String donorName, Long postId, int amount) {
+    if (amount <= 0) {
+      throw new FieldException("amount", "打赏积分必须大于0");
+    }
+    User donor = userRepository.findByUsername(donorName).orElseThrow();
+    Post post = postRepository.findById(postId).orElseThrow();
+    User author = post.getAuthor();
+    if (author.getId().equals(donor.getId())) {
+      throw new FieldException("post", "不能给自己打赏");
+    }
+    if (donor.getPoint() < amount) {
+      throw new FieldException("point", "积分不足");
+    }
+    addPoint(donor, -amount, PointHistoryType.DONATE_SENT, post, null, author);
+    addPoint(author, amount, PointHistoryType.DONATE_RECEIVED, post, null, donor);
+    notificationService.createNotification(
+      author,
+      NotificationType.DONATION,
+      post,
+      null,
+      null,
+      donor,
+      null,
+      String.valueOf(amount)
+    );
+    DonationResponse response = buildDonationResponse(post);
+    response.setBalance(donor.getPoint());
+    return response;
+  }
+
+  public DonationResponse getPostDonations(Long postId) {
+    Post post = postRepository.findById(postId).orElseThrow();
+    return buildDonationResponse(post);
+  }
+
+  private DonationResponse buildDonationResponse(Post post) {
+    List<PointHistory> histories =
+      pointHistoryRepository.findTop10ByPostAndTypeOrderByCreatedAtDesc(
+        post,
+        PointHistoryType.DONATE_RECEIVED
+      );
+    List<DonationDto> donations = histories
+      .stream()
+      .map(history -> {
+        DonationDto dto = new DonationDto();
+        User donor = history.getFromUser();
+        if (donor != null) {
+          dto.setUserId(donor.getId());
+          dto.setUsername(donor.getUsername());
+          dto.setAvatar(donor.getAvatar());
+        }
+        dto.setAmount(history.getAmount());
+        dto.setCreatedAt(history.getCreatedAt());
+        return dto;
+      })
+      .collect(Collectors.toList());
+    Long total = pointHistoryRepository.sumAmountByPostAndType(
+      post,
+      PointHistoryType.DONATE_RECEIVED
+    );
+    int safeTotal = 0;
+    if (total != null) {
+      safeTotal = total > Integer.MAX_VALUE ? Integer.MAX_VALUE : total.intValue();
+    }
+    DonationResponse response = new DonationResponse();
+    response.setDonations(donations);
+    response.setTotalAmount(safeTotal);
+    return response;
   }
 }

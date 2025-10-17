@@ -1,24 +1,29 @@
 <template>
   <div class="donate-container">
-    <ToolTip content="打赏作者" placement="bottom" v-if="donateItems.length > 0">
+    <ToolTip content="打赏作者" placement="bottom" v-if="donationList.length > 0">
       <div class="donate-viewer" @click="openPanel">
         <div
           class="donate-viewer-item-container"
           @mouseenter="cancelHide"
           @mouseleave="scheduleHide"
         >
-          <BaseItemGroup :items="donateItems" :overlap="10" :expanded-gap="2" :direction="vertical">
+          <BaseItemGroup
+            :items="donationList"
+            :overlap="10"
+            :expanded-gap="2"
+            :direction="vertical"
+          >
             <template #item="{ item }">
               <BaseUserAvatar
-                :user-id="1"
-                :src="avatar"
-                alt="avatar"
+                :user-id="item.userId"
+                :src="item.avatar"
+                :alt="item.username"
                 :width="20"
                 :disable-link="true"
               />
             </template>
           </BaseItemGroup>
-          <div class="donate-counts-text">100</div>
+          <div class="donate-counts-text">{{ totalAmount }}</div>
         </div>
       </div>
     </ToolTip>
@@ -35,17 +40,15 @@
       @mouseenter="cancelHide"
       @mouseleave="scheduleHide"
     >
-      <div class="donate-option">
+      <div
+        v-for="option in donateOptions"
+        :key="option"
+        class="donate-option"
+        :class="{ disabled: donating || isAuthorUser || !authState.loggedIn }"
+        @click="handleDonate(option)"
+      >
         <financing class="donate-option-icon" />
-        <div class="donate-counts-text">10</div>
-      </div>
-      <div class="donate-option">
-        <financing class="donate-option-icon" />
-        <div class="donate-counts-text">30</div>
-      </div>
-      <div class="donate-option">
-        <financing class="donate-option-icon" />
-        <div class="donate-counts-text">100</div>
+        <div class="donate-counts-text">{{ option }}</div>
       </div>
     </div>
   </div>
@@ -53,31 +56,45 @@
 
 <script setup>
 import { Finance } from '@icon-park/vue-next'
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { toast } from '~/main'
+import { authState, getToken } from '~/utils/auth'
 
-const emit = defineEmits(['update:modelValue'])
+const financing = Finance
 
-const props = defineProps({})
+const props = defineProps({
+  postId: {
+    type: [Number, String],
+    required: true,
+  },
+  authorId: {
+    type: [Number, String],
+    required: true,
+  },
+  isAuthor: {
+    type: Boolean,
+    default: false,
+  },
+})
 
-const avatar = ref('')
+const config = useRuntimeConfig()
+const API_BASE_URL = config.public.apiBaseUrl
+
 const panelVisible = ref(false)
 const donatePanelRef = ref(null)
 const panelInlineStyle = ref({})
-const donateItems = ref([
-  // {
-  //   id: 1,
-  //   count: 100,
-  // },
-  // {
-  //   id: 2,
-  //   count: 300,
-  // },
-  // {
-  //   id: 3,
-  //   count: 500,
-  // },
-])
+const donationSummary = ref({ totalAmount: 0, donations: [] })
+const donating = ref(false)
 let hideTimer = null
+
+const donateOptions = [10, 30, 100]
+const donationList = computed(() => donationSummary.value?.donations ?? [])
+const totalAmount = computed(() => donationSummary.value?.totalAmount ?? 0)
+const isAuthorUser = computed(() => {
+  if (props.isAuthor) return true
+  if (!authState.userId || !props.authorId) return false
+  return Number(authState.userId) === Number(props.authorId)
+})
 
 const openPanel = () => {
   clearTimeout(hideTimer)
@@ -114,23 +131,79 @@ watch(panelVisible, async (visible) => {
   }
 })
 
+const normalizeSummary = (data) => ({
+  totalAmount: data?.totalAmount ?? 0,
+  donations: Array.isArray(data?.donations) ? data.donations : [],
+})
+
+const loadDonations = async () => {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/posts/${props.postId}/donations`)
+    if (!res.ok) return
+    const data = await res.json()
+    donationSummary.value = normalizeSummary(data)
+  } catch (e) {
+    // ignore network errors for donation summary
+  }
+}
+
+const handleDonate = async (amount) => {
+  if (!amount || donating.value) return
+  if (!authState.loggedIn) {
+    toast.error('请先登录后再打赏')
+    panelVisible.value = false
+    return
+  }
+  if (isAuthorUser.value) {
+    toast.warning('不能给自己打赏')
+    return
+  }
+  try {
+    donating.value = true
+    const token = getToken()
+    const res = await fetch(`${API_BASE_URL}/api/posts/${props.postId}/donations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+      body: JSON.stringify({ amount }),
+    })
+    const data = await res.json().catch(() => null)
+    if (!res.ok) {
+      if (res.status === 401) {
+        toast.error('请先登录后再打赏')
+      } else {
+        toast.error(data?.error || '打赏失败')
+      }
+      return
+    }
+    donationSummary.value = normalizeSummary(data)
+    toast.success('打赏成功，感谢你的支持！')
+    panelVisible.value = false
+  } catch (e) {
+    toast.error('打赏失败，请稍后再试')
+  } finally {
+    donating.value = false
+  }
+}
+
 onMounted(async () => {
   window.addEventListener('resize', updatePanelInlineStyle)
-
-  const updateAvatar = async () => {
-    if (authState.loggedIn) {
-      const user = await loadCurrentUser()
-      if (user && user.avatar) {
-        avatar.value = user.avatar
-      }
-    }
-  }
-  await updateAvatar()
+  await loadDonations()
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updatePanelInlineStyle)
 })
+
+watch(
+  () => props.postId,
+  async () => {
+    donationSummary.value = { totalAmount: 0, donations: [] }
+    await loadDonations()
+  },
+)
 </script>
 
 <style scoped>
@@ -215,6 +288,15 @@ onBeforeUnmount(() => {
 
 .donate-option:hover {
   background-color: var(--normal-light-background-color);
+}
+
+.donate-option.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.donate-option.disabled:hover {
+  background-color: transparent;
 }
 
 .donate-option-icon {
