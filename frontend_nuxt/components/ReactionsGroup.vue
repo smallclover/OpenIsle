@@ -322,6 +322,7 @@ onBeforeUnmount(() => {
 .reactions-count {
   font-size: 16px;
   font-weight: bold;
+  margin-right: 15px;
 }
 
 .reactions-panel {
