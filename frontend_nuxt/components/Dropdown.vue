@@ -168,9 +168,19 @@ export default {
     const mobileMenuRef = ref(null)
     const isMobile = useIsMobile()
 
+    const openMenu = () => {
+      if (!open.value) {
+        open.value = true
+      }
+    }
+
     const toggle = () => {
-      open.value = !open.value
-      if (!open.value) emit('close')
+      if (open.value) {
+        open.value = false
+        emit('close')
+      } else {
+        open.value = true
+      }
     }
 
     const close = () => {
@@ -275,7 +285,7 @@ export default {
       return /^https?:\/\//.test(icon) || icon.startsWith('/')
     }
 
-    expose({ toggle, close, reload, scrollToBottom })
+    expose({ toggle, close, reload, scrollToBottom, openMenu })
 
     return {
       open,
@@ -308,7 +318,6 @@ export default {
   border: 1px solid var(--normal-border-color);
   border-radius: 5px;
   padding: 5px 10px;
-  margin-bottom: 4px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -331,6 +340,7 @@ export default {
   z-index: 10000;
   max-height: 300px;
   min-width: 350px;
+  margin-top: 4px;
   overflow-y: auto;
 }
 

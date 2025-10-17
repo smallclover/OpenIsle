@@ -26,6 +26,11 @@
 
       <ClientOnly>
         <div class="header-content-right">
+          <SearchDropdown
+            ref="searchDropdown"
+            v-if="!isMobile || showSearch"
+            @close="closeSearch"
+          />
           <!-- 搜索 -->
           <ToolTip v-if="isMobile" content="搜索" placement="bottom">
             <div class="header-icon-item" @click="search">
@@ -106,7 +111,6 @@
           </div>
         </div>
       </ClientOnly>
-      <SearchDropdown ref="searchDropdown" v-if="isMobile && showSearch" @close="closeSearch" />
     </div>
   </header>
 </template>
