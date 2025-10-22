@@ -75,6 +75,11 @@ public class PostService {
 
   private final SearchIndexEventPublisher searchIndexEventPublisher;
 
+  private static final int DEFAULT_PROPOSAL_APPROVE_THRESHOLD = 60;
+  private static final int DEFAULT_PROPOSAL_QUORUM = 10;
+  private static final long DEFAULT_PROPOSAL_DURATION_DAYS = 3;
+  private static final List<String> DEFAULT_PROPOSAL_OPTIONS = List.of("同意", "反对");
+
   @Value("${app.website-url:https://www.open-isle.com}")
   private String websiteUrl;
 
@@ -253,10 +258,7 @@ public class PostService {
     java.util.List<String> options,
     Boolean multiple,
     String proposedName,
-    String proposedSlug,
-    String proposalDescription,
-    Integer approveThreshold,
-    Integer quorum
+    String proposalDescription
   ) {
     // 限制访问次数
     boolean limitResult = postRateLimit(username);
@@ -307,35 +309,18 @@ public class PostService {
       if (proposedName == null || proposedName.isBlank()) {
         throw new IllegalArgumentException("Proposed name required");
       }
-      if (proposedSlug == null || proposedSlug.isBlank()) {
-        throw new IllegalArgumentException("Proposed slug required");
+      String normalizedName = proposedName.trim();
+      if (categoryProposalPostRepository.existsByProposedNameIgnoreCase(normalizedName)) {
+        throw new IllegalArgumentException("Proposed name already exists: " + normalizedName);
       }
-      if (categoryProposalPostRepository.existsByProposedSlug(proposedSlug)) {
-        throw new IllegalArgumentException("Proposed slug already exists: " + proposedSlug);
-      }
-      cp.setProposedName(proposedName);
-      cp.setProposedSlug(proposedSlug);
+      cp.setProposedName(normalizedName);
       cp.setDescription(proposalDescription);
-      if (approveThreshold != null) {
-        if (approveThreshold < 0 || approveThreshold > 100) {
-          throw new IllegalArgumentException("approveThreshold must be between 0 and 100");
-        }
-        cp.setApproveThreshold(approveThreshold);
-      }
-      if (quorum != null) {
-        if (quorum < 0) {
-          throw new IllegalArgumentException("quorum must be >= 0");
-        }
-        cp.setQuorum(quorum);
-      }
-      cp.setStartAt(startTime);
-      cp.setEndTime(endTime);
-      // default yes/no options if not provided
-      if (options == null || options.size() < 2) {
-        cp.setOptions(List.of("同意", "反对"));
-      } else {
-        cp.setOptions(options);
-      }
+      cp.setApproveThreshold(DEFAULT_PROPOSAL_APPROVE_THRESHOLD);
+      cp.setQuorum(DEFAULT_PROPOSAL_QUORUM);
+      LocalDateTime now = LocalDateTime.now();
+      cp.setStartAt(now);
+      cp.setEndTime(now.plusDays(DEFAULT_PROPOSAL_DURATION_DAYS));
+      cp.setOptions(DEFAULT_PROPOSAL_OPTIONS);
       cp.setMultiple(false);
       post = cp;
     } else {

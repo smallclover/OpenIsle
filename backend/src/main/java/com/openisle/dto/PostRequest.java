@@ -31,8 +31,5 @@ public class PostRequest {
 
   // fields for category proposal posts
   private String proposedName;
-  private String proposedSlug;
   private String proposalDescription;
-  private Integer approveThreshold;
-  private Integer quorum;
 }

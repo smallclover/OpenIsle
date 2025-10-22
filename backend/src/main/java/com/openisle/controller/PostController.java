@@ -75,10 +75,7 @@ public class PostController {
       req.getOptions(),
       req.getMultiple(),
       req.getProposedName(),
-      req.getProposedSlug(),
-      req.getProposalDescription(),
-      req.getApproveThreshold(),
-      req.getQuorum()
+      req.getProposalDescription()
     );
     draftService.deleteDraft(auth.getName());
     PostDetailDto dto = postMapper.toDetailDto(post, auth.getName());

@@ -80,12 +80,7 @@ const poll = reactive({
 })
 const proposal = reactive({
   proposedName: '',
-  proposedSlug: '',
   proposalDescription: '',
-  approveThreshold: 60,
-  quorum: 10,
-  endTime: null,
-  options: ['同意', '反对'],
 })
 const startTime = ref(null)
 const isWaitingPosting = ref(false)
@@ -135,12 +130,7 @@ const clearPost = async () => {
   poll.endTime = null
   poll.multiple = false
   proposal.proposedName = ''
-  proposal.proposedSlug = ''
   proposal.proposalDescription = ''
-  proposal.approveThreshold = 60
-  proposal.quorum = 10
-  proposal.endTime = null
-  proposal.options = ['同意', '反对']
 
   // 删除草稿
   const token = getToken()
@@ -306,26 +296,6 @@ const submitPost = async () => {
       toast.error('请填写拟议分类名称')
       return
     }
-    if (!proposal.proposedSlug.trim()) {
-      toast.error('请填写拟议分类 Slug')
-      return
-    }
-    if (proposal.approveThreshold < 0 || proposal.approveThreshold > 100) {
-      toast.error('通过阈值需在0到100之间')
-      return
-    }
-    if (proposal.quorum < 0) {
-      toast.error('最小参与数需大于或等于0')
-      return
-    }
-    if (proposal.options.length < 2 || proposal.options.some((o) => !o.trim())) {
-      toast.error('请填写至少两个投票选项')
-      return
-    }
-    if (!proposal.endTime) {
-      toast.error('请选择投票结束时间')
-      return
-    }
   }
   try {
     const token = getToken()
@@ -347,51 +317,43 @@ const submitPost = async () => {
       }
       prizeIconUrl = uploadData.data.url
     }
+    const toUtcString = (value) => {
+      if (!value) return undefined
+      return new Date(new Date(value).getTime() + 8.02 * 60 * 60 * 1000).toISOString()
+    }
+
+    const payload = {
+      title: title.value,
+      content: content.value,
+      categoryId: selectedCategory.value,
+      tagIds: selectedTags.value,
+      type: postType.value,
+    }
+
+    if (postType.value === 'LOTTERY') {
+      payload.prizeIcon = prizeIconUrl
+      payload.prizeName = lottery.prizeName
+      payload.prizeCount = lottery.prizeCount
+      payload.prizeDescription = lottery.prizeDescription
+      payload.pointCost = lottery.pointCost
+      payload.startTime = startTime.value ? new Date(startTime.value).toISOString() : undefined
+      payload.endTime = toUtcString(lottery.endTime)
+    } else if (postType.value === 'POLL') {
+      payload.options = poll.options
+      payload.multiple = poll.multiple
+      payload.endTime = toUtcString(poll.endTime)
+    } else if (postType.value === 'PROPOSAL') {
+      payload.proposedName = proposal.proposedName
+      payload.proposalDescription = proposal.proposalDescription
+    }
+
     const res = await fetch(`${API_BASE_URL}/api/posts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        title: title.value,
-        content: content.value,
-        categoryId: selectedCategory.value,
-        tagIds: selectedTags.value,
-        type: postType.value,
-        prizeIcon: postType.value === 'LOTTERY' ? prizeIconUrl : undefined,
-        prizeName: postType.value === 'LOTTERY' ? lottery.prizeName : undefined,
-        prizeCount: postType.value === 'LOTTERY' ? lottery.prizeCount : undefined,
-        prizeDescription: postType.value === 'LOTTERY' ? lottery.prizeDescription : undefined,
-        options: postType.value === 'POLL' ? poll.options : undefined,
-        multiple: postType.value === 'POLL' ? poll.multiple : undefined,
-        proposedName: postType.value === 'PROPOSAL' ? proposal.proposedName : undefined,
-        proposedSlug: postType.value === 'PROPOSAL' ? proposal.proposedSlug : undefined,
-        proposalDescription:
-          postType.value === 'PROPOSAL' ? proposal.proposalDescription : undefined,
-        approveThreshold: postType.value === 'PROPOSAL' ? proposal.approveThreshold : undefined,
-        quorum: postType.value === 'PROPOSAL' ? proposal.quorum : undefined,
-        options:
-          postType.value === 'POLL'
-            ? poll.options
-            : postType.value === 'PROPOSAL'
-              ? proposal.options
-              : undefined,
-        startTime:
-          postType.value === 'LOTTERY' ? new Date(startTime.value).toISOString() : undefined,
-        pointCost: postType.value === 'LOTTERY' ? lottery.pointCost : undefined,
-        // 将时间转换为 UTC+8.5 时区 todo: 需要优化
-        endTime:
-          postType.value === 'LOTTERY'
-            ? new Date(new Date(lottery.endTime).getTime() + 8.02 * 60 * 60 * 1000).toISOString()
-            : postType.value === 'POLL'
-              ? new Date(new Date(poll.endTime).getTime() + 8.02 * 60 * 60 * 1000).toISOString()
-              : postType.value === 'PROPOSAL'
-                ? new Date(
-                    new Date(proposal.endTime).getTime() + 8.02 * 60 * 60 * 1000,
-                  ).toISOString()
-                : undefined,
-      }),
+      body: JSON.stringify(payload),
     })
     const data = await res.json()
     if (res.ok) {
