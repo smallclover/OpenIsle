@@ -38,11 +38,7 @@
       <span class="proposal-row-title">投票选项</span>
       <div class="poll-option-item" v-for="(opt, idx) in data.options" :key="idx">
         <BaseInput v-model="data.options[idx]" placeholder="选项内容" />
-        <i
-          v-if="data.options.length > 2"
-          class="fa-solid fa-xmark remove-option-icon"
-          @click="removeOption(idx)"
-        ></i>
+        <close-icon class="remove-option-icon" @click="removeOption(idx)" />
       </div>
       <div class="add-option" @click="addOption">添加选项</div>
     </div>
