@@ -49,7 +49,11 @@
       </slot>
     </div>
     <div
-      v-if="open && !isMobile && (loading || filteredOptions.length > 0 || showSearch)"
+      v-if="
+        open &&
+        !isMobile &&
+        (loading || filteredOptions.length > 0 || showSearch || (remote && search))
+      "
       :class="['dropdown-menu', menuClass]"
       v-click-outside="close"
       ref="menuRef"
@@ -62,26 +66,29 @@
         <l-hatch size="20" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
       </div>
       <template v-else>
-        <div
-          v-for="o in filteredOptions"
-          :key="o.id"
-          @click="select(o.id)"
-          :class="['dropdown-option', optionClass, { selected: isSelected(o.id) }]"
-        >
-          <slot name="option" :option="o" :isSelected="isSelected(o.id)">
-            <template v-if="o.icon">
-              <BaseImage
-                v-if="isImageIcon(o.icon)"
-                :src="o.icon"
-                class="option-icon"
-                :alt="o.name"
-              />
-              <component v-else :is="o.icon" class="option-icon" :size="16" />
-            </template>
-            <span>{{ o.name }}</span>
-          </slot>
-        </div>
-        <slot name="footer" :close="close" :loading="loading" />
+        <div v-if="filteredOptions.length === 0" class="dropdown-empty">没有搜索结果</div>
+        <template v-else>
+          <div
+            v-for="o in filteredOptions"
+            :key="o.id"
+            @click="select(o.id)"
+            :class="['dropdown-option', optionClass, { selected: isSelected(o.id) }]"
+          >
+            <slot name="option" :option="o" :isSelected="isSelected(o.id)">
+              <template v-if="o.icon">
+                <BaseImage
+                  v-if="isImageIcon(o.icon)"
+                  :src="o.icon"
+                  class="option-icon"
+                  :alt="o.name"
+                />
+                <component v-else :is="o.icon" class="option-icon" :size="16" />
+              </template>
+              <span>{{ o.name }}</span>
+            </slot>
+          </div>
+          <slot name="footer" :close="close" :loading="loading" />
+        </template>
       </template>
     </div>
     <Teleport to="body">
@@ -99,26 +106,29 @@
             <l-hatch size="20" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
           </div>
           <template v-else>
-            <div
-              v-for="o in filteredOptions"
-              :key="o.id"
-              @click="select(o.id)"
-              :class="['dropdown-option', optionClass, { selected: isSelected(o.id) }]"
-            >
-              <slot name="option" :option="o" :isSelected="isSelected(o.id)">
-                <template v-if="o.icon">
-                  <BaseImage
-                    v-if="isImageIcon(o.icon)"
-                    :src="o.icon"
-                    class="option-icon"
-                    :alt="o.name"
-                  />
-                  <component v-else :is="o.icon" class="option-icon" :size="16" />
-                </template>
-                <span>{{ o.name }}</span>
-              </slot>
-            </div>
-            <slot name="footer" :close="close" :loading="loading" />
+            <div v-if="filteredOptions.length === 0" class="dropdown-empty">没有搜索结果</div>
+            <template v-else>
+              <div
+                v-for="o in filteredOptions"
+                :key="o.id"
+                @click="select(o.id)"
+                :class="['dropdown-option', optionClass, { selected: isSelected(o.id) }]"
+              >
+                <slot name="option" :option="o" :isSelected="isSelected(o.id)">
+                  <template v-if="o.icon">
+                    <BaseImage
+                      v-if="isImageIcon(o.icon)"
+                      :src="o.icon"
+                      class="option-icon"
+                      :alt="o.name"
+                    />
+                    <component v-else :is="o.icon" class="option-icon" :size="16" />
+                  </template>
+                  <span>{{ o.name }}</span>
+                </slot>
+              </div>
+              <slot name="footer" :close="close" :loading="loading" />
+            </template>
           </template>
         </div>
       </div>
@@ -158,9 +168,19 @@ export default {
     const mobileMenuRef = ref(null)
     const isMobile = useIsMobile()
 
+    const openMenu = () => {
+      if (!open.value) {
+        open.value = true
+      }
+    }
+
     const toggle = () => {
-      open.value = !open.value
-      if (!open.value) emit('close')
+      if (open.value) {
+        open.value = false
+        emit('close')
+      } else {
+        open.value = true
+      }
     }
 
     const close = () => {
@@ -265,7 +285,7 @@ export default {
       return /^https?:\/\//.test(icon) || icon.startsWith('/')
     }
 
-    expose({ toggle, close, reload, scrollToBottom })
+    expose({ toggle, close, reload, scrollToBottom, openMenu })
 
     return {
       open,
@@ -283,6 +303,7 @@ export default {
       isImageIcon,
       setSearch,
       isMobile,
+      remote: props.remote,
     }
   },
 }
@@ -297,7 +318,6 @@ export default {
   border: 1px solid var(--normal-border-color);
   border-radius: 5px;
   padding: 5px 10px;
-  margin-bottom: 4px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -320,6 +340,7 @@ export default {
   z-index: 10000;
   max-height: 300px;
   min-width: 350px;
+  margin-top: 4px;
   overflow-y: auto;
 }
 
@@ -382,6 +403,13 @@ export default {
   display: flex;
   justify-content: center;
   padding: 10px 0;
+}
+
+.dropdown-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--muted-text-color, #8c8c8c);
+  font-size: 14px;
 }
 
 .dropdown-mobile-page {

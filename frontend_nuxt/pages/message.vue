@@ -75,7 +75,7 @@
                           @click="markRead(item.id)"
                           :to="`/posts/${item.post.id}#comment-${item.parentComment.id}`"
                         >
-                          {{ stripMarkdownLength(item.parentComment.content, 100) }}
+                          <span v-html="stripMarkdownWithTiebaMoji(item.parentComment.content, 500)"></span>
                         </NuxtLink>
                       </span>
                       回复了
@@ -85,7 +85,7 @@
                           @click="markRead(item.id)"
                           :to="`/posts/${item.post.id}#comment-${item.comment.id}`"
                         >
-                          {{ stripMarkdownLength(item.comment.content, 100) }}
+                        <span v-html="stripMarkdownWithTiebaMoji(item.comment.content, 500)"></span>
                         </NuxtLink>
                       </span>
                     </NotificationContainer>
@@ -115,7 +115,7 @@
                           @click="markRead(item.id)"
                           :to="`/posts/${item.post.id}#comment-${item.comment.id}`"
                         >
-                          {{ stripMarkdownLength(item.comment.content, 100) }}
+                        <span v-html="stripMarkdownWithTiebaMoji(item.comment.content, 500)"></span>
                         </NuxtLink>
                       </span>
                     </NotificationContainer>
@@ -162,7 +162,7 @@
                           @click="markRead(item.id)"
                           :to="`/posts/${item.post.id}#comment-${item.comment.id}`"
                         >
-                          {{ stripMarkdownLength(item.comment.content, 100) }}
+                          <span v-html="stripMarkdownWithTiebaMoji(item.comment.content, 500)"></span>
                         </NuxtLink>
                       </span>
                       进行了表态
@@ -267,7 +267,7 @@
                         @click="markRead(item.id)"
                         :to="`/posts/${item.post.id}#comment-${item.comment.id}`"
                       >
-                        {{ stripMarkdownLength(item.comment.content, 100) }}
+                        <span v-html="stripMarkdownWithTiebaMoji(item.comment.content, 500)"></span>
                       </NuxtLink>
                     </NotificationContainer>
                   </template>
@@ -287,7 +287,7 @@
                         @click="markRead(item.id)"
                         :to="`/posts/${item.post.id}#comment-${item.parentComment.id}`"
                       >
-                        {{ stripMarkdownLength(item.parentComment.content, 100) }}
+                        <span v-html="stripMarkdownWithTiebaMoji(item.parentComment.content, 500)"></span>                      
                       </NuxtLink>
                       回复了
                       <NuxtLink
@@ -295,7 +295,7 @@
                         @click="markRead(item.id)"
                         :to="`/posts/${item.post.id}#comment-${item.comment.id}`"
                       >
-                        {{ stripMarkdownLength(item.comment.content, 100) }}
+                        <span v-html="stripMarkdownWithTiebaMoji(item.comment.content, 500)"></span>                      
                       </NuxtLink>
                     </NotificationContainer>
                   </template>
@@ -323,7 +323,7 @@
                         @click="markRead(item.id)"
                         :to="`/posts/${item.post.id}#comment-${item.comment.id}`"
                       >
-                        {{ stripMarkdownLength(item.comment.content, 100) }}
+                        <span v-html="stripMarkdownWithTiebaMoji(item.comment.content, 500)"></span>
                       </NuxtLink>
                     </NotificationContainer>
                   </template>
@@ -342,7 +342,7 @@
                         @click="markRead(item.id)"
                         :to="`/posts/${item.post.id}#comment-${item.comment.id}`"
                       >
-                        {{ stripMarkdownLength(item.comment.content, 100) }}
+                        <span v-html="stripMarkdownWithTiebaMoji(item.comment.content, 500)"></span>
                       </NuxtLink>
                     </NotificationContainer>
                   </template>
@@ -542,6 +542,27 @@
                       被收录为精选
                     </NotificationContainer>
                   </template>
+                  <template v-else-if="item.type === 'DONATION'">
+                    <NotificationContainer :item="item" :markRead="markRead">
+                      <NuxtLink
+                        class="notif-content-text"
+                        @click="markRead(item.id)"
+                        :to="`/users/${item.fromUser.id}`"
+                      >
+                        {{ item.fromUser.username }}
+                      </NuxtLink>
+                      在帖子
+                      <NuxtLink
+                        class="notif-content-text"
+                        @click="markRead(item.id)"
+                        :to="`/posts/${item.post.id}`"
+                      >
+                        {{ stripMarkdownLength(item.post.title, 100) }}
+                      </NuxtLink>
+                      打赏了你
+                      <template v-if="item.content"> ，获得 {{ item.content }} 积分 </template>
+                    </NotificationContainer>
+                  </template>
                   <template v-else-if="item.type === 'POST_DELETED'">
                     <NotificationContainer :item="item" :markRead="markRead">
                       管理员
@@ -556,7 +577,7 @@
                       </template>
                       删除了您的帖子
                       <span class="notif-content-text">
-                        {{ stripMarkdownLength(item.content, 100) }}
+                        <span v-html="stripMarkdownWithTiebaMoji(item.content, 500)"></span>
                       </span>
                     </NotificationContainer>
                   </template>
@@ -586,7 +607,7 @@ import InfiniteLoadMore from '~/components/InfiniteLoadMore.vue'
 import BaseTabs from '~/components/BaseTabs.vue'
 import { toast } from '~/main'
 import { authState, getToken } from '~/utils/auth'
-import { stripMarkdownLength } from '~/utils/markdown'
+import { stripMarkdownWithTiebaMoji } from '~/utils/markdown'
 import {
   fetchNotifications,
   fetchUnreadCount,

@@ -1,5 +1,5 @@
 import { toast } from '../main'
-import { setToken, loadCurrentUser } from './auth'
+import { setToken } from './auth'
 import { registerPush } from './push'
 
 export function discordAuthorize(inviteToken = '') {
@@ -47,7 +47,6 @@ export async function discordExchange(code, inviteToken = '', reason = '') {
 
     if (res.ok && data.token) {
       setToken(data.token)
-      await loadCurrentUser()
       toast.success('登录成功')
       registerPush?.()
       return { success: true, needReason: false }

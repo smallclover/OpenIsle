@@ -3,7 +3,7 @@
   --primary-color: rgb(10, 110, 120);
   --primary-color-disabled: rgba(93, 152, 156, 0.5);
   --secondary-color: rgb(255, 255, 255);
-  --secondary-color-hover: rgba(10, 111, 120, 0.184);
+  --secondary-color-hover: rgba(10, 111, 120, 0.079);
   --new-post-icon-color: rgba(10, 111, 120, 0.598);
   --header-height: 60px;
   --header-background-color: white;
@@ -54,6 +54,7 @@
   --header-border-color: #555;
   --primary-color: rgb(17, 182, 197);
   --primary-color-hover: rgb(13, 137, 151);
+  --secondary-color-hover: rgba(17, 182, 197, 0.238);
   --new-post-icon-color: rgba(10, 111, 120, 0.598);
   --header-text-color: white;
   --app-menu-background-color: #333;
@@ -179,7 +180,9 @@ body {
 
 .info-content-text pre .line-numbers {
   counter-reset: line-number 0;
-  width: 2em;
+  white-space: nowrap; /* 禁止数字换行 */
+  font-variant-numeric: tabular-nums; /* 数字等宽 */
+  /* width: 2em; */
   font-size: 13px;
   position: sticky;
   flex-shrink: 0;
@@ -342,6 +345,16 @@ body {
     line-height: 1.5;
   }
 
+  /*处理iframe视频标签*/
+  .info-content-text iframe {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9; /* 保持 16:9 比例 */
+    border: none;
+    display: block;
+  }
+
   .d2h-file-name {
     font-size: 14px !important;
   }
@@ -357,7 +370,10 @@ body {
   .d2h-code-line {
     padding-left: 10px !important;
   }
-
+  /* 手机端不换行 */
+  .info-content-text code {
+    white-space: pre; /* 禁止自动换行 */
+  }
   /* .d2h-diff-table {
     font-size: 6px !important;
   }

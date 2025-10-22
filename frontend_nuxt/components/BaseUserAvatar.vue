@@ -1,21 +1,19 @@
 <template>
-  <NuxtLink
-    :to="resolvedLink"
+  <div
     class="base-user-avatar"
     :class="wrapperClass"
     :style="wrapperStyle"
     v-bind="wrapperAttrs"
+    @click="handleClick"
   >
-    <BaseImage :src="currentSrc" :alt="altText" class="base-user-avatar-img" @error="onError" />
-  </NuxtLink>
+    <BaseImage :src="props.src" :alt="altText" class="base-user-avatar-img" />
+  </div>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useAttrs } from 'vue'
 import BaseImage from './BaseImage.vue'
-
-const DEFAULT_AVATAR = '/default-avatar.svg'
 
 const props = defineProps({
   userId: {
@@ -50,15 +48,6 @@ const props = defineProps({
 
 const attrs = useAttrs()
 
-const currentSrc = ref(props.src || DEFAULT_AVATAR)
-
-watch(
-  () => props.src,
-  (value) => {
-    currentSrc.value = value || DEFAULT_AVATAR
-  },
-)
-
 const resolvedLink = computed(() => {
   if (props.to) return props.to
   if (props.userId !== null && props.userId !== undefined && props.userId !== '') {
@@ -70,10 +59,16 @@ const resolvedLink = computed(() => {
 const altText = computed(() => props.alt || '用户头像')
 
 const sizeStyle = computed(() => {
-  if (!props.width && props.width !== 0) return null
-  const value = typeof props.width === 'number' ? `${props.width}px` : props.width
-  if (!value) return null
-  return { width: value, height: value }
+  var style = {}
+
+  if (props.width > 0) {
+    style.width = `${props.width}px`
+  }
+  if (props.height > 0) {
+    style.height = `${props.height}px`
+  }
+
+  return style
 })
 
 const wrapperStyle = computed(() => {
@@ -88,10 +83,9 @@ const wrapperAttrs = computed(() => {
   return rest
 })
 
-function onError() {
-  if (currentSrc.value !== DEFAULT_AVATAR) {
-    currentSrc.value = DEFAULT_AVATAR
-  }
+const handleClick = () => {
+  if (props.disableLink) return
+  navigateTo(resolvedLink.value)
 }
 </script>
 
@@ -109,7 +103,7 @@ function onError() {
 }
 
 .base-user-avatar:hover {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 24px rgba(251, 138, 138, 0.1);
   transform: scale(1.05);
 }
 

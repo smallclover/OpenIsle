@@ -1,9 +1,9 @@
 <template>
   <div class="home-page">
-    <div v-if="!isMobile" class="search-container">
+    <!-- <div v-if="!isMobile" class="search-container">
       <div class="search-title">一切可能，从此刻启航，在此遇见灵感与共鸣</div>
       <SearchDropdown />
-    </div>
+    </div> -->
 
     <div class="topic-container">
       <div class="topic-item-container">
@@ -75,8 +75,8 @@
               <star v-if="!article.rssExcluded" class="featured-icon" />
               {{ article.title }}
             </NuxtLink>
-            <NuxtLink class="article-item-description main-item">
-              {{ sanitizeDescription(article.description) }}
+            <NuxtLink class="article-item-description main-item" :to="`/posts/${article.id}`">
+              <div v-html="stripMarkdownWithTiebaMoji(article.description, 500)"></div>
             </NuxtLink>
             <div class="article-info-container main-item">
               <ArticleCategory :category="article.category" />
@@ -143,6 +143,7 @@ import { useIsMobile } from '~/utils/screen'
 import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 import TimeManager from '~/utils/time'
 import { selectedCategoryGlobal, selectedTagsGlobal } from '~/composables/postFilter'
+import { stripMarkdownWithTiebaMoji } from '~/utils/markdown'
 useHead({
   title: 'OpenIsle - 全面开源的自由社区',
   meta: [
@@ -378,9 +379,6 @@ onBeforeUnmount(() => {
 /** 供 InfiniteLoadMore 重建用的 key：筛选/Tab 改变即重建内部状态 */
 const ioKey = computed(() => asyncKey.value.join('::'))
 
-/** 其他工具函数 **/
-const sanitizeDescription = (text) => stripMarkdown(text)
-
 // 页面选项同步到全局状态
 watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
   selectedCategoryGlobal.value = newCategory
@@ -537,16 +535,22 @@ watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
 .article-comments,
 .header-item.comments {
   width: 5%;
+  justify-content: flex-end;
+  text-align: right;
 }
 
 .article-views,
 .header-item.views {
   width: 5%;
+  justify-content: flex-end;
+  text-align: right;
 }
 
 .article-time,
 .header-item.activity {
   width: 10%;
+  justify-content: flex-end;
+  text-align: left;
 }
 
 .article-item-title {

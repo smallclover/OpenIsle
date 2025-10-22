@@ -42,6 +42,9 @@
       <span v-else-if="log.type === 'LOTTERY_RESULT'" class="change-log-content"
         >系统已「精密计算」抽奖结果 (=ﾟωﾟ)ﾉ</span
       >
+      <span v-else-if="log.type === 'DONATE'" class="change-log-content"
+        >为文章打赏了 {{ log.amount ?? 0 }} 积分</span
+      >
     </div>
     <div class="change-log-time">{{ log.time }}</div>
     <div

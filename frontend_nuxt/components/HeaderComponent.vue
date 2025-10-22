@@ -26,40 +26,63 @@
 
       <ClientOnly>
         <div class="header-content-right">
-          <div v-if="isMobile" class="search-icon" @click="search">
-            <search-icon />
-          </div>
-
-          <div v-if="isMobile" class="theme-icon" @click="cycleTheme">
-            <component :is="iconClass" />
-          </div>
-
-          <div v-if="!isMobile" class="invite_text" @click="copyInviteLink">
-            <copy />
-            邀请
-            <loading v-if="isCopying" />
-          </div>
+          <SearchDropdown
+            ref="searchDropdown"
+            v-if="!isMobile || showSearch"
+            @close="closeSearch"
+          />
+          <!-- 搜索 -->
+          <ToolTip v-if="isMobile" content="搜索" placement="bottom">
+            <div class="header-icon-item" @click="search">
+              <search-icon class="header-icon" />
+              <span class="header-label">搜索</span>
+            </div>
+          </ToolTip>
+          <!-- 主题切换 -->
+          <ToolTip v-if="isMobile" content="切换主题" placement="bottom">
+            <div class="header-icon-item" @click="cycleTheme">
+              <component :is="iconClass" class="header-icon" />
+              <span class="header-label">主题</span>
+            </div>
+          </ToolTip>
+          <!-- 邀请 -->
+          <ToolTip v-if="!isMobile" content="邀请好友" placement="bottom">
+            <div class="header-icon-item" @click="copyInviteLink">
+              <template v-if="!isCopying">
+                <copy-link class="header-icon" />
+                <span class="header-label">邀请</span>
+              </template>
+              <loading v-else />
+            </div>
+          </ToolTip>
+          <!-- 在线人数 -->
           <ToolTip v-if="!isMobile" content="当前在线人数" placement="bottom">
-            <div class="online-count">
-              <peoples-two />
-              <span>{{ onlineCount }}</span>
+            <div class="header-icon-item">
+              <peoples-two class="header-icon" />
+              <span class="header-label">在线</span>
+              <span class="header-badge">{{ onlineCount }}</span>
             </div>
           </ToolTip>
+          <!-- RSS -->
           <ToolTip content="复制RSS链接" placement="bottom">
-            <div class="rss-icon" @click="copyRssLink">
-              <rss />
+            <div class="header-icon-item" @click="copyRssLink">
+              <rss class="header-icon" />
+              <span class="header-label">RSS</span>
             </div>
           </ToolTip>
-
+          <!-- 发帖 -->
           <ToolTip v-if="!isMobile && isLogin" content="发帖" placement="bottom">
-            <div class="new-post-icon" @click="goToNewPost">
-              <edit />
+            <div class="header-icon-item" @click="goToNewPost">
+              <edit class="header-icon" />
+              <span class="header-label">发帖</span>
             </div>
           </ToolTip>
 
+          <!-- 消息 -->
           <ToolTip v-if="isLogin" content="站内信和频道" placement="bottom">
-            <div class="messages-icon" @click="goToMessages">
-              <message-emoji />
+            <div class="header-icon-item" @click="goToMessages">
+              <message-emoji class="header-icon" />
+              <span class="header-label">消息</span>
               <span v-if="unreadMessageCount > 0" class="unread-badge">{{
                 unreadMessageCount
               }}</span>
@@ -73,10 +96,9 @@
                 <BaseUserAvatar
                   class="avatar-img"
                   :user-id="authState.userId"
-                  :src="avatar"
-                  alt="avatar"
-                  :width="32"
+                  :src="authState.avatar"
                   :disable-link="true"
+                  :width="32"
                 />
                 <down />
               </div>
@@ -89,7 +111,6 @@
           </div>
         </div>
       </ClientOnly>
-      <SearchDropdown ref="searchDropdown" v-if="isMobile && showSearch" @close="closeSearch" />
     </div>
   </header>
 </template>
@@ -101,7 +122,7 @@ import DropdownMenu from '~/components/DropdownMenu.vue'
 import ToolTip from '~/components/ToolTip.vue'
 import SearchDropdown from '~/components/SearchDropdown.vue'
 import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
-import { authState, clearToken, loadCurrentUser } from '~/utils/auth'
+import { authState, clearToken } from '~/utils/auth'
 import { useUnreadCount } from '~/composables/useUnreadCount'
 import { useChannelsUnreadCount } from '~/composables/useChannelsUnreadCount'
 import { useIsMobile } from '~/utils/screen'
@@ -123,13 +144,11 @@ const isLogin = computed(() => authState.loggedIn)
 const isMobile = useIsMobile()
 const { count: unreadMessageCount, fetchUnreadCount } = useUnreadCount()
 const { hasUnread: hasChannelUnread, fetchChannelUnread } = useChannelsUnreadCount()
-const avatar = ref('')
 const showSearch = ref(false)
 const searchDropdown = ref(null)
 const userMenu = ref(null)
 const menuBtn = ref(null)
 const isCopying = ref(false)
-
 const onlineCount = ref(0)
 
 // 心跳检测
@@ -192,6 +211,7 @@ const copyInviteLink = async () => {
   const token = getToken()
   if (!token) {
     toast.error('请先登录')
+    isCopying.value = false // 🔥 修复：未登录时立即复原状态
     return
   }
   try {
@@ -235,17 +255,7 @@ const copyRssLink = async () => {
 }
 
 const goToProfile = async () => {
-  if (!authState.loggedIn) {
-    navigateTo('/login', { replace: true })
-    return
-  }
-  let id = authState.username || authState.userId
-  if (!id) {
-    const user = await loadCurrentUser()
-    if (user) {
-      id = user.username || user.id
-    }
-  }
+  let id = authState.username || authState.id
   if (id) {
     navigateTo(`/users/${id}`, { replace: true })
   }
@@ -289,14 +299,6 @@ const iconClass = computed(() => {
 })
 
 onMounted(async () => {
-  const updateAvatar = async () => {
-    if (authState.loggedIn) {
-      const user = await loadCurrentUser()
-      if (user && user.avatar) {
-        avatar.value = user.avatar
-      }
-    }
-  }
   const updateUnread = async () => {
     if (authState.loggedIn) {
       fetchUnreadCount()
@@ -306,16 +308,7 @@ onMounted(async () => {
     }
   }
 
-  await updateAvatar()
   await updateUnread()
-
-  watch(
-    () => authState.loggedIn,
-    async (isLoggedIn) => {
-      await updateAvatar()
-      await updateUnread()
-    },
-  )
 
   // 新增的在线人数逻辑
   sendPing()
@@ -333,7 +326,7 @@ onMounted(async () => {
   height: var(--header-height);
   background-color: var(--background-color-blur);
   backdrop-filter: var(--blur-10);
-  color: var(--header-text-color);
+  color: var(--primary-color);
   border-bottom: 1px solid var(--header-border-color);
 }
 
@@ -376,6 +369,7 @@ onMounted(async () => {
   flex-direction: row;
   align-items: center;
   gap: 20px;
+  padding-right: 15px;
 }
 
 .micon {
@@ -464,16 +458,13 @@ onMounted(async () => {
   cursor: pointer;
 }
 
-.invite_text {
-  font-size: 12px;
-  cursor: pointer;
-  color: var(--primary-color);
-}
-
 .invite_text:hover {
+  opacity: 0.8;
   text-decoration: underline;
 }
 
+.invite_text,
+.online-count,
 .rss-icon,
 .new-post-icon,
 .messages-icon {
@@ -484,8 +475,8 @@ onMounted(async () => {
 
 .unread-badge {
   position: absolute;
-  top: -5px;
-  right: -10px;
+  top: -4px;
+  right: -6px;
   background-color: #ff4d4f;
   color: white;
   border-radius: 50%;
@@ -500,8 +491,8 @@ onMounted(async () => {
 
 .unread-dot {
   position: absolute;
-  top: -2px;
-  right: -4px;
+  top: 0;
+  right: -1px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -513,12 +504,58 @@ onMounted(async () => {
 }
 
 .online-count {
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--primary-color);
   cursor: default;
+}
+
+/* === 统一图标按钮风格 === */
+.header-icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--primary-color);
+  cursor: pointer;
+  position: relative;
+  transition:
+    color 0.25s ease,
+    transform 0.15s ease,
+    opacity 0.2s ease;
+}
+
+.header-icon-item:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
+}
+
+/* 点击时瞬间高亮 + 轻微缩放 */
+.header-icon-item:active {
+  color: var(--primary-color-hover);
+  transform: scale(0.92);
+}
+
+.header-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.header-label {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* 在线人数的数字文字样式（无背景） */
+.header-badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  color: var(--primary-color); /* 🔹 使用主题主色 */
+  background: none; /* 🔹 去掉背景 */
+  font-size: 11px; /* 字体稍微大一点以便清晰 */
+  font-weight: 600; /* 加一点权重让数字更醒目 */
+  line-height: 1;
+  padding: 0; /* 去掉内边距 */
 }
 
 @keyframes rss-glow {
@@ -555,6 +592,13 @@ onMounted(async () => {
 
   .header-content-right {
     gap: 15px;
+  }
+  /* 手机不显示文字 */
+  .header-label {
+    display: none;
+  }
+  .header-badge {
+    display: none;
   }
 }
 </style>

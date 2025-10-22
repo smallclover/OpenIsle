@@ -18,9 +18,11 @@
             <div>{{ counts[r.type] }}</div>
           </div>
 
-          <div class="reactions-viewer-item placeholder" @click="openPanel">
-            <sly-face-whit-smile class="reactions-viewer-item-placeholder-icon" />
-          </div>
+          <ToolTip content="发表心情" placement="bottom">
+            <div class="reactions-viewer-item placeholder" @click="openPanel">
+              <sly-face-whit-smile class="reactions-viewer-item-placeholder-icon" />
+            </div>
+          </ToolTip>
         </template>
         <template v-else-if="displayedReactions.length">
           <div
@@ -35,21 +37,11 @@
         </template>
       </div>
     </div>
-    <div class="make-reaction-container">
-      <div
-        v-if="props.contentType !== 'message'"
-        class="make-reaction-item like-reaction"
-        @click="toggleReaction('LIKE')"
-      >
-        <like v-if="!userReacted('LIKE')" />
-        <like v-else theme="filled" />
-        <span class="reactions-count" v-if="likeCount">{{ likeCount }}</span>
-      </div>
-      <slot></slot>
-    </div>
     <div
       v-if="panelVisible"
       class="reactions-panel"
+      ref="reactionsPanelRef"
+      :style="panelInlineStyle"
       @mouseenter="cancelHide"
       @mouseleave="scheduleHide"
     >
@@ -69,7 +61,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { toast } from '~/main'
 import { authState, getToken } from '~/utils/auth'
 import { reactionEmojiMap } from '~/utils/reactions'
@@ -102,8 +94,6 @@ const counts = computed(() => {
 })
 
 const totalCount = computed(() => Object.values(counts.value).reduce((a, b) => a + b, 0))
-const likeCount = computed(() => counts.value['LIKE'] || 0)
-
 const userReacted = (type) =>
   reactions.value.some((r) => r.type === type && r.user === authState.username)
 
@@ -152,9 +142,11 @@ const displayedReactions = computed(() => {
     .map((type) => ({ type }))
 })
 
-const panelTypes = computed(() => sortedReactionTypes.value.filter((t) => t !== 'LIKE'))
+const panelTypes = computed(() => sortedReactionTypes.value)
 
 const panelVisible = ref(false)
+const reactionsPanelRef = ref(null)
+const panelInlineStyle = ref({})
 let hideTimer = null
 const openPanel = () => {
   clearTimeout(hideTimer)
@@ -169,6 +161,33 @@ const scheduleHide = () => {
 const cancelHide = () => {
   clearTimeout(hideTimer)
 }
+
+const updatePanelInlineStyle = () => {
+  if (!panelVisible.value) return
+  const panelEl = reactionsPanelRef.value
+  if (!panelEl) return
+  const parentEl = panelEl.closest('.reactions-container')?.parentElement?.parentElement
+  if (!parentEl) return
+  const parentWidth = parentEl.clientWidth - 20
+  panelInlineStyle.value = {
+    width: 'max-content',
+    maxWidth: `${parentWidth}px`,
+  }
+}
+
+watch(panelVisible, async (visible) => {
+  if (visible) {
+    await nextTick()
+    updatePanelInlineStyle()
+  }
+})
+
+watch(panelTypes, async () => {
+  if (panelVisible.value) {
+    await nextTick()
+    updatePanelInlineStyle()
+  }
+})
 
 const toggleReaction = async (type) => {
   const token = getToken()
@@ -245,6 +264,15 @@ const toggleReaction = async (type) => {
 
 onMounted(async () => {
   await initialize()
+  window.addEventListener('resize', updatePanelInlineStyle)
+})
+
+defineExpose({
+  toggleReaction,
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updatePanelInlineStyle)
 })
 </script>
 
@@ -253,11 +281,7 @@ onMounted(async () => {
   position: relative;
   display: flex;
   flex-direction: row;
-  gap: 10px;
   align-items: center;
-  width: 100%;
-  justify-content: space-between;
-  flex-wrap: wrap;
 }
 
 .reactions-viewer {
@@ -295,40 +319,15 @@ onMounted(async () => {
   padding-left: 5px;
 }
 
-.make-reaction-container {
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-}
-
-.make-reaction-item {
-  cursor: pointer;
-  padding: 4px;
-  opacity: 0.5;
-  border-radius: 8px;
-  font-size: 20px;
-}
-
-.like-reaction {
-  color: #ff0000;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 5px;
-}
-
-.make-reaction-item:hover {
-  background-color: #ffe2e2;
-}
-
 .reactions-count {
   font-size: 16px;
   font-weight: bold;
+  margin-right: 15px;
 }
 
 .reactions-panel {
   position: absolute;
-  bottom: 50px;
+  bottom: 35px;
   background-color: var(--background-color);
   border: 1px solid var(--normal-border-color);
   border-radius: 20px;
@@ -361,7 +360,6 @@ onMounted(async () => {
   border: 1px solid var(--normal-border-color);
   border-radius: 10px;
   margin-right: 5px;
-  margin-bottom: 5px;
   font-size: 14px;
   color: var(--text-color);
   align-items: center;

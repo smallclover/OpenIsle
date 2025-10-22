@@ -17,7 +17,7 @@ import { computed, ref } from 'vue'
 import { useAttrs } from 'vue'
 
 const props = defineProps({
-  src: { type: String, required: true },
+  src: { type: String, default: '' },
   alt: { type: String, default: '' },
 })
 
@@ -37,9 +37,6 @@ const placeholder = computed(() => {
 })
 
 function onLoad() {
-  loaded.value = true
-}
-function onError() {
   loaded.value = true
 }
 </script>

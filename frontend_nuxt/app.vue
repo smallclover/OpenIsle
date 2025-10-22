@@ -41,9 +41,12 @@ import GlobalPopups from '~/components/GlobalPopups.vue'
 import ConfirmDialog from '~/components/ConfirmDialog.vue'
 import MessageFloatWindow from '~/components/MessageFloatWindow.vue'
 import { useIsMobile } from '~/utils/screen'
+import { checkToken } from '~/utils/auth'
 
 const isMobile = useIsMobile()
 const menuVisible = ref(!isMobile.value)
+
+await checkToken()
 
 const showNewPostIcon = computed(() => useRoute().path === '/')
 

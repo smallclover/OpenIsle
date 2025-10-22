@@ -53,14 +53,29 @@
         @click="handleContentClick"
       ></div>
       <div class="article-footer-container">
-        <ReactionsGroup v-model="comment.reactions" content-type="comment" :content-id="comment.id">
-          <div class="make-reaction-item comment-reaction" @click="toggleEditor">
+        <ReactionsGroup
+          ref="commentReactionsGroupRef"
+          v-model="comment.reactions"
+          content-type="comment"
+          :content-id="comment.id"
+        />
+        <div class="comment-reaction-actions">
+          <div
+            class="reaction-action like-action"
+            :class="{ selected: commentLikedByMe }"
+            @click="toggleCommentLike"
+          >
+            <like v-if="!commentLikedByMe" />
+            <like v-else theme="filled" />
+            <span v-if="commentLikeCount" class="reaction-count">{{ commentLikeCount }}</span>
+          </div>
+          <div class="reaction-action comment-reaction" @click="toggleEditor">
             <comment-icon />
           </div>
-          <div class="make-reaction-item copy-link" @click="copyCommentLink">
+          <div class="reaction-action copy-link" @click="copyCommentLink">
             <link-icon />
           </div>
-        </ReactionsGroup>
+        </div>
       </div>
       <div class="comment-editor-wrapper" ref="editorWrapper">
         <CommentEditor
@@ -156,6 +171,18 @@ const lightboxVisible = ref(false)
 const lightboxIndex = ref(0)
 const lightboxImgs = ref([])
 const loggedIn = computed(() => authState.loggedIn)
+const commentReactionsGroupRef = ref(null)
+const commentLikeCount = computed(
+  () => (props.comment.reactions || []).filter((reaction) => reaction.type === 'LIKE').length,
+)
+const commentLikedByMe = computed(() =>
+  (props.comment.reactions || []).some(
+    (reaction) => reaction.type === 'LIKE' && reaction.user === authState.username,
+  ),
+)
+const toggleCommentLike = () => {
+  commentReactionsGroupRef.value?.toggleReaction('LIKE')
+}
 const countReplies = (list) => list.reduce((sum, r) => sum + 1 + countReplies(r.reply || []), 0)
 const replyCount = computed(() => countReplies(props.comment.reply || []))
 const isCommentFromPostAuthor = computed(() => {
@@ -365,6 +392,47 @@ const handleContentClick = (e) => {
 </script>
 
 <style scoped>
+.comment-reaction-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.reaction-action {
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  opacity: 0.6;
+  font-size: 18px;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.reaction-action:hover {
+  opacity: 1;
+  background-color: var(--normal-light-background-color);
+}
+
+.reaction-action.like-action {
+  color: #ff0000;
+}
+
+.reaction-action.selected {
+  opacity: 1;
+  background-color: var(--normal-light-background-color);
+}
+
+.reaction-count {
+  font-size: 14px;
+  font-weight: bold;
+}
+
 .reply-toggle {
   cursor: pointer;
   color: var(--primary-color);
@@ -376,10 +444,6 @@ const handleContentClick = (e) => {
 
 .comment-reaction {
   color: var(--primary-color);
-}
-
-.comment-reaction:hover {
-  background-color: lightgray;
 }
 
 .comment-highlight {
@@ -422,6 +486,16 @@ const handleContentClick = (e) => {
   opacity: 0.3;
   display: none;
   font-weight: bold;
+}
+
+.article-footer-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 0px;
+  flex-wrap: wrap;
+  margin-bottom: 0px;
 }
 
 .medal-name {

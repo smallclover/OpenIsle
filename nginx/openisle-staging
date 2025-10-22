@@ -1,0 +1,133 @@
+# 放在 http { } 里一次定义
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+server {
+    listen 443 ssl;
+    server_name staging.open-isle.com www.staging.open-isle.com;
+
+
+    ssl_certificate     /etc/letsencrypt/live/staging.open-isle.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/staging.open-isle.com/privkey.pem;
+    # ssl_certificate     /etc/letsencrypt/live/open-isle.com/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/open-isle.com/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # ---------- SSR ----------
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+
+        # 正确的升级头（仅在有 Upgrade 时）
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+
+        # 透传真实主机/协议/源 IP
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+
+        # 合理超时，避免 SSR 首屏慢查询导致 502/504
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+
+        add_header Cache-Control "no-store" always;
+        add_header X-Upstream $upstream_addr always;
+    }
+
+    # 1) 原生 WebSocket
+    location ^~ /api/ws {
+        proxy_pass         http://127.0.0.1:8081;  # 不要尾随 /，保留原样 URI
+        proxy_http_version 1.1;
+
+        # 升级所需
+        proxy_set_header   Upgrade              $http_upgrade;
+        proxy_set_header   Connection           $connection_upgrade;
+
+        # 统一透传这些头（你在 /api/ 有，/api/ws 也要有）
+        proxy_set_header   Host                 $host;
+        proxy_set_header   X-Real-IP            $remote_addr;
+        proxy_set_header   X-Forwarded-For      $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto    $scheme;
+        proxy_set_header   X-Forwarded-Host     $host;
+
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_buffering    off;
+        proxy_cache        off;
+    }
+
+    # 2) SockJS（包含 /info、/iframe.html、/.../websocket 等）
+    location ^~ /api/sockjs {
+        proxy_pass         http://127.0.0.1:8081;
+        proxy_http_version 1.1;
+
+        proxy_set_header   Upgrade              $http_upgrade;
+        proxy_set_header   Connection           $connection_upgrade;
+
+        proxy_set_header   Host                 $host;
+        proxy_set_header   X-Real-IP            $remote_addr;
+        proxy_set_header   X-Forwarded-For      $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto    $scheme;
+        proxy_set_header   X-Forwarded-Host     $host;
+
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_buffering    off;
+        proxy_cache        off;
+
+        # 如要同源 iframe 回退，下面两行二选一（或者交给 Spring Security 的 sameOrigin）
+        # proxy_hide_header  X-Frame-Options;
+        # add_header         X-Frame-Options "SAMEORIGIN" always;
+    }    
+
+    # ---------- API ----------
+    location /api/ {
+        proxy_pass http://127.0.0.1:8081/api/;
+        proxy_http_version 1.1;
+
+    	proxy_set_header Upgrade $http_upgrade;
+    	proxy_set_header Connection $connection_upgrade;
+
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+
+        add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0" always;
+        proxy_no_cache 1;
+        proxy_cache_bypass 1;
+    }
+
+    # ---------- WEBSOCKET GATEWAY TO :8083 ----------
+    location ^~ /websocket/ {
+        proxy_pass         http://127.0.0.1:8083/;
+        proxy_http_version 1.1;
+
+        proxy_set_header   Upgrade              $http_upgrade;
+        proxy_set_header   Connection           $connection_upgrade;
+
+        proxy_set_header   Host                 $host;
+        proxy_set_header   X-Real-IP            $remote_addr;
+        proxy_set_header   X-Forwarded-For      $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto    $scheme;
+        proxy_set_header   X-Forwarded-Host     $host;
+
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_buffering    off;
+        proxy_cache        off;
+        add_header         Cache-Control "no-store" always;
+    }
+
+}

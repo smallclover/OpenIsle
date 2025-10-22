@@ -13,4 +13,6 @@ public enum PointHistoryType {
   REDEEM,
   LOTTERY_JOIN,
   LOTTERY_REWARD,
+  DONATE_SENT,
+  DONATE_RECEIVED,
 }

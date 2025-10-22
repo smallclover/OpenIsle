@@ -2,8 +2,13 @@ name: CI & CD
 
 on:
   workflow_dispatch:
-  # schedule:
-  #   - cron: "0 19 * * *" # 每天 UTC 19:00，相当于北京时间凌晨3点
+  schedule:
+    - cron: "0 19 * * *" # 每天 UTC 19:00（北京 03:00）
+
+# 与 Staging 共用同一把锁，避免两边同时在 8G 服务器上跑
+concurrency:
+  group: openisle-server
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
@@ -13,10 +18,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to Server
+      - name: Deploy to Server (prod)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: root
           key: ${{ secrets.SSH_KEY }}
-          script: bash /opt/openisle/deploy.sh
+          script: bash /opt/openisle/OpenIsle/deploy/deploy.sh

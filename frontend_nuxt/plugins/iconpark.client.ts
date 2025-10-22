@@ -29,6 +29,7 @@ import {
   ApplicationMenu,
   Search,
   Copy,
+  CopyLink,
   Loading,
   Rss,
   MessageEmoji,
@@ -79,6 +80,7 @@ import {
   Dislike,
   CheckOne,
   Share,
+  Financing,
 } from '@icon-park/vue-next'
 
 export default defineNuxtPlugin((nuxtApp) => {
@@ -111,6 +113,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.component('ApplicationMenu', ApplicationMenu)
   nuxtApp.vueApp.component('SearchIcon', Search)
   nuxtApp.vueApp.component('Copy', Copy)
+  nuxtApp.vueApp.component('CopyLink', CopyLink)
   nuxtApp.vueApp.component('Loading', Loading)
   nuxtApp.vueApp.component('Rss', Rss)
   nuxtApp.vueApp.component('MessageEmoji', MessageEmoji)
@@ -161,4 +164,5 @@ export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.component('Dislike', Dislike)
   nuxtApp.vueApp.component('CheckOne', CheckOne)
   nuxtApp.vueApp.component('Share', Share)
+  nuxtApp.vueApp.component('Financing', Financing)
 })
