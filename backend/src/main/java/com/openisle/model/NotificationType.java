@@ -46,6 +46,10 @@ public enum NotificationType {
   POLL_RESULT_OWNER,
   /** A poll you participated in has concluded */
   POLL_RESULT_PARTICIPANT,
+  /** Your category proposal has concluded */
+  CATEGORY_PROPOSAL_RESULT_OWNER,
+  /** A category proposal you participated in has concluded */
+  CATEGORY_PROPOSAL_RESULT_PARTICIPANT,
   /** Your post was featured */
   POST_FEATURED,
   /** Someone donated to your post */

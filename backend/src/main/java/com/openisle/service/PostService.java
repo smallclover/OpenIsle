@@ -70,6 +70,7 @@ public class PostService {
   private final PointService pointService;
   private final PostChangeLogService postChangeLogService;
   private final PointHistoryRepository pointHistoryRepository;
+  private final CategoryService categoryService;
   private final ConcurrentMap<Long, ScheduledFuture<?>> scheduledFinalizations =
     new ConcurrentHashMap<>();
 
@@ -112,7 +113,8 @@ public class PostService {
     PointHistoryRepository pointHistoryRepository,
     @Value("${app.post.publish-mode:DIRECT}") PublishMode publishMode,
     RedisTemplate redisTemplate,
-    SearchIndexEventPublisher searchIndexEventPublisher
+    SearchIndexEventPublisher searchIndexEventPublisher,
+    CategoryService categoryService
   ) {
     this.postRepository = postRepository;
     this.userRepository = userRepository;
@@ -141,6 +143,7 @@ public class PostService {
 
     this.redisTemplate = redisTemplate;
     this.searchIndexEventPublisher = searchIndexEventPublisher;
+    this.categoryService = categoryService;
   }
 
   @EventListener(ApplicationReadyEvent.class)
@@ -429,8 +432,11 @@ public class PostService {
         boolean quorumMet = totalParticipants >= cp.getQuorum();
         int approvePercent = totalParticipants > 0 ? (approveVotes * 100) / totalParticipants : 0;
         boolean thresholdMet = approvePercent >= cp.getApproveThreshold();
+        boolean approved = false;
+        String rejectReason = null;
         if (quorumMet && thresholdMet) {
           cp.setProposalStatus(CategoryProposalStatus.APPROVED);
+          approved = true;
         } else {
           cp.setProposalStatus(CategoryProposalStatus.REJECTED);
           String reason;
@@ -442,6 +448,7 @@ public class PostService {
             reason = "赞成率不足";
           }
           cp.setRejectReason(reason);
+          rejectReason = reason;
         }
         cp.setResultSnapshot(
           "approveVotes=" +
@@ -452,28 +459,37 @@ public class PostService {
             approvePercent
         );
         categoryProposalPostRepository.save(cp);
+        if (approved) {
+          categoryService.createCategory(cp.getProposedName(), cp.getDescription(), "star", null);
+        }
         if (cp.getAuthor() != null) {
           notificationService.createNotification(
             cp.getAuthor(),
-            NotificationType.POLL_RESULT_OWNER,
+            NotificationType.CATEGORY_PROPOSAL_RESULT_OWNER,
             cp,
             null,
+            approved,
             null,
             null,
-            null,
-            null
+            approved ? null : rejectReason
           );
         }
         for (User participant : cp.getParticipants()) {
+          if (
+            cp.getAuthor() != null &&
+            java.util.Objects.equals(participant.getId(), cp.getAuthor().getId())
+          ) {
+            continue;
+          }
           notificationService.createNotification(
             participant,
-            NotificationType.POLL_RESULT_PARTICIPANT,
+            NotificationType.CATEGORY_PROPOSAL_RESULT_PARTICIPANT,
             cp,
             null,
+            approved,
             null,
             null,
-            null,
-            null
+            approved ? null : rejectReason
           );
         }
         postChangeLogService.recordVoteResult(cp);
@@ -576,6 +592,9 @@ public class PostService {
     pollPostRepository
       .findById(postId)
       .ifPresent(pp -> {
+        if (pp instanceof CategoryProposalPost) {
+          return;
+        }
         if (pp.isResultAnnounced()) {
           return;
         }

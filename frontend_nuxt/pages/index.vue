@@ -1,10 +1,5 @@
 <template>
   <div class="home-page">
-    <!-- <div v-if="!isMobile" class="search-container">
-      <div class="search-title">一切可能，从此刻启航，在此遇见灵感与共鸣</div>
-      <SearchDropdown />
-    </div> -->
-
     <div class="topic-container">
       <div class="topic-item-container">
         <div
@@ -117,7 +112,7 @@
       </div>
       <div v-else class="placeholder-container">分类浏览功能开发中，敬请期待。</div>
 
-      <!-- ✅ 通用“底部加载更多”组件（自管 loading/observer/并发） -->
+      <!-- 通用“底部加载更多”组件（自管 loading/observer/并发） -->
       <InfiniteLoadMore
         v-if="articles.length > 0"
         :key="ioKey"

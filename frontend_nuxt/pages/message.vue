@@ -75,7 +75,9 @@
                           @click="markRead(item.id)"
                           :to="`/posts/${item.post.id}#comment-${item.parentComment.id}`"
                         >
-                          <span v-html="stripMarkdownWithTiebaMoji(item.parentComment.content, 500)"></span>
+                          <span
+                            v-html="stripMarkdownWithTiebaMoji(item.parentComment.content, 500)"
+                          ></span>
                         </NuxtLink>
                       </span>
                       回复了
@@ -85,7 +87,9 @@
                           @click="markRead(item.id)"
                           :to="`/posts/${item.post.id}#comment-${item.comment.id}`"
                         >
-                        <span v-html="stripMarkdownWithTiebaMoji(item.comment.content, 500)"></span>
+                          <span
+                            v-html="stripMarkdownWithTiebaMoji(item.comment.content, 500)"
+                          ></span>
                         </NuxtLink>
                       </span>
                     </NotificationContainer>
@@ -115,7 +119,9 @@
                           @click="markRead(item.id)"
                           :to="`/posts/${item.post.id}#comment-${item.comment.id}`"
                         >
-                        <span v-html="stripMarkdownWithTiebaMoji(item.comment.content, 500)"></span>
+                          <span
+                            v-html="stripMarkdownWithTiebaMoji(item.comment.content, 500)"
+                          ></span>
                         </NuxtLink>
                       </span>
                     </NotificationContainer>
@@ -162,7 +168,9 @@
                           @click="markRead(item.id)"
                           :to="`/posts/${item.post.id}#comment-${item.comment.id}`"
                         >
-                          <span v-html="stripMarkdownWithTiebaMoji(item.comment.content, 500)"></span>
+                          <span
+                            v-html="stripMarkdownWithTiebaMoji(item.comment.content, 500)"
+                          ></span>
                         </NuxtLink>
                       </span>
                       进行了表态
@@ -251,6 +259,38 @@
                       已出结果
                     </NotificationContainer>
                   </template>
+                  <template v-else-if="item.type === 'CATEGORY_PROPOSAL_RESULT_OWNER'">
+                    <NotificationContainer :item="item" :markRead="markRead">
+                      你的分类提案
+                      <NuxtLink
+                        class="notif-content-text"
+                        @click="markRead(item.id)"
+                        :to="`/posts/${item.post.id}`"
+                      >
+                        {{ stripMarkdownLength(item.post.title, 100) }}
+                      </NuxtLink>
+                      <span v-if="item.approved">已通过</span>
+                      <span v-else>
+                        未通过<span v-if="item.content">，原因：{{ item.content }}</span>
+                      </span>
+                    </NotificationContainer>
+                  </template>
+                  <template v-else-if="item.type === 'CATEGORY_PROPOSAL_RESULT_PARTICIPANT'">
+                    <NotificationContainer :item="item" :markRead="markRead">
+                      你参与的分类提案
+                      <NuxtLink
+                        class="notif-content-text"
+                        @click="markRead(item.id)"
+                        :to="`/posts/${item.post.id}`"
+                      >
+                        {{ stripMarkdownLength(item.post.title, 100) }}
+                      </NuxtLink>
+                      <span v-if="item.approved">已通过</span>
+                      <span v-else>
+                        未通过<span v-if="item.content">，原因：{{ item.content }}</span>
+                      </span>
+                    </NotificationContainer>
+                  </template>
                   <template v-else-if="item.type === 'POST_UPDATED'">
                     <NotificationContainer :item="item" :markRead="markRead">
                       您关注的帖子
@@ -287,7 +327,9 @@
                         @click="markRead(item.id)"
                         :to="`/posts/${item.post.id}#comment-${item.parentComment.id}`"
                       >
-                        <span v-html="stripMarkdownWithTiebaMoji(item.parentComment.content, 500)"></span>                      
+                        <span
+                          v-html="stripMarkdownWithTiebaMoji(item.parentComment.content, 500)"
+                        ></span>
                       </NuxtLink>
                       回复了
                       <NuxtLink
@@ -295,7 +337,7 @@
                         @click="markRead(item.id)"
                         :to="`/posts/${item.post.id}#comment-${item.comment.id}`"
                       >
-                        <span v-html="stripMarkdownWithTiebaMoji(item.comment.content, 500)"></span>                      
+                        <span v-html="stripMarkdownWithTiebaMoji(item.comment.content, 500)"></span>
                       </NuxtLink>
                     </NotificationContainer>
                   </template>
@@ -775,6 +817,10 @@ const formatType = (t) => {
       return '发布的投票结果已公布'
     case 'POLL_RESULT_PARTICIPANT':
       return '参与的投票结果已公布'
+    case 'CATEGORY_PROPOSAL_RESULT_OWNER':
+      return '分类提案结果已公布'
+    case 'CATEGORY_PROPOSAL_RESULT_PARTICIPANT':
+      return '参与的分类提案结果已公布'
     default:
       return t
   }
