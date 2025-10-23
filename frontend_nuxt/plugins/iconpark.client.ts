@@ -82,6 +82,7 @@ import {
   Share,
   Financing,
   Hands,
+  PreviewCloseOne,
 } from '@icon-park/vue-next'
 
 export default defineNuxtPlugin((nuxtApp) => {
@@ -167,4 +168,5 @@ export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.component('Share', Share)
   nuxtApp.vueApp.component('Financing', Financing)
   nuxtApp.vueApp.component('Hands', Hands)
+  nuxtApp.vueApp.component('PreviewCloseOne', PreviewCloseOne)
 })

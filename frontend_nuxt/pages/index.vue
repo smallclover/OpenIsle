@@ -70,6 +70,7 @@
               <hands v-else-if="article.type === 'PROPOSAL'" class="proposal-icon" />
               <star v-if="!article.rssExcluded" class="featured-icon" />
               {{ article.title }}
+              <preview-close-one class="preview-close-icon" v-if="article.rssExcluded" />
             </NuxtLink>
             <NuxtLink class="article-item-description main-item" :to="`/posts/${article.id}`">
               <div v-html="stripMarkdownWithTiebaMoji(article.description, 500)"></div>
