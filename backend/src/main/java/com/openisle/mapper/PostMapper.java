@@ -6,7 +6,9 @@ import com.openisle.dto.LotteryDto;
 import com.openisle.dto.PollDto;
 import com.openisle.dto.PostDetailDto;
 import com.openisle.dto.PostSummaryDto;
+import com.openisle.dto.ProposalDto;
 import com.openisle.dto.ReactionDto;
+import com.openisle.model.CategoryProposalPost;
 import com.openisle.model.CommentSort;
 import com.openisle.model.LotteryPost;
 import com.openisle.model.PollPost;
@@ -113,26 +115,40 @@ public class PostMapper {
       dto.setLottery(l);
     }
 
-    if (post instanceof PollPost pp) {
-      PollDto p = new PollDto();
-      p.setOptions(pp.getOptions());
-      p.setVotes(pp.getVotes());
-      p.setEndTime(pp.getEndTime());
-      p.setParticipants(
-        pp.getParticipants().stream().map(userMapper::toAuthorDto).collect(Collectors.toList())
-      );
-      Map<Integer, List<AuthorDto>> optionParticipants = pollVoteRepository
-        .findByPostId(pp.getId())
-        .stream()
-        .collect(
-          Collectors.groupingBy(
-            PollVote::getOptionIndex,
-            Collectors.mapping(v -> userMapper.toAuthorDto(v.getUser()), Collectors.toList())
-          )
-        );
-      p.setOptionParticipants(optionParticipants);
-      p.setMultiple(Boolean.TRUE.equals(pp.getMultiple()));
-      dto.setPoll(p);
+    if (post instanceof CategoryProposalPost cp) {
+      ProposalDto proposalDto = (ProposalDto) buildPollDto(cp, new ProposalDto());
+      proposalDto.setProposalStatus(cp.getProposalStatus());
+      proposalDto.setProposedName(cp.getProposedName());
+      proposalDto.setDescription(cp.getDescription());
+      proposalDto.setApproveThreshold(cp.getApproveThreshold());
+      proposalDto.setQuorum(cp.getQuorum());
+      proposalDto.setStartAt(cp.getStartAt());
+      proposalDto.setResultSnapshot(cp.getResultSnapshot());
+      proposalDto.setRejectReason(cp.getRejectReason());
+      dto.setPoll(proposalDto);
+    } else if (post instanceof PollPost pp) {
+      dto.setPoll(buildPollDto(pp, new PollDto()));
     }
+  }
+
+  private PollDto buildPollDto(PollPost pollPost, PollDto target) {
+    target.setOptions(pollPost.getOptions());
+    target.setVotes(pollPost.getVotes());
+    target.setEndTime(pollPost.getEndTime());
+    target.setParticipants(
+      pollPost.getParticipants().stream().map(userMapper::toAuthorDto).collect(Collectors.toList())
+    );
+    Map<Integer, List<AuthorDto>> optionParticipants = pollVoteRepository
+      .findByPostId(pollPost.getId())
+      .stream()
+      .collect(
+        Collectors.groupingBy(
+          PollVote::getOptionIndex,
+          Collectors.mapping(v -> userMapper.toAuthorDto(v.getUser()), Collectors.toList())
+        )
+      );
+    target.setOptionParticipants(optionParticipants);
+    target.setMultiple(Boolean.TRUE.equals(pollPost.getMultiple()));
+    return target;
   }
 }
