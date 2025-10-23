@@ -44,13 +44,6 @@ cd OpenIsle
    docker compose \
      -f docker/docker-compose.yaml \
      --env-file .env \
-     --profile dev build
-   ```
-
-   ```shell
-   docker compose \
-     -f docker/docker-compose.yaml \
-     --env-file .env \
      --profile dev up -d
    ```
    该命令会创建名为 `frontend_dev` 的容器并运行 `npm run dev`，浏览器访问 http://127.0.0.1:3000 即可查看页面。
