@@ -5,10 +5,10 @@
         <info-icon class="proposal-description-title-icon" />提案规则说明</span
       >
       <div class="proposal-description-content">
-        <p>提案规则1</p>
-        <p>提案规则</p>
-        <p>提案规则</p>
-        <p>提案规则</p>
+        <p>📛 拟议分类名称需保持唯一，请勿与现有分类或正在提案中的名称重复。</p>
+        <p>📝 请在下方详细说明提案目的、预期价值及补充材料，方便大家快速理解。</p>
+        <p>🗳️ 提案提交后将开放 3 天投票，需达到至少 60% 的赞成率并满 10 人参与方可通过。</p>
+        <p>🤝 讨论请遵循社区守则，保持礼貌和善，欢迎附上相关案例或参考链接。</p>
       </div>
     </div>
     <div class="proposal-row">

@@ -261,7 +261,7 @@ public class PostService {
     String proposalDescription
   ) {
     // 限制访问次数
-    boolean limitResult = postRateLimit(username);
+    boolean limitResult = isPostLimitReached(username);
     if (!limitResult) {
       throw new RateLimitException("Too many posts");
     }
@@ -407,6 +407,7 @@ public class PostService {
     if (post.getStatus() == PostStatus.PUBLISHED) {
       searchIndexEventPublisher.publishPostSaved(post);
     }
+    markPostLimit(author.getUsername());
     return post;
   }
 
@@ -480,20 +481,23 @@ public class PostService {
   }
 
   /**
-   * 限制发帖频率
+   * 检查用户是否达到发帖限制
    * @param username
-   * @return
+   * @return true - 允许发帖，false - 已达限制
    */
-  private boolean postRateLimit(String username) {
+  private boolean isPostLimitReached(String username) {
     String key = CachingConfig.LIMIT_CACHE_NAME + ":posts:" + username;
     String result = (String) redisTemplate.opsForValue().get(key);
-    //最近没有创建过文章
-    if (StringUtils.isEmpty(result)) {
-      // 限制频率为5分钟
-      redisTemplate.opsForValue().set(key, "1", Duration.ofMinutes(5));
-      return true;
-    }
-    return false;
+    return StringUtils.isEmpty(result);
+  }
+
+  /**
+   * 标记用户发帖，触发limit计时
+   * @param username
+   */
+  private void markPostLimit(String username) {
+    String key = CachingConfig.LIMIT_CACHE_NAME + ":posts:" + username;
+    redisTemplate.opsForValue().set(key, "1", Duration.ofMinutes(5));
   }
 
   @CacheEvict(value = CachingConfig.POST_CACHE_NAME, allEntries = true)
