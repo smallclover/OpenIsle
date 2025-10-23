@@ -28,6 +28,8 @@ const iconMap = {
   POLL_VOTE: 'ChartHistogram',
   POLL_RESULT_OWNER: 'RankingList',
   POLL_RESULT_PARTICIPANT: 'ChartLine',
+  CATEGORY_PROPOSAL_RESULT_OWNER: 'TagOne',
+  CATEGORY_PROPOSAL_RESULT_PARTICIPANT: 'TagOne',
   MENTION: 'HashtagKey',
   POST_DELETED: 'ClearIcon',
   POST_FEATURED: 'Star',
@@ -254,7 +256,9 @@ function createFetchNotifications() {
         } else if (
           n.type === 'POLL_VOTE' ||
           n.type === 'POLL_RESULT_OWNER' ||
-          n.type === 'POLL_RESULT_PARTICIPANT'
+          n.type === 'POLL_RESULT_PARTICIPANT' ||
+          n.type === 'CATEGORY_PROPOSAL_RESULT_OWNER' ||
+          n.type === 'CATEGORY_PROPOSAL_RESULT_PARTICIPANT'
         ) {
           arr.push({
             ...n,

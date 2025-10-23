@@ -2,6 +2,30 @@
   <div class="post-poll-container" v-if="poll">
     <div class="poll-top-container">
       <div class="poll-options-container">
+        <div class="poll-title-section">
+          <div class="poll-title-section-row">
+            <div class="poll-option-title" v-if="poll.multiple">多选</div>
+            <div class="poll-option-title" v-else-if="isProposal">
+              拟议分类：{{ poll.proposedName }}
+              <ToolTip
+                content="🗳️ 提案提交后将开放3天投票，需达到至少60%的赞成率并满10人参与方可通过。"
+                placement="bottom"
+                v-if="isProposal"
+              >
+                <info-icon class="info-icon" />
+              </ToolTip>
+            </div>
+            <div class="poll-option-title" v-else>单选</div>
+            <div class="poll-left-time">
+              <stopwatch class="poll-left-time-icon" />
+              <div class="poll-left-time-title">离结束</div>
+              <div class="poll-left-time-value">{{ countdown }}</div>
+            </div>
+          </div>
+          <div class="poll-title-section-row">
+            <div v-if="poll.description" class="proposal-description">{{ poll.description }}</div>
+          </div>
+        </div>
         <div v-if="showPollResult || pollEnded || hasVoted">
           <div v-for="(opt, idx) in poll.options" :key="idx" class="poll-option-result">
             <div class="poll-option-info-container">
@@ -29,16 +53,6 @@
           </div>
         </div>
         <div v-else>
-          <div class="poll-title-section">
-            <div class="poll-option-title" v-if="poll.multiple">多选</div>
-            <div class="poll-option-title" v-else>单选</div>
-
-            <div class="poll-left-time">
-              <stopwatch class="poll-left-time-icon" />
-              <div class="poll-left-time-title">离结束</div>
-              <div class="poll-left-time-value">{{ countdown }}</div>
-            </div>
-          </div>
           <template v-if="poll.multiple">
             <div
               v-for="(opt, idx) in poll.options"
@@ -103,11 +117,6 @@
       <div v-else-if="pollEnded" class="poll-option-hint"><stopwatch /> 投票已结束</div>
       <div v-else class="poll-option-hint">
         <div>您已投票，等待结束查看结果</div>
-        <div class="poll-left-time">
-          <stopwatch class="poll-left-time-icon" />
-          <div class="poll-left-time-title">离结束</div>
-          <div class="poll-left-time-value">{{ countdown }}</div>
-        </div>
       </div>
     </div>
   </div>
@@ -130,6 +139,9 @@ const emit = defineEmits(['refresh'])
 const loggedIn = computed(() => authState.loggedIn)
 const showPollResult = ref(false)
 
+const isProposal = computed(() =>
+  Object.prototype.hasOwnProperty.call(props.poll || {}, 'proposedName'),
+)
 const pollParticipants = computed(() => props.poll?.participants || [])
 const pollOptionParticipants = computed(() => props.poll?.optionParticipants || {})
 const pollVotes = computed(() => props.poll?.votes || {})
@@ -231,6 +243,34 @@ const submitMultiPoll = async () => {
   background-color: var(--lottery-background-color);
   border-radius: 10px;
   padding: 10px;
+}
+
+.proposal-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+.proposal-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.proposal-status {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.proposal-description {
+  font-size: 16px;
+  margin-top: 10px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  opacity: 0.8;
 }
 
 .poll-option-button {
@@ -385,10 +425,18 @@ const submitMultiPoll = async () => {
 }
 
 .poll-title-section {
-  display: flex;
-  gap: 30px;
-  flex-direction: row;
   margin-bottom: 20px;
+}
+
+.poll-title-section-row {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  gap: 30px;
+}
+
+.info-icon {
+  margin-right: 20px;
 }
 
 .poll-option-title {

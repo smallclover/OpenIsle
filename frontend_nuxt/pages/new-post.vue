@@ -37,6 +37,7 @@
       </div>
       <LotteryForm v-if="postType === 'LOTTERY'" :data="lottery" />
       <PollForm v-if="postType === 'POLL'" :data="poll" />
+      <ProposalForm v-if="postType === 'PROPOSAL'" :data="proposal" />
     </div>
   </div>
 </template>
@@ -50,6 +51,7 @@ import PostTypeSelect from '~/components/PostTypeSelect.vue'
 import TagSelect from '~/components/TagSelect.vue'
 import LotteryForm from '~/components/LotteryForm.vue'
 import PollForm from '~/components/PollForm.vue'
+import ProposalForm from '~/components/ProposalForm.vue'
 import { toast } from '~/main'
 import { authState, getToken } from '~/utils/auth'
 const config = useRuntimeConfig()
@@ -75,6 +77,10 @@ const poll = reactive({
   options: ['', ''],
   endTime: null,
   multiple: false,
+})
+const proposal = reactive({
+  proposedName: '',
+  proposalDescription: '',
 })
 const startTime = ref(null)
 const isWaitingPosting = ref(false)
@@ -123,6 +129,8 @@ const clearPost = async () => {
   poll.options = ['', '']
   poll.endTime = null
   poll.multiple = false
+  proposal.proposedName = ''
+  proposal.proposalDescription = ''
 
   // 删除草稿
   const token = getToken()
@@ -283,6 +291,12 @@ const submitPost = async () => {
       return
     }
   }
+  if (postType.value === 'PROPOSAL') {
+    if (!proposal.proposedName.trim()) {
+      toast.error('请填写拟议分类名称')
+      return
+    }
+  }
   try {
     const token = getToken()
     await ensureTags(token)
@@ -303,35 +317,43 @@ const submitPost = async () => {
       }
       prizeIconUrl = uploadData.data.url
     }
+    const toUtcString = (value) => {
+      if (!value) return undefined
+      return new Date(new Date(value).getTime() + 8.02 * 60 * 60 * 1000).toISOString()
+    }
+
+    const payload = {
+      title: title.value,
+      content: content.value,
+      categoryId: selectedCategory.value,
+      tagIds: selectedTags.value,
+      type: postType.value,
+    }
+
+    if (postType.value === 'LOTTERY') {
+      payload.prizeIcon = prizeIconUrl
+      payload.prizeName = lottery.prizeName
+      payload.prizeCount = lottery.prizeCount
+      payload.prizeDescription = lottery.prizeDescription
+      payload.pointCost = lottery.pointCost
+      payload.startTime = startTime.value ? new Date(startTime.value).toISOString() : undefined
+      payload.endTime = toUtcString(lottery.endTime)
+    } else if (postType.value === 'POLL') {
+      payload.options = poll.options
+      payload.multiple = poll.multiple
+      payload.endTime = toUtcString(poll.endTime)
+    } else if (postType.value === 'PROPOSAL') {
+      payload.proposedName = proposal.proposedName
+      payload.proposalDescription = proposal.proposalDescription
+    }
+
     const res = await fetch(`${API_BASE_URL}/api/posts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        title: title.value,
-        content: content.value,
-        categoryId: selectedCategory.value,
-        tagIds: selectedTags.value,
-        type: postType.value,
-        prizeIcon: postType.value === 'LOTTERY' ? prizeIconUrl : undefined,
-        prizeName: postType.value === 'LOTTERY' ? lottery.prizeName : undefined,
-        prizeCount: postType.value === 'LOTTERY' ? lottery.prizeCount : undefined,
-        prizeDescription: postType.value === 'LOTTERY' ? lottery.prizeDescription : undefined,
-        options: postType.value === 'POLL' ? poll.options : undefined,
-        multiple: postType.value === 'POLL' ? poll.multiple : undefined,
-        startTime:
-          postType.value === 'LOTTERY' ? new Date(startTime.value).toISOString() : undefined,
-        pointCost: postType.value === 'LOTTERY' ? lottery.pointCost : undefined,
-        // 将时间转换为 UTC+8.5 时区 todo: 需要优化
-        endTime:
-          postType.value === 'LOTTERY'
-            ? new Date(new Date(lottery.endTime).getTime() + 8.02 * 60 * 60 * 1000).toISOString()
-            : postType.value === 'POLL'
-              ? new Date(new Date(poll.endTime).getTime() + 8.02 * 60 * 60 * 1000).toISOString()
-              : undefined,
-      }),
+      body: JSON.stringify(payload),
     })
     const data = await res.json()
     if (res.ok) {

@@ -1,5 +1,6 @@
 - [前置工作](#前置工作)
 - [前端极速调试（Docker 全量环境）](#前端极速调试docker-全量环境)
+  - [dev 与 dev_local_backend 巡航指南](#dev-dev_local_backend-guide)
 - [启动后端服务](#启动后端服务)
   - [本地 IDEA](#本地-idea)
     - [配置环境变量](#配置环境变量)
@@ -43,13 +44,6 @@ cd OpenIsle
    docker compose \
      -f docker/docker-compose.yaml \
      --env-file .env \
-     --profile dev build
-   ```
-
-   ```shell
-   docker compose \
-     -f docker/docker-compose.yaml \
-     --env-file .env \
      --profile dev up -d
    ```
    该命令会创建名为 `frontend_dev` 的容器并运行 `npm run dev`，浏览器访问 http://127.0.0.1:3000 即可查看页面。
@@ -81,6 +75,41 @@ cd OpenIsle
 
 如需自定义 Node 依赖缓存、数据库持久化等，可参考 `docker/docker-compose.yaml` 中各卷的定义进行调整。
 
+<a id="dev-dev_local_backend-guide"></a>
+
+### 🧭 dev 与 dev_local_backend 巡航指南
+
+在需要本地 IDE 启动后端、而容器只提供 MySQL、Redis、RabbitMQ、OpenSearch 等依赖时，可切换到 `dev_local_backend` Profile：
+
+```bash
+docker compose \
+  -f docker/docker-compose.yaml \
+  --env-file .env \
+  --profile dev_local_backend up -d
+```
+
+> [!TIP]
+> 该 Profile 不会启动 Docker 内的 Spring Boot 服务，`frontend_dev_local_backend` 会通过 `host.docker.internal` 访问你本机正在运行的后端。非常适合用 IDEA/VS Code 调试 Java 服务的场景！
+
+| 想要的体验 | 推荐 Profile | 会启动的关键容器 | 备注 |
+| --- | --- | --- | --- |
+| 🚀 一键启动前后端 | `dev` | `springboot`、`frontend_dev`、`mysql`… | 纯容器内跑全链路，省心省力 |
+| 🛠️ IDE 启动后端 + 容器托管依赖 | `dev_local_backend` | `frontend_dev_local_backend`、`mysql`、`redis`… | 记得本地后端监听 `8080`/`8082` 等端口 |
+
+切换 Profile 时，请先停掉当前组合再启动另一组，避免端口占用或容器命名冲突：
+
+```bash
+docker compose -f docker/docker-compose.yaml --env-file .env --profile dev down
+# 或者
+docker compose -f docker/docker-compose.yaml --env-file .env --profile dev_local_backend down
+```
+
+常见小贴士：
+
+- 🧹 需要彻底清理依赖时，别忘了追加 `-v` 清除持久化数据卷。
+- 🪄 仅切换 Profile 时通常无需重新 `build`，除非你更新了镜像依赖。
+- 🧪 如需确认前端容器访问的是本机后端，可在 IDE 控制台查看请求日志或执行 `curl http://localhost:8080/actuator/health` 进行自检。
+
 ## 启动后端服务
 
 启动后端服务有多种方式，选择一种即可。
@@ -109,6 +138,17 @@ IDEA 打开 `backend/` 文件夹。
    SERVER_PORT=8081
    LOG_LEVEL=DEBUG
    ```
+
+> [!WARNING]
+> 如果你通过 `dev_local_backend` Profile 启动了数据库/缓存等依赖，却让后端由 IDEA 在宿主机运行，请务必将 `open-isle.env`（或 IDEA 的环境变量面板）中的主机名改成 `localhost`：
+>
+> ```ini
+> MYSQL_HOST=localhost
+> REDIS_HOST=localhost
+> RABBITMQ_HOST=localhost
+> ```
+>
+> 对应的容器端口均已映射到宿主机，无需额外配置。若仍保留默认的 `mysql`、`redis`、`rabbitmq`，IDEA 将尝试解析容器网络内的别名而导致连接失败。
 
 也可以修改 `src/main/resources/application.properties`，但该文件会被 Git 追踪，通常不推荐。
 

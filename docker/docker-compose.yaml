@@ -25,6 +25,10 @@ services:
       timeout: 3s
       retries: 30
       start_period: 20s
+    profiles:
+      - dev
+      - dev_local_backend
+      - prod
 
   # OpenSearch Service
   opensearch:
@@ -61,6 +65,9 @@ services:
       start_period: 60s
     networks:
       - openisle-network
+    profiles:
+      - dev
+      - dev_local_backend
 
   dashboards:
     image: opensearchproject/opensearch-dashboards:3.0.0
@@ -75,6 +82,10 @@ services:
     restart: unless-stopped
     networks:
       - openisle-network
+    profiles:
+      - dev
+      - dev_local_backend
+      - prod
 
   rabbitmq:
     image: rabbitmq:3.13-management
@@ -98,6 +109,10 @@ services:
       start_period: 30s
     networks:
       - openisle-network
+    profiles:
+      - dev
+      - dev_local_backend
+      - prod
 
   redis:
     image: redis:7
@@ -111,6 +126,10 @@ services:
       - redis-data:/data
     networks:
       - openisle-network
+    profiles:
+      - dev
+      - dev_local_backend
+      - prod
 
   # Java spring boot service (开发便捷镜像，后续可换成打包镜像)
   springboot:
@@ -155,6 +174,9 @@ services:
       start_period: 60s
     networks:
       - openisle-network
+    profiles:
+      - dev
+      - prod
 
   websocket-service:
     image: maven:3.9-eclipse-temurin-17
@@ -186,6 +208,10 @@ services:
       start_period: 60s
     networks:
       - openisle-network
+    profiles:
+      - dev
+      - dev_local_backend
+      - prod
 
   frontend_dev:
     image: node:20
@@ -208,6 +234,28 @@ services:
       - openisle-network
     profiles:
       - dev
+  
+  frontend_dev_local_backend:
+    image: node:20
+    container_name: ${COMPOSE_PROJECT_NAME}-openisle-frontend-dev-local-backend
+    working_dir: /app
+    env_file:
+      - ${ENV_FILE:-../.env}
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ../frontend_nuxt:/app
+      - frontend-node-modules:/app/node_modules
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      websocket-service:
+        condition: service_healthy
+    networks:
+      - openisle-network
+    profiles:
+      - dev_local_backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   frontend_service:
     build:
@@ -226,13 +274,13 @@ services:
       websocket-service:
         condition: service_healthy
     restart: unless-stopped
-    profiles: ["staging", "prod"]
+    profiles:
+      - prod
 
-
+  # 监听“frontend_dev 容器自身的” 127.0.0.1:8080 → 转发到 springboot:8080
   loopback_8080:
     image: alpine/socat
     container_name: ${COMPOSE_PROJECT_NAME}-loopback-8080
-    # 监听“frontend_dev 容器自身的” 127.0.0.1:8080 → 转发到 springboot:8080
     command:
       - -d
       - -d
@@ -243,13 +291,37 @@ services:
       springboot:
         condition: service_healthy
     network_mode: "service:frontend_dev"
-    profiles: ["dev"]
     healthcheck:
       test: ["CMD", "sh", "-c", "nc -z 127.0.0.1 8080"]
       interval: 5s
       timeout: 3s
       retries: 20
       start_period: 10s
+    profiles:
+      - dev
+  
+  # 监听“frontend_dev 容器自身的” 127.0.0.1:8080 → 转发到 启动docker的本机:8080
+  loopback_8080_host:
+    image: alpine/socat
+    container_name: ${COMPOSE_PROJECT_NAME}-loopback-8080-host
+    command:
+      - -d
+      - -d
+      - -ly
+      - TCP4-LISTEN:8080,bind=127.0.0.1,reuseaddr,fork
+      - TCP4:host.docker.internal:8080
+    network_mode: "service:frontend_dev_local_backend"
+    depends_on:
+      frontend_dev_local_backend:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "sh", "-c", "nc -z 127.0.0.1 8080"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    profiles:
+      - dev_local_backend
 
   loopback_8082:
     image: alpine/socat
@@ -265,13 +337,37 @@ services:
       websocket-service:
         condition: service_healthy
     network_mode: "service:frontend_dev"
-    profiles: ["dev"]
     healthcheck:
       test: ["CMD", "sh", "-c", "nc -z 127.0.0.1 8082"]
       interval: 5s
       timeout: 3s
       retries: 20
       start_period: 10s
+    profiles:
+      - dev
+
+  loopback_8082_host:
+    image: alpine/socat
+    container_name: ${COMPOSE_PROJECT_NAME}-loopback-8082-host
+    # 监听 127.0.0.1:8082 → 转发到 websocket-service:8082（WS 纯 TCP 可直接过）
+    command:
+      - -d
+      - -d
+      - -ly
+      - TCP4-LISTEN:8082,bind=127.0.0.1,reuseaddr,fork
+      - TCP4:websocket-service:8082
+    depends_on:
+      websocket-service:
+        condition: service_healthy
+    network_mode: "service:frontend_dev_local_backend"
+    healthcheck:
+      test: ["CMD", "sh", "-c", "nc -z 127.0.0.1 8082"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    profiles:
+      - dev_local_backend
 
 networks:
   openisle-network:
