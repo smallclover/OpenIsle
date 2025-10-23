@@ -320,7 +320,7 @@ public class PostService {
       LocalDateTime now = LocalDateTime.now();
       cp.setStartAt(now);
       cp.setEndTime(now.plusDays(DEFAULT_PROPOSAL_DURATION_DAYS));
-      cp.setOptions(DEFAULT_PROPOSAL_OPTIONS);
+      cp.setOptions(new ArrayList<>(DEFAULT_PROPOSAL_OPTIONS));
       cp.setMultiple(false);
       post = cp;
     } else {
