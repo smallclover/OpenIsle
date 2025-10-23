@@ -72,6 +72,7 @@
               <pin v-if="article.pinned" theme="outline" class="pinned-icon" />
               <gift v-if="article.type === 'LOTTERY'" class="lottery-icon" />
               <ranking-list v-else-if="article.type === 'POLL'" class="poll-icon" />
+              <hands v-else-if="article.type === 'PROPOSAL'" class="proposal-icon" />
               <star v-if="!article.rssExcluded" class="featured-icon" />
               {{ article.title }}
             </NuxtLink>
@@ -572,6 +573,7 @@ watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
 .pinned-icon,
 .lottery-icon,
 .featured-icon,
+.proposal-icon,
 .poll-icon {
   margin-right: 4px;
   color: var(--primary-color);
