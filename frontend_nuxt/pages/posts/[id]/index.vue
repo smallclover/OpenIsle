@@ -1,195 +1,186 @@
 <template>
+  <BasePopup v-if="isRestricted" :visible="true" @close="closeRestrictedPopup">
+    <div class="restricted-content">
+      <Lock class="restricted-icon" />
+
+      <template v-if="visibleScope === 'ONLY_ME'">
+        <p>这是一篇私密文章，仅作者本人及管理员可见</p>
+        <div class="restricted-actions">
+          <NuxtLink to="/" class="restricted-button">返回首页</NuxtLink>
+        </div>
+      </template>
+
+      <template v-else-if="visibleScope === 'ONLY_REGISTER'">
+        <p>请登录后查看这篇文章</p>
+        <div class="restricted-actions">
+          <NuxtLink to="/login" class="restricted-button" v-if="!loggedIn">登录</NuxtLink>
+        </div>
+      </template>
+    </div></BasePopup
+  >
   <div class="post-page-container">
     <div v-if="isWaitingFetchingPost" class="loading-container">
       <l-hatch size="28" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
     </div>
-    <div v-else 
-      class="post-page-main-container" 
-      ref="mainContainer"
-      >
-      <!-- 🔒 遮罩层 -->
+    <div v-else class="post-page-main-container" ref="mainContainer">
+      <div class="article-title-container">
+        <div class="article-title-container-left">
+          <div class="article-title">{{ title }}</div>
+          <div class="article-info-container">
+            <ArticleCategory :category="category" />
+            <ArticleTags :tags="tags" />
+          </div>
+        </div>
+        <div class="article-title-container-right">
+          <div v-if="status === 'PENDING'" class="article-pending-button">审核中</div>
+          <div v-if="status === 'REJECTED'" class="article-block-button">已拒绝</div>
+          <div v-if="!rssExcluded" class="article-featured-button">精品</div>
+          <div v-if="closed" class="article-closed-button">已关闭</div>
+          <div
+            v-if="!closed && loggedIn && !isAuthor && !subscribed"
+            class="article-subscribe-button"
+            @click="subscribePost"
+          >
+            <people-plus />
+            <div class="article-subscribe-button-text">
+              {{ isMobile ? '订阅' : '订阅文章' }}
+            </div>
+          </div>
+          <div
+            v-if="!closed && loggedIn && !isAuthor && subscribed"
+            class="article-unsubscribe-button"
+            @click="unsubscribePost"
+          >
+            <people-minus-one />
+            <div class="article-unsubscribe-button-text">
+              {{ isMobile ? '退订' : '取消订阅' }}
+            </div>
+          </div>
+          <DropdownMenu v-if="articleMenuItems.length > 0" :items="articleMenuItems">
+            <template #trigger>
+              <more-one class="action-menu-icon" />
+            </template>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <div class="info-content-container author-info-container">
+        <div class="user-avatar-container" @click="gotoProfile">
+          <div class="user-avatar-item">
+            <BaseUserAvatar
+              class="user-avatar-item-img"
+              :src="author.avatar"
+              :user-id="author.id"
+              alt="avatar"
+              :disable-link="true"
+            />
+          </div>
+          <div v-if="isMobile" class="info-content-header">
+            <div class="user-name">
+              {{ author.username }}
+              <medal-one class="medal-icon" />
+              <NuxtLink
+                v-if="author.displayMedal"
+                class="user-medal"
+                :to="`/users/${author.id}?tab=achievements`"
+                >{{ getMedalTitle(author.displayMedal) }}</NuxtLink
+              >
+            </div>
+            <div class="post-time">{{ postTime }}</div>
+          </div>
+        </div>
+
+        <div class="info-content">
+          <div v-if="!isMobile" class="info-content-header">
+            <div class="user-name">
+              {{ author.username }}
+              <medal-one class="medal-icon" />
+              <NuxtLink
+                v-if="author.displayMedal"
+                class="user-medal"
+                :to="`/users/${author.id}?tab=achievements`"
+                >{{ getMedalTitle(author.displayMedal) }}</NuxtLink
+              >
+            </div>
+            <div class="post-time">{{ postTime }}</div>
+          </div>
+          <div
+            class="info-content-text"
+            v-html="renderMarkdown(postContent)"
+            @click="handleContentClick"
+          ></div>
+
+          <div class="article-footer-container">
+            <div class="article-option-container">
+              <ReactionsGroup
+                ref="postReactionsGroupRef"
+                v-model="postReactions"
+                content-type="post"
+                :content-id="postId"
+              />
+              <DonateGroup :post-id="postId" :author-id="author.id" :is-author="isAuthor" />
+            </div>
+            <div class="article-footer-actions">
+              <div
+                class="reaction-action like-action"
+                :class="{ selected: postLikedByMe }"
+                @click="togglePostLike"
+              >
+                <like v-if="!postLikedByMe" />
+                <like v-else theme="filled" />
+                <span v-if="postLikeCount" class="reaction-count">{{ postLikeCount }}</span>
+              </div>
+              <div class="reaction-action copy-link" @click="copyPostLink">
+                <link-icon />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <PostLottery v-if="lottery" :lottery="lottery" :post-id="postId" @refresh="refreshPost" />
       <ClientOnly>
-        <div v-if="isRestricted" class="restricted-overlay">
-          <div class="restricted-content">
-            <Lock class="restricted-icon" />
-
-            <!-- 🔒 权限文案 -->
-            <template v-if="visibleScope === 'ONLY_ME'">
-              <p>这是一篇私密文章，仅作者本人及管理员可见</p>
-              <div class="restricted-actions">
-                <NuxtLink to="/" class="restricted-button">返回首页</NuxtLink>
-              </div>
-            </template>
-
-            <template v-else-if="visibleScope === 'ONLY_REGISTER'">
-              <p>请登录后查看这篇文章</p>
-              <div class="restricted-actions">
-                <NuxtLink to="/login" class="restricted-button" v-if="!loggedIn" >登录</NuxtLink>
-              </div>
-            </template>
-          </div>
-        </div>
+        <PostPoll v-if="poll" :poll="poll" :post-id="postId" @refresh="refreshPost" />
       </ClientOnly>
-      <div :class="{ 'is-blurred': isRestricted }">
-        <div class="article-title-container">
-            <div class="article-title-container-left">
-              <div class="article-title">{{ title }}</div>
-              <div class="article-info-container">
-                <ArticleCategory :category="category" />
-                <ArticleTags :tags="tags" />
-              </div>
-            </div>
-            <div class="article-title-container-right">
-              <div v-if="status === 'PENDING'" class="article-pending-button">审核中</div>
-              <div v-if="status === 'REJECTED'" class="article-block-button">已拒绝</div>
-              <div v-if="!rssExcluded" class="article-featured-button">精品</div>
-              <div v-if="closed" class="article-closed-button">已关闭</div>
-              <div
-                v-if="!closed && loggedIn && !isAuthor && !subscribed"
-                class="article-subscribe-button"
-                @click="subscribePost"
-              >
-                <people-plus />
-                <div class="article-subscribe-button-text">
-                  {{ isMobile ? '订阅' : '订阅文章' }}
-                </div>
-              </div>
-              <div
-                v-if="!closed && loggedIn && !isAuthor && subscribed"
-                class="article-unsubscribe-button"
-                @click="unsubscribePost"
-              >
-                <people-minus-one />
-                <div class="article-unsubscribe-button-text">
-                  {{ isMobile ? '退订' : '取消订阅' }}
-                </div>
-              </div>
-              <DropdownMenu v-if="articleMenuItems.length > 0" :items="articleMenuItems">
-                <template #trigger>
-                  <more-one class="action-menu-icon" />
-                </template>
-              </DropdownMenu>
-            </div>
+      <div v-if="closed" class="post-close-container">该帖子已关闭，内容仅供阅读，无法进行互动</div>
+
+      <ClientOnly>
+        <CommentEditor
+          @submit="postComment"
+          :loading="isWaitingPostingComment"
+          :disabled="!loggedIn || closed"
+          :show-login-overlay="!loggedIn"
+          :parent-user-name="author.username"
+        />
+      </ClientOnly>
+
+      <div class="comment-config-container">
+        <div class="comment-sort-container">
+          <div class="comment-sort-title">Sort by:</div>
+          <Dropdown v-model="commentSort" :fetch-options="fetchCommentSorts" />
         </div>
+      </div>
 
-        <div class="info-content-container author-info-container">
-          <div class="user-avatar-container" @click="gotoProfile">
-            <div class="user-avatar-item">
-              <BaseUserAvatar
-                class="user-avatar-item-img"
-                :src="author.avatar"
-                :user-id="author.id"
-                alt="avatar"
-                :disable-link="true"
-              />
-            </div>
-            <div v-if="isMobile" class="info-content-header">
-              <div class="user-name">
-                {{ author.username }}
-                <medal-one class="medal-icon" />
-                <NuxtLink
-                  v-if="author.displayMedal"
-                  class="user-medal"
-                  :to="`/users/${author.id}?tab=achievements`"
-                  >{{ getMedalTitle(author.displayMedal) }}</NuxtLink
-                >
-              </div>
-              <div class="post-time">{{ postTime }}</div>
-            </div>
-          </div>
-
-          <div class="info-content">
-            <div v-if="!isMobile" class="info-content-header">
-              <div class="user-name">
-                {{ author.username }}
-                <medal-one class="medal-icon" />
-                <NuxtLink
-                  v-if="author.displayMedal"
-                  class="user-medal"
-                  :to="`/users/${author.id}?tab=achievements`"
-                  >{{ getMedalTitle(author.displayMedal) }}</NuxtLink
-                >
-              </div>
-              <div class="post-time">{{ postTime }}</div>
-            </div>
-            <div
-              class="info-content-text"
-              v-html="renderMarkdown(postContent)"
-              @click="handleContentClick"
-            ></div>
-
-            <div class="article-footer-container">
-              <div class="article-option-container">
-                <ReactionsGroup
-                  ref="postReactionsGroupRef"
-                  v-model="postReactions"
-                  content-type="post"
-                  :content-id="postId"
-                />
-                <DonateGroup :post-id="postId" :author-id="author.id" :is-author="isAuthor" />
-              </div>
-              <div class="article-footer-actions">
-                <div
-                  class="reaction-action like-action"
-                  :class="{ selected: postLikedByMe }"
-                  @click="togglePostLike"
-                >
-                  <like v-if="!postLikedByMe" />
-                  <like v-else theme="filled" />
-                  <span v-if="postLikeCount" class="reaction-count">{{ postLikeCount }}</span>
-                </div>
-                <div class="reaction-action copy-link" @click="copyPostLink">
-                  <link-icon />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <PostLottery v-if="lottery" :lottery="lottery" :post-id="postId" @refresh="refreshPost" />
-        <ClientOnly>
-          <PostPoll v-if="poll" :poll="poll" :post-id="postId" @refresh="refreshPost" />
-        </ClientOnly>
-        <div v-if="closed" class="post-close-container">该帖子已关闭，内容仅供阅读，无法进行互动</div>
-
-        <ClientOnly>
-          <CommentEditor
-            @submit="postComment"
-            :loading="isWaitingPostingComment"
-            :disabled="!loggedIn || closed"
-            :show-login-overlay="!loggedIn"
-            :parent-user-name="author.username"
-          />
-        </ClientOnly>
-
-        <div class="comment-config-container">
-          <div class="comment-sort-container">
-            <div class="comment-sort-title">Sort by:</div>
-            <Dropdown v-model="commentSort" :fetch-options="fetchCommentSorts" />
-          </div>
-        </div>
-
-        <div v-if="isFetchingComments" class="loading-container">
-          <l-hatch size="28" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
-        </div>
-        <div v-else class="comments-container">
-          <BasePlaceholder v-if="timelineItems.length === 0" text="暂无评论" icon="inbox" />
-          <BaseTimeline v-else :items="timelineItems">
-            <template #item="{ item }">
-              <CommentItem
-                v-if="item.kind === 'comment'"
-                :key="item.id"
-                :comment="item"
-                :level="0"
-                :default-show-replies="item.openReplies"
-                :post-author-id="author.id"
-                :post-closed="closed"
-                @deleted="onCommentDeleted"
-              />
-              <PostChangeLogItem v-else :log="item" :title="title" />
-            </template>
-          </BaseTimeline>
-        </div>
+      <div v-if="isFetchingComments" class="loading-container">
+        <l-hatch size="28" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
+      </div>
+      <div v-else class="comments-container">
+        <BasePlaceholder v-if="timelineItems.length === 0" text="暂无评论" icon="inbox" />
+        <BaseTimeline v-else :items="timelineItems">
+          <template #item="{ item }">
+            <CommentItem
+              v-if="item.kind === 'comment'"
+              :key="item.id"
+              :comment="item"
+              :level="0"
+              :default-show-replies="item.openReplies"
+              :post-author-id="author.id"
+              :post-closed="closed"
+              @deleted="onCommentDeleted"
+            />
+            <PostChangeLogItem v-else :log="item" :title="title" />
+          </template>
+        </BaseTimeline>
       </div>
     </div>
 
@@ -537,17 +528,23 @@ const tokenHeader = computed(() => {
   const token = getToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
 })
-const { data: postData, pending: pendingPost, error: postError, refresh: refreshPost } =
-  await useAsyncData(`post-${postId}`, async () => {
+const {
+  data: postData,
+  pending: pendingPost,
+  error: postError,
+  refresh: refreshPost,
+} = await useAsyncData(
+  `post-${postId}`,
+  async () => {
     try {
       return await $fetch(`${API_BASE_URL}/api/posts/${postId}`, { headers: tokenHeader.value })
-    } catch (err) {
-    }
-  }, {
+    } catch (err) {}
+  },
+  {
     server: false,
     lazy: false,
-  })
-
+  },
+)
 
 // 用 pendingPost 驱动现有 UI（替代 isWaitingFetchingPost 手控）
 const isWaitingFetchingPost = computed(() => pendingPost.value)
@@ -1385,7 +1382,6 @@ onMounted(async () => {
   position: relative;
 }
 
-
 /* ======== 权限锁定状态 ======== */
 .is-blurred {
   filter: blur(10px);
@@ -1413,11 +1409,8 @@ onMounted(async () => {
 /* 中央提示框 */
 .restricted-content {
   background: #ffff;
-  color:var(--primary-color);
-  padding: 50px 60px;
-  border-radius: 12px;
+  color: var(--primary-color);
   text-align: center;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
 }
 
 .restricted-icon {
