@@ -81,6 +81,7 @@ import {
   CheckOne,
   Share,
   Financing,
+  Hands,
 } from '@icon-park/vue-next'
 
 export default defineNuxtPlugin((nuxtApp) => {
@@ -165,4 +166,5 @@ export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.component('CheckOne', CheckOne)
   nuxtApp.vueApp.component('Share', Share)
   nuxtApp.vueApp.component('Financing', Financing)
+  nuxtApp.vueApp.component('Hands', Hands)
 })

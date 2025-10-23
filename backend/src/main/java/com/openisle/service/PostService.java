@@ -3,8 +3,8 @@ package com.openisle.service;
 import com.openisle.config.CachingConfig;
 import com.openisle.exception.NotFoundException;
 import com.openisle.exception.RateLimitException;
-import com.openisle.mapper.PostMapper;
 import com.openisle.model.*;
+import com.openisle.repository.CategoryProposalPostRepository;
 import com.openisle.repository.CategoryRepository;
 import com.openisle.repository.CommentRepository;
 import com.openisle.repository.LotteryPostRepository;
@@ -22,7 +22,6 @@ import com.openisle.service.EmailSender;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -33,7 +32,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
@@ -55,6 +53,7 @@ public class PostService {
   private final TagRepository tagRepository;
   private final LotteryPostRepository lotteryPostRepository;
   private final PollPostRepository pollPostRepository;
+  private final CategoryProposalPostRepository categoryProposalPostRepository;
   private final PollVoteRepository pollVoteRepository;
   private PublishMode publishMode;
   private final NotificationService notificationService;
@@ -72,10 +71,16 @@ public class PostService {
   private final PointService pointService;
   private final PostChangeLogService postChangeLogService;
   private final PointHistoryRepository pointHistoryRepository;
+  private final CategoryService categoryService;
   private final ConcurrentMap<Long, ScheduledFuture<?>> scheduledFinalizations =
     new ConcurrentHashMap<>();
 
   private final SearchIndexEventPublisher searchIndexEventPublisher;
+
+  private static final int DEFAULT_PROPOSAL_APPROVE_THRESHOLD = 60;
+  private static final int DEFAULT_PROPOSAL_QUORUM = 10;
+  private static final long DEFAULT_PROPOSAL_DURATION_DAYS = 3;
+  private static final List<String> DEFAULT_PROPOSAL_OPTIONS = List.of("同意", "反对");
 
   @Value("${app.website-url:https://www.open-isle.com}")
   private String websiteUrl;
@@ -90,6 +95,7 @@ public class PostService {
     TagRepository tagRepository,
     LotteryPostRepository lotteryPostRepository,
     PollPostRepository pollPostRepository,
+    CategoryProposalPostRepository categoryProposalPostRepository,
     PollVoteRepository pollVoteRepository,
     NotificationService notificationService,
     SubscriptionService subscriptionService,
@@ -108,7 +114,8 @@ public class PostService {
     PointHistoryRepository pointHistoryRepository,
     @Value("${app.post.publish-mode:DIRECT}") PublishMode publishMode,
     RedisTemplate redisTemplate,
-    SearchIndexEventPublisher searchIndexEventPublisher
+    SearchIndexEventPublisher searchIndexEventPublisher,
+    CategoryService categoryService
   ) {
     this.postRepository = postRepository;
     this.userRepository = userRepository;
@@ -116,6 +123,7 @@ public class PostService {
     this.tagRepository = tagRepository;
     this.lotteryPostRepository = lotteryPostRepository;
     this.pollPostRepository = pollPostRepository;
+    this.categoryProposalPostRepository = categoryProposalPostRepository;
     this.pollVoteRepository = pollVoteRepository;
     this.notificationService = notificationService;
     this.subscriptionService = subscriptionService;
@@ -136,6 +144,7 @@ public class PostService {
 
     this.redisTemplate = redisTemplate;
     this.searchIndexEventPublisher = searchIndexEventPublisher;
+    this.categoryService = categoryService;
   }
 
   @EventListener(ApplicationReadyEvent.class)
@@ -160,6 +169,24 @@ public class PostService {
     }
     for (PollPost pp : pollPostRepository.findByEndTimeBeforeAndResultAnnouncedFalse(now)) {
       applicationContext.getBean(PostService.class).finalizePoll(pp.getId());
+    }
+    for (CategoryProposalPost cp : categoryProposalPostRepository.findByEndTimeAfterAndProposalStatus(
+      now,
+      CategoryProposalStatus.PENDING
+    )) {
+      if (cp.getEndTime() != null) {
+        ScheduledFuture<?> future = taskScheduler.schedule(
+          () -> applicationContext.getBean(PostService.class).finalizeProposal(cp.getId()),
+          java.util.Date.from(cp.getEndTime().atZone(ZoneId.systemDefault()).toInstant())
+        );
+        scheduledFinalizations.put(cp.getId(), future);
+      }
+    }
+    for (CategoryProposalPost cp : categoryProposalPostRepository.findByEndTimeBeforeAndProposalStatus(
+      now,
+      CategoryProposalStatus.PENDING
+    )) {
+      applicationContext.getBean(PostService.class).finalizeProposal(cp.getId());
     }
   }
 
@@ -234,10 +261,12 @@ public class PostService {
     LocalDateTime startTime,
     LocalDateTime endTime,
     java.util.List<String> options,
-    Boolean multiple
+    Boolean multiple,
+    String proposedName,
+    String proposalDescription
   ) {
     // 限制访问次数
-    boolean limitResult = postRateLimit(username);
+    boolean limitResult = isPostLimitReached(username);
     if (!limitResult) {
       throw new RateLimitException("Too many posts");
     }
@@ -280,6 +309,25 @@ public class PostService {
       pp.setEndTime(endTime);
       pp.setMultiple(multiple != null && multiple);
       post = pp;
+    } else if (actualType == PostType.PROPOSAL) {
+      CategoryProposalPost cp = new CategoryProposalPost();
+      if (proposedName == null || proposedName.isBlank()) {
+        throw new IllegalArgumentException("Proposed name required");
+      }
+      String normalizedName = proposedName.trim();
+      if (categoryProposalPostRepository.existsByProposedNameIgnoreCase(normalizedName)) {
+        throw new IllegalArgumentException("Proposed name already exists: " + normalizedName);
+      }
+      cp.setProposedName(normalizedName);
+      cp.setDescription(proposalDescription);
+      cp.setApproveThreshold(DEFAULT_PROPOSAL_APPROVE_THRESHOLD);
+      cp.setQuorum(DEFAULT_PROPOSAL_QUORUM);
+      LocalDateTime now = LocalDateTime.now();
+      cp.setStartAt(now);
+      cp.setEndTime(now.plusDays(DEFAULT_PROPOSAL_DURATION_DAYS));
+      cp.setOptions(new ArrayList<>(DEFAULT_PROPOSAL_OPTIONS));
+      cp.setMultiple(false);
+      post = cp;
     } else {
       post = new Post();
     }
@@ -300,6 +348,8 @@ public class PostService {
 
     if (post instanceof LotteryPost) {
       post = lotteryPostRepository.save((LotteryPost) post);
+    } else if (post instanceof CategoryProposalPost categoryProposalPost) {
+      post = categoryProposalPostRepository.save(categoryProposalPost);
     } else if (post instanceof PollPost) {
       post = pollPostRepository.save((PollPost) post);
     } else {
@@ -354,6 +404,12 @@ public class PostService {
         java.util.Date.from(lp.getEndTime().atZone(ZoneId.systemDefault()).toInstant())
       );
       scheduledFinalizations.put(lp.getId(), future);
+    } else if (post instanceof CategoryProposalPost cp && cp.getEndTime() != null) {
+      ScheduledFuture<?> future = taskScheduler.schedule(
+        () -> applicationContext.getBean(PostService.class).finalizeProposal(cp.getId()),
+        java.util.Date.from(cp.getEndTime().atZone(ZoneId.systemDefault()).toInstant())
+      );
+      scheduledFinalizations.put(cp.getId(), future);
     } else if (post instanceof PollPost pp && pp.getEndTime() != null) {
       ScheduledFuture<?> future = taskScheduler.schedule(
         () -> applicationContext.getBean(PostService.class).finalizePoll(pp.getId()),
@@ -364,24 +420,110 @@ public class PostService {
     if (post.getStatus() == PostStatus.PUBLISHED) {
       searchIndexEventPublisher.publishPostSaved(post);
     }
+    markPostLimit(author.getUsername());
     return post;
   }
 
+  @CacheEvict(value = CachingConfig.POST_CACHE_NAME, allEntries = true)
+  @Transactional
+  public void finalizeProposal(Long postId) {
+    scheduledFinalizations.remove(postId);
+    categoryProposalPostRepository
+      .findById(postId)
+      .ifPresent(cp -> {
+        if (cp.getProposalStatus() != CategoryProposalStatus.PENDING) {
+          return;
+        }
+        int totalParticipants = cp.getParticipants() != null ? cp.getParticipants().size() : 0;
+        int approveVotes = 0;
+        if (cp.getVotes() != null) {
+          approveVotes = cp.getVotes().getOrDefault(0, 0);
+        }
+        boolean quorumMet = totalParticipants >= cp.getQuorum();
+        int approvePercent = totalParticipants > 0 ? (approveVotes * 100) / totalParticipants : 0;
+        boolean thresholdMet = approvePercent >= cp.getApproveThreshold();
+        boolean approved = false;
+        String rejectReason = null;
+        if (quorumMet && thresholdMet) {
+          cp.setProposalStatus(CategoryProposalStatus.APPROVED);
+          approved = true;
+        } else {
+          cp.setProposalStatus(CategoryProposalStatus.REJECTED);
+          String reason;
+          if (!quorumMet && !thresholdMet) {
+            reason = "未达到法定人数且赞成率不足";
+          } else if (!quorumMet) {
+            reason = "未达到法定人数";
+          } else {
+            reason = "赞成率不足";
+          }
+          cp.setRejectReason(reason);
+          rejectReason = reason;
+        }
+        cp.setResultSnapshot(
+          "approveVotes=" +
+            approveVotes +
+            ", totalParticipants=" +
+            totalParticipants +
+            ", approvePercent=" +
+            approvePercent
+        );
+        categoryProposalPostRepository.save(cp);
+        if (approved) {
+          categoryService.createCategory(cp.getProposedName(), cp.getDescription(), "star", null);
+        }
+        if (cp.getAuthor() != null) {
+          notificationService.createNotification(
+            cp.getAuthor(),
+            NotificationType.CATEGORY_PROPOSAL_RESULT_OWNER,
+            cp,
+            null,
+            approved,
+            null,
+            null,
+            approved ? null : rejectReason
+          );
+        }
+        for (User participant : cp.getParticipants()) {
+          if (
+            cp.getAuthor() != null &&
+            java.util.Objects.equals(participant.getId(), cp.getAuthor().getId())
+          ) {
+            continue;
+          }
+          notificationService.createNotification(
+            participant,
+            NotificationType.CATEGORY_PROPOSAL_RESULT_PARTICIPANT,
+            cp,
+            null,
+            approved,
+            null,
+            null,
+            approved ? null : rejectReason
+          );
+        }
+        postChangeLogService.recordVoteResult(cp);
+      });
+  }
+
   /**
-   * 限制发帖频率
+   * 检查用户是否达到发帖限制
    * @param username
-   * @return
+   * @return true - 允许发帖，false - 已达限制
    */
-  private boolean postRateLimit(String username) {
+  private boolean isPostLimitReached(String username) {
     String key = CachingConfig.LIMIT_CACHE_NAME + ":posts:" + username;
     String result = (String) redisTemplate.opsForValue().get(key);
-    //最近没有创建过文章
-    if (StringUtils.isEmpty(result)) {
-      // 限制频率为5分钟
-      redisTemplate.opsForValue().set(key, "1", Duration.ofMinutes(5));
-      return true;
-    }
-    return false;
+    return StringUtils.isEmpty(result);
+  }
+
+  /**
+   * 标记用户发帖，触发limit计时
+   * @param username
+   */
+  private void markPostLimit(String username) {
+    String key = CachingConfig.LIMIT_CACHE_NAME + ":posts:" + username;
+    redisTemplate.opsForValue().set(key, "1", Duration.ofMinutes(5));
   }
 
   @CacheEvict(value = CachingConfig.POST_CACHE_NAME, allEntries = true)
@@ -460,6 +602,9 @@ public class PostService {
     pollPostRepository
       .findById(postId)
       .ifPresent(pp -> {
+        if (pp instanceof CategoryProposalPost) {
+          return;
+        }
         if (pp.isResultAnnounced()) {
           return;
         }

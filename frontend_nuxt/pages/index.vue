@@ -1,10 +1,5 @@
 <template>
   <div class="home-page">
-    <!-- <div v-if="!isMobile" class="search-container">
-      <div class="search-title">一切可能，从此刻启航，在此遇见灵感与共鸣</div>
-      <SearchDropdown />
-    </div> -->
-
     <div class="topic-container">
       <div class="topic-item-container">
         <div
@@ -72,6 +67,7 @@
               <pin v-if="article.pinned" theme="outline" class="pinned-icon" />
               <gift v-if="article.type === 'LOTTERY'" class="lottery-icon" />
               <ranking-list v-else-if="article.type === 'POLL'" class="poll-icon" />
+              <hands v-else-if="article.type === 'PROPOSAL'" class="proposal-icon" />
               <star v-if="!article.rssExcluded" class="featured-icon" />
               {{ article.title }}
             </NuxtLink>
@@ -116,7 +112,7 @@
       </div>
       <div v-else class="placeholder-container">分类浏览功能开发中，敬请期待。</div>
 
-      <!-- ✅ 通用“底部加载更多”组件（自管 loading/observer/并发） -->
+      <!-- 通用“底部加载更多”组件（自管 loading/observer/并发） -->
       <InfiniteLoadMore
         v-if="articles.length > 0"
         :key="ioKey"
@@ -572,6 +568,7 @@ watch([selectedCategory, selectedTags], ([newCategory, newTags]) => {
 .pinned-icon,
 .lottery-icon,
 .featured-icon,
+.proposal-icon,
 .poll-icon {
   margin-right: 4px;
   color: var(--primary-color);

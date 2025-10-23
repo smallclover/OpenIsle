@@ -31,4 +31,8 @@ public class PostRequest {
   // fields for poll posts
   private List<String> options;
   private Boolean multiple;
+
+  // fields for category proposal posts
+  private String proposedName;
+  private String proposalDescription;
 }
