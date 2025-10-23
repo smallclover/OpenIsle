@@ -161,8 +161,8 @@ services:
         condition: service_started
       websocket-service:
         condition: service_healthy
-      opensearch:
-        condition: service_healthy
+      # opensearch:
+      #   condition: service_healthy
     command: >
       sh -c "apt-get update && apt-get install -y --no-install-recommends curl &&
              mvn clean spring-boot:run -Dmaven.test.skip=true"

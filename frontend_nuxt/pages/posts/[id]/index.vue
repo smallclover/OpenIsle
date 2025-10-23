@@ -1,8 +1,7 @@
 <template>
   <BasePopup v-if="isRestricted" :visible="true" @close="closeRestrictedPopup">
     <div class="restricted-content">
-      <Lock class="restricted-icon" />
-
+      <lock class="restricted-icon" />
       <template v-if="visibleScope === 'ONLY_ME'">
         <p>这是一篇私密文章，仅作者本人及管理员可见</p>
         <div class="restricted-actions">
@@ -16,8 +15,8 @@
           <NuxtLink to="/login" class="restricted-button" v-if="!loggedIn">登录</NuxtLink>
         </div>
       </template>
-    </div></BasePopup
-  >
+    </div>
+  </BasePopup>
   <div class="post-page-container">
     <div v-if="isWaitingFetchingPost" class="loading-container">
       <l-hatch size="28" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
@@ -104,7 +103,9 @@
             </div>
             <div class="post-time">{{ postTime }}</div>
           </div>
+          <div v-if="isRestricted" v-for="n in 3" :key="n" class="info-content-text skeleton"></div>
           <div
+            v-else
             class="info-content-text"
             v-html="renderMarkdown(postContent)"
             @click="handleContentClick"
@@ -161,7 +162,7 @@
         </div>
       </div>
 
-      <div v-if="isFetchingComments" class="loading-container">
+      <div v-if="isFetchingComments || isRestricted" class="loading-container">
         <l-hatch size="28" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
       </div>
       <div v-else class="comments-container">
@@ -184,25 +185,6 @@
       </div>
     </div>
 
-    <!-- <div class="post-page-scroller-container">
-      <div class="scroller">
-        <div v-if="isWaitingFetchingPost" class="scroller-time">loading...</div>
-        <div v-else class="scroller-time">{{ scrollerTopTime }}</div>
-        <div class="scroller-middle">
-          <input
-            type="range"
-            class="scroller-range"
-            :max="totalPosts"
-            :min="1"
-            v-model.number="currentIndex"
-            @input="onSliderInput"
-          />
-          <div class="scroller-index">{{ currentIndex }}/{{ totalPosts }}</div>
-        </div>
-        <div v-if="isWaitingFetchingPost" class="scroller-time">loading...</div>
-        <div v-else class="scroller-time">{{ lastReplyTime }}</div>
-      </div>
-    </div> -->
     <vue-easy-lightbox
       :visible="lightboxVisible"
       :index="lightboxIndex"
@@ -1041,6 +1023,35 @@ onMounted(async () => {
 .scroller-time {
   font-size: 14px;
   opacity: 0.5;
+}
+
+.skeleton {
+  background-color: #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  height: 20px;
+  margin-top: 5px;
+}
+
+.skeleton::before {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(90deg, #eee 0%, #f5f5f7 40%, #e0e0e0 100%);
+  transform: translateX(-100%);
+  animation: skeleton-shimmer 1.5s infinite linear;
+  z-index: 1;
+  border-radius: 8px;
+}
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .user-avatar-container {

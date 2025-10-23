@@ -36,7 +36,6 @@ echo "👉 Pull base images (for image-based services)..."
 docker compose -f "$compose_file" --env-file "$env_file" pull --ignore-pull-failures
 
 echo "👉 Build images (staging)..."
-# 前端 + OpenSearch 都是自建镜像；--pull 更新其基础镜像
 docker compose -f "$compose_file" --env-file "$env_file" \
   build --pull \
   --build-arg NUXT_ENV=staging \
