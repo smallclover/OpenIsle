@@ -416,6 +416,14 @@ const changeLogIcon = (l) => {
     } else {
       return 'dislike'
     }
+  } else if (l.type === 'VISIBLE_SCOPE') {
+    if (l.newVisibleScope === 'ONLY_ME') {
+      return 'lock-one'
+    } else if (l.newVisibleScope === 'ONLY_REGISTER') {
+      return 'peoples-two'
+    } else {
+      return 'communication'
+    }
   } else if (l.type === 'VOTE_RESULT') {
     return 'check-one'
   } else if (l.type === 'LOTTERY_RESULT') {
@@ -446,6 +454,8 @@ const mapChangeLog = (l) => ({
   newCategory: l.newCategory,
   oldTags: l.oldTags,
   newTags: l.newTags,
+  oldVisibleScope: l.oldVisibleScope,
+  newVisibleScope: l.newVisibleScope,
   amount: l.amount,
   icon: changeLogIcon(l),
 })

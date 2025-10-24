@@ -52,6 +52,9 @@ public class PostChangeLogMapper {
     } else if (log instanceof PostFeaturedChangeLog f) {
       dto.setOldFeatured(f.isOldFeatured());
       dto.setNewFeatured(f.isNewFeatured());
+    } else if (log instanceof PostVisibleScopeChangeLog v) {
+      dto.setOldVisibleScope(v.getOldVisibleScope());
+      dto.setNewVisibleScope(v.getNewVisibleScope());
     } else if (log instanceof PostDonateChangeLog d) {
       dto.setAmount(d.getAmount());
     }

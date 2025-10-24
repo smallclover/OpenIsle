@@ -99,6 +99,21 @@ public class PostChangeLogService {
     logRepository.save(log);
   }
 
+  public void recordVisibleScopeChange(
+    Post post,
+    User user,
+    PostVisibleScopeType oldVisibleScope,
+    PostVisibleScopeType newVisibleScope
+  ) {
+    PostVisibleScopeChangeLog log = new PostVisibleScopeChangeLog();
+    log.setPost(post);
+    log.setUser(user);
+    log.setType(PostChangeType.VISIBLE_SCOPE);
+    log.setOldVisibleScope(oldVisibleScope);
+    log.setNewVisibleScope(newVisibleScope);
+    logRepository.save(log);
+  }
+
   public void recordVoteResult(Post post) {
     PostVoteResultChangeLog log = new PostVoteResultChangeLog();
     log.setPost(post);
