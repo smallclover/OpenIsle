@@ -66,6 +66,7 @@ public class PostController {
       req.getContent(),
       req.getTagIds(),
       req.getType(),
+      req.getPostVisibleScopeType(),
       req.getPrizeDescription(),
       req.getPrizeIcon(),
       req.getPrizeCount(),
@@ -103,7 +104,8 @@ public class PostController {
       req.getCategoryId(),
       req.getTitle(),
       req.getContent(),
-      req.getTagIds()
+      req.getTagIds(),
+      req.getPostVisibleScopeType()
     );
     return ResponseEntity.ok(postMapper.toDetailDto(post, auth.getName()));
   }

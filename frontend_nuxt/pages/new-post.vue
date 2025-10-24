@@ -11,6 +11,7 @@
           <CategorySelect v-model="selectedCategory" />
           <TagSelect v-model="selectedTags" creatable />
           <PostTypeSelect v-model="postType" />
+          <PostVisibleScopeSelect v-model="postVisibleScope"/>
         </div>
         <div class="post-options-right">
           <div class="post-clear" @click="clearPost"><clear-icon /> 清空</div>
@@ -54,6 +55,7 @@ import PollForm from '~/components/PollForm.vue'
 import ProposalForm from '~/components/ProposalForm.vue'
 import { toast } from '~/main'
 import { authState, getToken } from '~/utils/auth'
+import PostVisibleScopeSelect from '~/components/PostVisibleScopeSelect.vue'
 const config = useRuntimeConfig()
 const API_BASE_URL = config.public.apiBaseUrl
 
@@ -62,6 +64,7 @@ const content = ref('')
 const selectedCategory = ref('')
 const selectedTags = ref([])
 const postType = ref('NORMAL')
+const postVisibleScope = ref('ALL')
 const lottery = reactive({
   prizeIcon: '',
   prizeIconFile: null,
@@ -100,6 +103,7 @@ const loadDraft = async () => {
       content.value = data.content || ''
       selectedCategory.value = data.categoryId || ''
       selectedTags.value = data.tagIds || []
+      postVisibleScope.value = data.visiblescope
 
       toast.success('草稿已加载')
     }
@@ -115,6 +119,7 @@ const clearPost = async () => {
   content.value = ''
   selectedCategory.value = ''
   selectedTags.value = []
+  postVisibleScope.value = 'ALL'
   postType.value = 'NORMAL'
   lottery.prizeIcon = ''
   lottery.prizeIconFile = null
@@ -168,6 +173,7 @@ const saveDraft = async () => {
         content: content.value,
         categoryId: selectedCategory.value || null,
         tagIds,
+        postVisibleScopeType:postVisibleScope.value
       }),
     })
     if (res.ok) {
@@ -328,6 +334,7 @@ const submitPost = async () => {
       categoryId: selectedCategory.value,
       tagIds: selectedTags.value,
       type: postType.value,
+      postVisibleScopeType: postVisibleScope.value,
     }
 
     if (postType.value === 'LOTTERY') {
@@ -355,6 +362,7 @@ const submitPost = async () => {
       },
       body: JSON.stringify(payload),
     })
+    
     const data = await res.json()
     if (res.ok) {
       if (data.reward && data.reward > 0) {

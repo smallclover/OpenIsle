@@ -1,5 +1,22 @@
 <template>
-  <div class="post-page-container">
+  <div v-if="isRestricted" class="restricted-content">
+    <template v-if="visibleScope === 'ONLY_ME'">
+      <LoginOverlay
+        text="这是一篇私密文章，仅作者本人及管理员可见"
+        button-text="返回首页"
+        button-link="/"
+      />
+    </template>
+
+    <template v-else-if="visibleScope === 'ONLY_REGISTER'">
+      <LoginOverlay
+        text="这是一篇仅登录用户可见的文章，请先登录"
+        button-text="登录"
+        button-link="/login"
+      />
+    </template>
+  </div>
+  <div v-else class="post-page-container">
     <div v-if="isWaitingFetchingPost" class="loading-container">
       <l-hatch size="28" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
     </div>
@@ -16,7 +33,9 @@
           <div v-if="status === 'PENDING'" class="article-pending-button">审核中</div>
           <div v-if="status === 'REJECTED'" class="article-block-button">已拒绝</div>
           <div v-if="!rssExcluded" class="article-featured-button">精品</div>
-          <div v-if="closed" class="article-closed-button">已关闭</div>
+          <div v-if="closed" class="article-gray-button">已关闭</div>
+          <div v-if="visibleScope === 'ONLY_ME'" class="article-gray-button">仅自己可见</div>
+          <div v-if="visibleScope === 'ONLY_REGISTER'" class="article-gray-button">仅登录可见</div>
           <div
             v-if="!closed && loggedIn && !isAuthor && !subscribed"
             class="article-subscribe-button"
@@ -165,25 +184,6 @@
       </div>
     </div>
 
-    <div class="post-page-scroller-container">
-      <div class="scroller">
-        <div v-if="isWaitingFetchingPost" class="scroller-time">loading...</div>
-        <div v-else class="scroller-time">{{ scrollerTopTime }}</div>
-        <div class="scroller-middle">
-          <input
-            type="range"
-            class="scroller-range"
-            :max="totalPosts"
-            :min="1"
-            v-model.number="currentIndex"
-            @input="onSliderInput"
-          />
-          <div class="scroller-index">{{ currentIndex }}/{{ totalPosts }}</div>
-        </div>
-        <div v-if="isWaitingFetchingPost" class="scroller-time">loading...</div>
-        <div v-else class="scroller-time">{{ lastReplyTime }}</div>
-      </div>
-    </div>
     <vue-easy-lightbox
       :visible="lightboxVisible"
       :index="lightboxIndex"
@@ -228,6 +228,7 @@ import { useIsMobile } from '~/utils/screen'
 import Dropdown from '~/components/Dropdown.vue'
 import { ClientOnly } from '#components'
 import { useConfirm } from '~/composables/useConfirm'
+import { Lock } from '@icon-park/vue-next'
 const { confirm } = useConfirm()
 
 const config = useRuntimeConfig()
@@ -241,6 +242,13 @@ const author = ref('')
 const postContent = ref('')
 const category = ref('')
 const tags = ref([])
+const visibleScope = ref('ALL') // 可见范围
+const isRestricted = computed(() => {
+  return (
+    (visibleScope.value === 'ONLY_ME' && !isAuthor.value && !isAdmin.value) ||
+    (visibleScope.value === 'ONLY_REGISTER' && !loggedIn.value)
+  )
+})
 const postReactions = ref([])
 const postReactionsGroupRef = ref(null)
 const postLikeCount = computed(
@@ -497,15 +505,27 @@ const onCommentDeleted = (id) => {
   fetchTimeline()
 }
 
+const tokenHeader = computed(() => {
+  const token = getToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+})
 const {
   data: postData,
   pending: pendingPost,
   error: postError,
   refresh: refreshPost,
-} = await useAsyncData(`post-${postId}`, () => $fetch(`${API_BASE_URL}/api/posts/${postId}`), {
-  server: true,
-  lazy: false,
-})
+} = await useAsyncData(
+  `post-${postId}`,
+  async () => {
+    try {
+      return await $fetch(`${API_BASE_URL}/api/posts/${postId}`, { headers: tokenHeader.value })
+    } catch (err) {}
+  },
+  {
+    server: false,
+    lazy: false,
+  },
+)
 
 // 用 pendingPost 驱动现有 UI（替代 isWaitingFetchingPost 手控）
 const isWaitingFetchingPost = computed(() => pendingPost.value)
@@ -519,6 +539,7 @@ watchEffect(() => {
   title.value = data.title
   category.value = data.category
   tags.value = data.tags || []
+  visibleScope.value = data.visibleScope || 'ALL'
   postReactions.value = data.reactions || []
   subscribed.value = !!data.subscribed
   status.value = data.status
@@ -935,7 +956,7 @@ onMounted(async () => {
 <style>
 .post-page-container {
   background-color: var(--background-color);
-  display: flex;
+  display: block;
   flex-direction: row;
 }
 
@@ -948,9 +969,10 @@ onMounted(async () => {
 }
 
 .post-page-main-container {
+  position: relative;
   scrollbar-width: none;
   padding: 20px;
-  width: calc(85% - 40px);
+  width: calc(100% - 40px);
 }
 
 .info-content-text p code {
@@ -1000,6 +1022,35 @@ onMounted(async () => {
 .scroller-time {
   font-size: 14px;
   opacity: 0.5;
+}
+
+.skeleton {
+  background-color: #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  height: 20px;
+  margin-top: 5px;
+}
+
+.skeleton::before {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(90deg, #eee 0%, #f5f5f7 40%, #e0e0e0 100%);
+  transform: translateX(-100%);
+  animation: skeleton-shimmer 1.5s infinite linear;
+  z-index: 1;
+  border-radius: 8px;
+}
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .user-avatar-container {
@@ -1106,7 +1157,7 @@ onMounted(async () => {
   white-space: nowrap;
 }
 
-.article-closed-button,
+.article-gray-button,
 .article-subscribe-button-text,
 .article-featured-button,
 .article-unsubscribe-button-text {
@@ -1159,7 +1210,7 @@ onMounted(async () => {
   font-size: 14px;
 }
 
-.article-closed-button {
+.article-gray-button {
   background-color: var(--background-color);
   color: gray;
   border: 1px solid gray;
@@ -1339,6 +1390,76 @@ onMounted(async () => {
 
 .comment-editor-wrapper {
   position: relative;
+}
+
+/* ======== 权限锁定状态 ======== */
+.is-blurred {
+  filter: blur(10px);
+  pointer-events: none;
+  user-select: none;
+  transition: filter 0.3s ease;
+}
+
+/* 遮罩层 */
+.restricted-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.45);
+  animation: fadeIn 0.3s ease forwards;
+}
+
+/* 中央提示框 */
+.restricted-content {
+  background: #ffff;
+  color: var(--primary-color);
+  text-align: center;
+}
+
+.restricted-icon {
+  font-size: 60px;
+  opacity: 0.8;
+  margin-bottom: 15px;
+}
+
+.restricted-button {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 10px 18px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.restricted-button:hover {
+  background: var(--primary-color-hover);
+}
+
+.restricted-actions {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 淡入动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 768px) {

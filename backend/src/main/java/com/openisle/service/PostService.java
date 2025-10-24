@@ -1,6 +1,7 @@
 package com.openisle.service;
 
 import com.openisle.config.CachingConfig;
+import com.openisle.exception.NotFoundException;
 import com.openisle.exception.RateLimitException;
 import com.openisle.model.*;
 import com.openisle.repository.CategoryProposalPostRepository;
@@ -252,6 +253,7 @@ public class PostService {
     String content,
     List<Long> tagIds,
     PostType type,
+    PostVisibleScopeType postVisibleScopeType,
     String prizeDescription,
     String prizeIcon,
     Integer prizeCount,
@@ -336,6 +338,14 @@ public class PostService {
     post.setCategory(category);
     post.setTags(new HashSet<>(tags));
     post.setStatus(publishMode == PublishMode.REVIEW ? PostStatus.PENDING : PostStatus.PUBLISHED);
+
+    // 什么都没设置的情况下，默认为ALL
+    if(Objects.isNull(postVisibleScopeType)){
+        post.setVisibleScope(PostVisibleScopeType.ALL);
+    }else{
+        post.setVisibleScope(postVisibleScopeType);
+    }
+
     if (post instanceof LotteryPost) {
       post = lotteryPostRepository.save((LotteryPost) post);
     } else if (post instanceof CategoryProposalPost categoryProposalPost) {
@@ -716,7 +726,7 @@ public class PostService {
       .orElseThrow(() -> new com.openisle.exception.NotFoundException("Post not found"));
     if (post.getStatus() != PostStatus.PUBLISHED) {
       if (viewer == null) {
-        throw new com.openisle.exception.NotFoundException("Post not found");
+        throw new com.openisle.exception.NotFoundException("User not found");
       }
       User viewerUser = userRepository
         .findByUsername(viewer)
@@ -1147,7 +1157,8 @@ public class PostService {
     Long categoryId,
     String title,
     String content,
-    java.util.List<Long> tagIds
+    List<Long> tagIds,
+    PostVisibleScopeType postVisibleScopeType
   ) {
     if (tagIds == null || tagIds.isEmpty()) {
       throw new IllegalArgumentException("At least one tag required");
@@ -1179,6 +1190,7 @@ public class PostService {
     post.setContent(content);
     post.setCategory(category);
     post.setTags(new java.util.HashSet<>(tags));
+    post.setVisibleScope(postVisibleScopeType);
     Post updated = postRepository.save(post);
     imageUploader.adjustReferences(oldContent, content);
     notificationService.notifyMentions(content, user, updated, null);

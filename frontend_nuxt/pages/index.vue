@@ -70,6 +70,7 @@
               <hands v-else-if="article.type === 'PROPOSAL'" class="proposal-icon" />
               <star v-if="!article.rssExcluded" class="featured-icon" />
               {{ article.title }}
+              <lock class="preview-close-icon" v-if="article.isRestricted" />
             </NuxtLink>
             <NuxtLink class="article-item-description main-item" :to="`/posts/${article.id}`">
               <div v-html="stripMarkdownWithTiebaMoji(article.description, 500)"></div>
@@ -295,6 +296,7 @@ const {
       comments: p.commentCount,
       views: p.views,
       rssExcluded: p.rssExcluded || false,
+      isRestricted: p.visibleScope === 'ONLY_ME' || p.visibleScope === 'ONLY_REGISTER',
       time: TimeManager.format(
         selectedTopic.value === '最新回复' ? p.lastReplyAt || p.createdAt : p.createdAt,
       ),
@@ -336,6 +338,7 @@ const fetchNextPage = async () => {
     members: (p.participants || []).map((m) => ({ id: m.id, avatar: m.avatar })),
     comments: p.commentCount,
     views: p.views,
+    isRestricted: p.visibleScope === 'ONLY_ME' || p.visibleScope === 'ONLY_REGISTER',
     rssExcluded: p.rssExcluded || false,
     time: TimeManager.format(
       selectedTopic.value === '最新回复' ? p.lastReplyAt || p.createdAt : p.createdAt,
