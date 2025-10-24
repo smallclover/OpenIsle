@@ -3,15 +3,30 @@
     <div class="login-overlay-blur"></div>
     <div class="login-overlay-content">
       <user-icon class="login-overlay-icon" />
-      <div class="login-overlay-text">请先登录，点击跳转到登录页面</div>
-      <div class="login-overlay-button" @click="goLogin">登录</div>
+      <div class="login-overlay-text">{{ props.text }}</div>
+      <div class="login-overlay-button" @click="goLogin">{{ props.buttonText }}</div>
     </div>
   </div>
 </template>
 
 <script setup>
+const props = defineProps({
+  text: {
+    type: String,
+    default: '请先登录，点击跳转到登录页面',
+  },
+  buttonText: {
+    type: String,
+    default: '登录',
+  },
+  buttonLink: {
+    type: String,
+    default: '/login',
+  },
+})
+
 const goLogin = () => {
-  navigateTo('/login', { replace: true })
+  navigateTo(props.buttonLink, { replace: true })
 }
 </script>
 

@@ -1,23 +1,22 @@
 <template>
-  <BasePopup v-if="isRestricted" :visible="true" @close="closeRestrictedPopup">
-    <div class="restricted-content">
-      <lock class="restricted-icon" />
-      <template v-if="visibleScope === 'ONLY_ME'">
-        <p>这是一篇私密文章，仅作者本人及管理员可见</p>
-        <div class="restricted-actions">
-          <NuxtLink to="/" class="restricted-button">返回首页</NuxtLink>
-        </div>
-      </template>
+  <div v-if="isRestricted" class="restricted-content">
+    <template v-if="visibleScope === 'ONLY_ME'">
+      <LoginOverlay
+        text="这是一篇私密文章，仅作者本人及管理员可见"
+        button-text="返回首页"
+        button-link="/"
+      />
+    </template>
 
-      <template v-else-if="visibleScope === 'ONLY_REGISTER'">
-        <p>请登录后查看这篇文章</p>
-        <div class="restricted-actions">
-          <NuxtLink to="/login" class="restricted-button" v-if="!loggedIn">登录</NuxtLink>
-        </div>
-      </template>
-    </div>
-  </BasePopup>
-  <div class="post-page-container">
+    <template v-else-if="visibleScope === 'ONLY_REGISTER'">
+      <LoginOverlay
+        text="这是一篇仅登录用户可见的文章，请先登录"
+        button-text="登录"
+        button-link="/login"
+      />
+    </template>
+  </div>
+  <div v-else class="post-page-container">
     <div v-if="isWaitingFetchingPost" class="loading-container">
       <l-hatch size="28" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
     </div>
@@ -34,7 +33,9 @@
           <div v-if="status === 'PENDING'" class="article-pending-button">审核中</div>
           <div v-if="status === 'REJECTED'" class="article-block-button">已拒绝</div>
           <div v-if="!rssExcluded" class="article-featured-button">精品</div>
-          <div v-if="closed" class="article-closed-button">已关闭</div>
+          <div v-if="closed" class="article-gray-button">已关闭</div>
+          <div v-if="visibleScope === 'ONLY_ME'" class="article-gray-button">仅自己可见</div>
+          <div v-if="visibleScope === 'ONLY_REGISTER'" class="article-gray-button">仅登录可见</div>
           <div
             v-if="!closed && loggedIn && !isAuthor && !subscribed"
             class="article-subscribe-button"
@@ -103,9 +104,7 @@
             </div>
             <div class="post-time">{{ postTime }}</div>
           </div>
-          <div v-if="isRestricted" v-for="n in 3" :key="n" class="info-content-text skeleton"></div>
           <div
-            v-else
             class="info-content-text"
             v-html="renderMarkdown(postContent)"
             @click="handleContentClick"
@@ -162,7 +161,7 @@
         </div>
       </div>
 
-      <div v-if="isFetchingComments || isRestricted" class="loading-container">
+      <div v-if="isFetchingComments" class="loading-container">
         <l-hatch size="28" stroke="4" speed="3.5" color="var(--primary-color)"></l-hatch>
       </div>
       <div v-else class="comments-container">
@@ -1158,7 +1157,7 @@ onMounted(async () => {
   white-space: nowrap;
 }
 
-.article-closed-button,
+.article-gray-button,
 .article-subscribe-button-text,
 .article-featured-button,
 .article-unsubscribe-button-text {
@@ -1211,7 +1210,7 @@ onMounted(async () => {
   font-size: 14px;
 }
 
-.article-closed-button {
+.article-gray-button {
   background-color: var(--background-color);
   color: gray;
   border: 1px solid gray;
