@@ -36,6 +36,10 @@
         <template v-if="log.newFeatured">将文章设为精选</template>
         <template v-else>取消精选文章</template>
       </span>
+      <span v-else-if="log.type === 'VISIBLE_SCOPE'" class="change-log-content">
+        变更了文章可见范围, 从 {{ formatVisibleScope(log.oldVisibleScope) }} 修改为
+        {{ formatVisibleScope(log.newVisibleScope) }}
+      </span>
       <span v-else-if="log.type === 'VOTE_RESULT'" class="change-log-content"
         >系统已计算投票结果</span
       >
@@ -68,6 +72,17 @@ const props = defineProps({
   log: Object,
   title: String,
 })
+
+const VISIBLE_SCOPE_LABELS = {
+  ALL: '全部可见',
+  ONLY_ME: '仅自己可见',
+  ONLY_REGISTER: '仅注册用户可见',
+}
+
+const formatVisibleScope = (scope) => {
+  if (!scope) return VISIBLE_SCOPE_LABELS.ALL
+  return VISIBLE_SCOPE_LABELS[scope] ?? scope
+}
 
 const diffHtml = computed(() => {
   // Track theme changes

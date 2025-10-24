@@ -8,6 +8,7 @@ public enum PostChangeType {
   CLOSED,
   PINNED,
   FEATURED,
+  VISIBLE_SCOPE,
   VOTE_RESULT,
   LOTTERY_RESULT,
   DONATE,

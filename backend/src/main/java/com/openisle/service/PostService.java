@@ -340,10 +340,10 @@ public class PostService {
     post.setStatus(publishMode == PublishMode.REVIEW ? PostStatus.PENDING : PostStatus.PUBLISHED);
 
     // 什么都没设置的情况下，默认为ALL
-    if(Objects.isNull(postVisibleScopeType)){
-        post.setVisibleScope(PostVisibleScopeType.ALL);
-    }else{
-        post.setVisibleScope(postVisibleScopeType);
+    if (Objects.isNull(postVisibleScopeType)) {
+      post.setVisibleScope(PostVisibleScopeType.ALL);
+    } else {
+      post.setVisibleScope(postVisibleScopeType);
     }
 
     if (post instanceof LotteryPost) {
@@ -1190,6 +1190,7 @@ public class PostService {
     post.setContent(content);
     post.setCategory(category);
     post.setTags(new java.util.HashSet<>(tags));
+    PostVisibleScopeType oldVisibleScope = post.getVisibleScope();
     post.setVisibleScope(postVisibleScopeType);
     Post updated = postRepository.save(post);
     imageUploader.adjustReferences(oldContent, content);
@@ -1211,6 +1212,14 @@ public class PostService {
     java.util.Set<com.openisle.model.Tag> newTags = new java.util.HashSet<>(tags);
     if (!oldTags.equals(newTags)) {
       postChangeLogService.recordTagChange(updated, user, oldTags, newTags);
+    }
+    if (!java.util.Objects.equals(oldVisibleScope, postVisibleScopeType)) {
+      postChangeLogService.recordVisibleScopeChange(
+        updated,
+        user,
+        oldVisibleScope,
+        postVisibleScopeType
+      );
     }
     if (updated.getStatus() == PostStatus.PUBLISHED) {
       searchIndexEventPublisher.publishPostSaved(updated);

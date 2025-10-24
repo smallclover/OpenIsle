@@ -1,6 +1,7 @@
 package com.openisle.dto;
 
 import com.openisle.model.PostChangeType;
+import com.openisle.model.PostVisibleScopeType;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Getter;
@@ -29,5 +30,7 @@ public class PostChangeLogDto {
   private LocalDateTime newPinnedAt;
   private Boolean oldFeatured;
   private Boolean newFeatured;
+  private PostVisibleScopeType oldVisibleScope;
+  private PostVisibleScopeType newVisibleScope;
   private Integer amount;
 }
