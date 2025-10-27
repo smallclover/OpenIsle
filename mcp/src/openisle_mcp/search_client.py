@@ -66,6 +66,35 @@ class SearchClient:
         response.raise_for_status()
         return self._ensure_dict(response.json())
 
+    async def reply_to_post(
+        self,
+        post_id: int,
+        token: str,
+        content: str,
+        captcha: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a comment on a post and return the backend payload."""
+
+        client = self._get_client()
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {token}",
+        }
+        payload: dict[str, Any] = {"content": content}
+        if captcha is not None:
+            stripped_captcha = captcha.strip()
+            if stripped_captcha:
+                payload["captcha"] = stripped_captcha
+
+        response = await client.post(
+            f"/api/posts/{post_id}/comments",
+            json=payload,
+            headers=headers,
+        )
+        response.raise_for_status()
+        return self._ensure_dict(response.json())
+
     async def recent_posts(self, minutes: int) -> list[dict[str, Any]]:
         """Return posts created within the given timeframe."""
 
