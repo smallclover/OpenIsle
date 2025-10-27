@@ -140,6 +140,25 @@ app = FastMCP(
 
 
 @app.tool(
+    name="set_token",
+    description=(
+        "Set JWT token for the current session to be reused by other tools."
+    ),
+)
+async def set_token(
+    token: Annotated[
+        str,
+        PydanticField(description="JWT token string."),
+    ],
+    ctx: Context | None = None,
+) -> str:
+    """Persist a JWT token for the active MCP session."""
+
+    session_token_manager.resolve(ctx, token)
+    return "Token stored successfully."
+
+
+@app.tool(
     name="search",
     description="Perform a global search across OpenIsle resources.",
     structured_output=True,
