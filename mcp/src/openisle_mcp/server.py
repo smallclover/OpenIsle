@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 from typing import Annotated
 
@@ -15,6 +16,8 @@ from .schemas import (
     CommentCreateResult,
     CommentData,
     CommentReplyResult,
+    NotificationData,
+    UnreadNotificationsResponse,
     PostDetail,
     PostSummary,
     RecentPostsResponse,
@@ -24,8 +27,26 @@ from .schemas import (
 from .search_client import SearchClient
 
 settings = get_settings()
+if not logging.getLogger().handlers:
+    logging.basicConfig(
+        level=getattr(logging, settings.log_level.upper(), logging.INFO),
+        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    )
+else:
+    logging.getLogger().setLevel(
+        getattr(logging, settings.log_level.upper(), logging.INFO)
+    )
+
+logger = logging.getLogger(__name__)
+
 search_client = SearchClient(
-    str(settings.backend_base_url), timeout=settings.request_timeout
+    str(settings.backend_base_url),
+    timeout=settings.request_timeout,
+    access_token=(
+        settings.access_token.get_secret_value()
+        if settings.access_token is not None
+        else None
+    ),
 )
 
 
@@ -34,8 +55,10 @@ async def lifespan(_: FastMCP):
     """Lifecycle hook that disposes shared resources when the server stops."""
 
     try:
+        logger.debug("OpenIsle MCP server lifespan started.")
         yield
     finally:
+        logger.debug("Disposing shared SearchClient instance.")
         await search_client.aclose()
 
 
@@ -43,8 +66,8 @@ app = FastMCP(
     name="openisle-mcp",
     instructions=(
         "Use this server to search OpenIsle content, reply to posts and comments with an "
-        "authentication token, retrieve details for a specific post, and list posts created "
-        "within a recent time window."
+        "authentication token, retrieve details for a specific post, list posts created "
+        "within a recent time window, and review unread notification messages."
     ),
     host=settings.host,
     port=settings.port,
@@ -68,6 +91,7 @@ async def search(
         raise ValueError("Keyword must not be empty.")
 
     try:
+        logger.info("Received search request for keyword='%s'", sanitized)
         raw_results = await search_client.global_search(sanitized)
     except httpx.HTTPStatusError as exc:  # pragma: no cover - network errors
         message = (
@@ -93,6 +117,11 @@ async def search(
 
     if ctx is not None:
         await ctx.info(f"Search keyword '{sanitized}' returned {len(results)} results.")
+    logger.debug(
+        "Validated %d search results for keyword='%s'",
+        len(results),
+        sanitized,
+    )
 
     return SearchResponse(keyword=sanitized, total=len(results), results=results)
 
@@ -107,10 +136,6 @@ async def reply_to_post(
         int,
         PydanticField(ge=1, description="Identifier of the post being replied to."),
     ],
-    token: Annotated[
-        str,
-        PydanticField(description="JWT bearer token for the user performing the reply."),
-    ],
     content: Annotated[
         str,
         PydanticField(description="Markdown content of the reply."),
@@ -122,6 +147,15 @@ async def reply_to_post(
             description="Optional captcha solution if the backend requires it.",
         ),
     ] = None,
+    token: Annotated[
+        str | None,
+        PydanticField(
+            default=None,
+            description=(
+                "Optional JWT bearer token. When omitted the configured access token is used."
+            ),
+        ),
+    ] = None,
     ctx: Context | None = None,
 ) -> CommentCreateResult:
     """Create a comment on a post and return the backend payload."""
@@ -130,13 +164,16 @@ async def reply_to_post(
     if not sanitized_content:
         raise ValueError("Reply content must not be empty.")
 
-    sanitized_token = token.strip()
-    if not sanitized_token:
-        raise ValueError("Authentication token must not be empty.")
+    sanitized_token = token.strip() if isinstance(token, str) else None
 
     sanitized_captcha = captcha.strip() if isinstance(captcha, str) else None
 
     try:
+        logger.info(
+            "Creating reply for post_id=%s (captcha=%s)",
+            post_id,
+            bool(sanitized_captcha),
+        )
         raw_comment = await search_client.reply_to_post(
             post_id,
             sanitized_token,
@@ -187,6 +224,11 @@ async def reply_to_post(
             "Reply created successfully for post "
             f"{post_id}."
         )
+    logger.debug(
+        "Validated reply comment payload for post_id=%s (comment_id=%s)",
+        post_id,
+        comment.id,
+    )
 
     return CommentCreateResult(comment=comment)
 
@@ -201,7 +243,6 @@ async def reply_to_comment(
         int,
         PydanticField(ge=1, description="Identifier of the comment being replied to."),
     ],
-    token: Annotated[str, PydanticField(description="JWT bearer token for the user performing the reply.")],
     content: Annotated[
         str,
         PydanticField(description="Markdown content of the reply."),
@@ -213,6 +254,15 @@ async def reply_to_comment(
             description="Optional captcha solution if the backend requires it.",
         ),
     ] = None,
+    token: Annotated[
+        str | None,
+        PydanticField(
+            default=None,
+            description=(
+                "Optional JWT bearer token. When omitted the configured access token is used."
+            ),
+        ),
+    ] = None,
     ctx: Context | None = None,
 ) -> CommentReplyResult:
     """Create a reply for a comment and return the backend payload."""
@@ -221,13 +271,16 @@ async def reply_to_comment(
     if not sanitized_content:
         raise ValueError("Reply content must not be empty.")
 
-    sanitized_token = token.strip()
-    if not sanitized_token:
-        raise ValueError("Authentication token must not be empty.")
+    sanitized_token = token.strip() if isinstance(token, str) else None
 
     sanitized_captcha = captcha.strip() if isinstance(captcha, str) else None
 
     try:
+        logger.info(
+            "Creating reply for comment_id=%s (captcha=%s)",
+            comment_id,
+            bool(sanitized_captcha),
+        )
         raw_comment = await search_client.reply_to_comment(
             comment_id,
             sanitized_token,
@@ -276,6 +329,11 @@ async def reply_to_comment(
             "Reply created successfully for comment "
             f"{comment_id}."
         )
+    logger.debug(
+        "Validated reply payload for comment_id=%s (reply_id=%s)",
+        comment_id,
+        comment.id,
+    )
 
     return CommentReplyResult(comment=comment)
 
@@ -295,6 +353,7 @@ async def recent_posts(
     """Fetch recent posts from the backend and return structured data."""
 
     try:
+        logger.info("Fetching recent posts for last %s minutes", minutes)
         raw_posts = await search_client.recent_posts(minutes)
     except httpx.HTTPStatusError as exc:  # pragma: no cover - network errors
         message = (
@@ -322,6 +381,11 @@ async def recent_posts(
         await ctx.info(
             f"Found {len(posts)} posts created within the last {minutes} minutes."
         )
+    logger.debug(
+        "Validated %d recent posts for window=%s minutes",
+        len(posts),
+        minutes,
+    )
 
     return RecentPostsResponse(minutes=minutes, total=len(posts), posts=posts)
 
@@ -352,6 +416,7 @@ async def get_post(
         sanitized_token = None
 
     try:
+        logger.info("Fetching post details for post_id=%s", post_id)
         raw_post = await search_client.get_post(post_id, sanitized_token)
     except httpx.HTTPStatusError as exc:  # pragma: no cover - network errors
         status_code = exc.response.status_code
@@ -385,8 +450,106 @@ async def get_post(
 
     if ctx is not None:
         await ctx.info(f"Retrieved post {post_id} successfully.")
+    logger.debug(
+        "Validated post payload for post_id=%s with %d comments",
+        post_id,
+        len(post.comments),
+    )
 
     return post
+
+
+@app.tool(
+    name="list_unread_messages",
+    description="List unread notification messages for the authenticated user.",
+    structured_output=True,
+)
+async def list_unread_messages(
+    page: Annotated[
+        int,
+        PydanticField(
+            default=0,
+            ge=0,
+            description="Page number of unread notifications to retrieve.",
+        ),
+    ] = 0,
+    size: Annotated[
+        int,
+        PydanticField(
+            default=30,
+            ge=1,
+            le=100,
+            description="Number of unread notifications to include per page.",
+        ),
+    ] = 30,
+    token: Annotated[
+        str | None,
+        PydanticField(
+            default=None,
+            description=(
+                "Optional JWT bearer token. When omitted the configured access token is used."
+            ),
+        ),
+    ] = None,
+    ctx: Context | None = None,
+) -> UnreadNotificationsResponse:
+    """Retrieve unread notifications and return structured data."""
+
+    sanitized_token = token.strip() if isinstance(token, str) else None
+
+    try:
+        logger.info(
+            "Fetching unread notifications (page=%s, size=%s)",
+            page,
+            size,
+        )
+        raw_notifications = await search_client.list_unread_notifications(
+            page=page,
+            size=size,
+            token=sanitized_token,
+        )
+    except httpx.HTTPStatusError as exc:  # pragma: no cover - network errors
+        message = (
+            "OpenIsle backend returned HTTP "
+            f"{exc.response.status_code} while fetching unread notifications."
+        )
+        if ctx is not None:
+            await ctx.error(message)
+        raise ValueError(message) from exc
+    except httpx.RequestError as exc:  # pragma: no cover - network errors
+        message = f"Unable to reach OpenIsle backend notification service: {exc}."
+        if ctx is not None:
+            await ctx.error(message)
+        raise ValueError(message) from exc
+
+    try:
+        notifications = [
+            NotificationData.model_validate(entry) for entry in raw_notifications
+        ]
+    except ValidationError as exc:
+        message = "Received malformed data from the unread notifications endpoint."
+        if ctx is not None:
+            await ctx.error(message)
+        raise ValueError(message) from exc
+
+    total = len(notifications)
+    if ctx is not None:
+        await ctx.info(
+            f"Retrieved {total} unread notifications (page {page}, size {size})."
+        )
+    logger.debug(
+        "Validated %d unread notifications for page=%s size=%s",
+        total,
+        page,
+        size,
+    )
+
+    return UnreadNotificationsResponse(
+        page=page,
+        size=size,
+        total=total,
+        notifications=notifications,
+    )
 
 
 def main() -> None:

@@ -277,3 +277,57 @@ class PostDetail(PostSummary):
     )
 
     model_config = ConfigDict(populate_by_name=True, extra="allow")
+
+
+class NotificationData(BaseModel):
+    """Unread notification payload returned by the backend."""
+
+    id: Optional[int] = Field(default=None, description="Notification identifier.")
+    type: Optional[str] = Field(default=None, description="Type of the notification.")
+    post: Optional[PostSummary] = Field(
+        default=None, description="Post associated with the notification if applicable."
+    )
+    comment: Optional[CommentData] = Field(
+        default=None, description="Comment referenced by the notification when available."
+    )
+    parent_comment: Optional[CommentData] = Field(
+        default=None,
+        alias="parentComment",
+        description="Parent comment for nested replies, when present.",
+    )
+    from_user: Optional[AuthorInfo] = Field(
+        default=None,
+        alias="fromUser",
+        description="User who triggered the notification.",
+    )
+    reaction_type: Optional[str] = Field(
+        default=None,
+        alias="reactionType",
+        description="Reaction type for reaction-based notifications.",
+    )
+    content: Optional[str] = Field(
+        default=None, description="Additional content or message for the notification."
+    )
+    approved: Optional[bool] = Field(
+        default=None, description="Approval status for moderation notifications."
+    )
+    read: Optional[bool] = Field(default=None, description="Whether the notification is read.")
+    created_at: Optional[datetime] = Field(
+        default=None,
+        alias="createdAt",
+        description="Timestamp when the notification was created.",
+    )
+
+    model_config = ConfigDict(populate_by_name=True, extra="allow")
+
+
+class UnreadNotificationsResponse(BaseModel):
+    """Structured response for unread notification queries."""
+
+    page: int = Field(description="Requested page index for the unread notifications.")
+    size: int = Field(description="Requested page size for the unread notifications.")
+    total: int = Field(description="Number of unread notifications returned in this page.")
+    notifications: list[NotificationData] = Field(
+        default_factory=list,
+        description="Unread notifications returned by the backend.",
+    )
