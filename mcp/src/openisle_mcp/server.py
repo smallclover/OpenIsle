@@ -57,9 +57,7 @@ class SessionTokenManager:
     def __init__(self) -> None:
         self._tokens: WeakKeyDictionary[Any, str] = WeakKeyDictionary()
 
-    def resolve(
-        self, ctx: Context | None, token: str | None = None
-    ) -> str | None:
+    def resolve(self, ctx: Context | None, token: str | None) -> str | None:
         """Resolve and optionally persist the token for the current session."""
 
         session = self._get_session(ctx)
@@ -129,8 +127,8 @@ async def lifespan(_: FastMCP):
 app = FastMCP(
     name="openisle-mcp",
     instructions=(
-        "Use this server to search OpenIsle content, reply to posts and comments with "
-        "session-managed authentication, retrieve details for a specific post, list posts created "
+        "Use this server to search OpenIsle content, reply to posts and comments with an "
+        "authentication token, retrieve details for a specific post, list posts created "
         "within a recent time window, and review unread notification messages."
     ),
     host=settings.host,
@@ -192,7 +190,7 @@ async def search(
 
 @app.tool(
     name="reply_to_post",
-    description="Create a comment on a post using session authentication.",
+    description="Create a comment on a post using an authentication token.",
     structured_output=True,
 )
 async def reply_to_post(
@@ -211,6 +209,15 @@ async def reply_to_post(
             description="Optional captcha solution if the backend requires it.",
         ),
     ] = None,
+    token: Annotated[
+        str | None,
+        PydanticField(
+            default=None,
+            description=(
+                "Optional JWT bearer token. When omitted the configured access token is used."
+            ),
+        ),
+    ] = None,
     ctx: Context | None = None,
 ) -> CommentCreateResult:
     """Create a comment on a post and return the backend payload."""
@@ -221,7 +228,7 @@ async def reply_to_post(
 
     sanitized_captcha = captcha.strip() if isinstance(captcha, str) else None
 
-    resolved_token = session_token_manager.resolve(ctx)
+    resolved_token = session_token_manager.resolve(ctx, token)
 
     try:
         logger.info(
@@ -290,7 +297,7 @@ async def reply_to_post(
 
 @app.tool(
     name="reply_to_comment",
-    description="Reply to an existing comment using session authentication.",
+    description="Reply to an existing comment using an authentication token.",
     structured_output=True,
 )
 async def reply_to_comment(
@@ -309,6 +316,15 @@ async def reply_to_comment(
             description="Optional captcha solution if the backend requires it.",
         ),
     ] = None,
+    token: Annotated[
+        str | None,
+        PydanticField(
+            default=None,
+            description=(
+                "Optional JWT bearer token. When omitted the configured access token is used."
+            ),
+        ),
+    ] = None,
     ctx: Context | None = None,
 ) -> CommentReplyResult:
     """Create a reply for a comment and return the backend payload."""
@@ -319,7 +335,7 @@ async def reply_to_comment(
 
     sanitized_captcha = captcha.strip() if isinstance(captcha, str) else None
 
-    resolved_token = session_token_manager.resolve(ctx)
+    resolved_token = session_token_manager.resolve(ctx, token)
 
     try:
         logger.info(
@@ -446,11 +462,18 @@ async def get_post(
         int,
         PydanticField(ge=1, description="Identifier of the post to retrieve."),
     ],
+    token: Annotated[
+        str | None,
+        PydanticField(
+            default=None,
+            description="Optional JWT bearer token to view the post as an authenticated user.",
+        ),
+    ] = None,
     ctx: Context | None = None,
 ) -> PostDetail:
     """Fetch post details from the backend and validate the response."""
 
-    resolved_token = session_token_manager.resolve(ctx)
+    resolved_token = session_token_manager.resolve(ctx, token)
 
     try:
         logger.info("Fetching post details for post_id=%s", post_id)
@@ -519,11 +542,20 @@ async def list_unread_messages(
             description="Number of unread notifications to include per page.",
         ),
     ] = 30,
+    token: Annotated[
+        str | None,
+        PydanticField(
+            default=None,
+            description=(
+                "Optional JWT bearer token. When omitted the configured access token is used."
+            ),
+        ),
+    ] = None,
     ctx: Context | None = None,
 ) -> UnreadNotificationsResponse:
     """Retrieve unread notifications and return structured data."""
 
-    resolved_token = session_token_manager.resolve(ctx)
+    resolved_token = session_token_manager.resolve(ctx, token)
 
     try:
         logger.info(
