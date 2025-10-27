@@ -31,7 +31,9 @@ By default the server listens on port `8085` and serves MCP over Streamable HTTP
 | Tool | Description |
 | --- | --- |
 | `search` | Perform a global search against the OpenIsle backend. |
+| `reply_to_comment` | Reply to an existing comment using a JWT token. |
+| `recent_posts` | Retrieve posts created within the last *N* minutes. |
 
-The tool returns structured data describing each search hit including highlighted snippets when
-provided by the backend.
+The tools return structured data mirroring the backend DTOs, including highlighted snippets for
+search results, the full comment payload for replies, and detailed metadata for recent posts.
 

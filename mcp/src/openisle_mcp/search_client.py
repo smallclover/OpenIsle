@@ -1,4 +1,4 @@
-"""HTTP client helpers for talking to the OpenIsle backend search endpoints."""
+"""HTTP client helpers for talking to the OpenIsle backend endpoints."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import httpx
 
 
 class SearchClient:
-    """Client for calling the OpenIsle search API."""
+    """Client for calling the OpenIsle HTTP APIs used by the MCP server."""
 
     def __init__(self, base_url: str, *, timeout: float = 10.0) -> None:
         self._base_url = base_url.rstrip("/")
@@ -35,7 +35,54 @@ class SearchClient:
         if not isinstance(payload, list):
             formatted = json.dumps(payload, ensure_ascii=False)[:200]
             raise ValueError(f"Unexpected response format from search endpoint: {formatted}")
-        return [self._validate_entry(entry) for entry in payload]
+        return [self._ensure_dict(entry) for entry in payload]
+
+    async def reply_to_comment(
+        self,
+        comment_id: int,
+        token: str,
+        content: str,
+        captcha: str | None = None,
+    ) -> dict[str, Any]:
+        """Reply to an existing comment and return the created reply."""
+
+        client = self._get_client()
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {token}",
+        }
+        payload: dict[str, Any] = {"content": content}
+        if captcha is not None:
+            stripped_captcha = captcha.strip()
+            if stripped_captcha:
+                payload["captcha"] = stripped_captcha
+
+        response = await client.post(
+            f"/api/comments/{comment_id}/replies",
+            json=payload,
+            headers=headers,
+        )
+        response.raise_for_status()
+        return self._ensure_dict(response.json())
+
+    async def recent_posts(self, minutes: int) -> list[dict[str, Any]]:
+        """Return posts created within the given timeframe."""
+
+        client = self._get_client()
+        response = await client.get(
+            "/api/posts/recent",
+            params={"minutes": minutes},
+            headers={"Accept": "application/json"},
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if not isinstance(payload, list):
+            formatted = json.dumps(payload, ensure_ascii=False)[:200]
+            raise ValueError(
+                f"Unexpected response format from recent posts endpoint: {formatted}"
+            )
+        return [self._ensure_dict(entry) for entry in payload]
 
     async def aclose(self) -> None:
         """Dispose of the underlying HTTP client."""
@@ -45,7 +92,7 @@ class SearchClient:
             self._client = None
 
     @staticmethod
-    def _validate_entry(entry: Any) -> dict[str, Any]:
+    def _ensure_dict(entry: Any) -> dict[str, Any]:
         if not isinstance(entry, dict):
-            raise ValueError(f"Search entry must be an object, got: {type(entry)!r}")
+            raise ValueError(f"Expected JSON object, got: {type(entry)!r}")
         return entry
