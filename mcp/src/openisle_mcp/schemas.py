@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 class SearchResultItem(BaseModel):
@@ -170,6 +170,15 @@ class CommentData(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True, extra="allow")
 
+    @field_validator("replies", "reactions", mode="before")
+    @classmethod
+    def _ensure_comment_lists(cls, value: Any) -> list[Any]:
+        """Convert ``None`` payloads to empty lists for comment collections."""
+
+        if value is None:
+            return []
+        return value
+
 
 class CommentReplyResult(BaseModel):
     """Structured response returned when replying to a comment."""
@@ -253,6 +262,15 @@ class PostSummary(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True, extra="allow")
 
+    @field_validator("tags", "reactions", "participants", mode="before")
+    @classmethod
+    def _ensure_post_lists(cls, value: Any) -> list[Any]:
+        """Normalize ``None`` values returned by the backend to empty lists."""
+
+        if value is None:
+            return []
+        return value
+
 
 class RecentPostsResponse(BaseModel):
     """Structured response for the recent posts tool."""
@@ -277,6 +295,15 @@ class PostDetail(PostSummary):
     )
 
     model_config = ConfigDict(populate_by_name=True, extra="allow")
+
+    @field_validator("comments", mode="before")
+    @classmethod
+    def _ensure_comments_list(cls, value: Any) -> list[Any]:
+        """Treat ``None`` comments payloads as empty lists."""
+
+        if value is None:
+            return []
+        return value
 
 
 class NotificationData(BaseModel):
