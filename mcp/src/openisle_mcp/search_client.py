@@ -173,6 +173,33 @@ class SearchClient:
         logger.info("Reply to post_id=%s succeeded with id=%s", post_id, body.get("id"))
         return body
 
+    async def create_post(
+        self,
+        payload: dict[str, Any],
+        *,
+        token: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a new post and return the detailed backend payload."""
+
+        client = self._get_client()
+        resolved_token = self._require_token(token)
+        headers = self._build_headers(token=resolved_token, include_json=True)
+
+        logger.debug(
+            "Creating post with category_id=%s and %d tag(s)",
+            payload.get("categoryId"),
+            len(payload.get("tagIds", []) if isinstance(payload.get("tagIds"), list) else []),
+        )
+        response = await client.post(
+            "/api/posts",
+            json=payload,
+            headers=headers,
+        )
+        response.raise_for_status()
+        body = self._ensure_dict(response.json())
+        logger.info("Post creation succeeded with id=%s", body.get("id"))
+        return body
+
     async def recent_posts(self, minutes: int) -> list[dict[str, Any]]:
         """Return posts created within the given timeframe."""
 

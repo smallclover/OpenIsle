@@ -192,6 +192,12 @@ class CommentCreateResult(BaseModel):
     comment: CommentData = Field(description="Comment returned by the backend.")
 
 
+class PostCreateResult(BaseModel):
+    """Structured response returned when creating a new post."""
+
+    post: PostDetail = Field(description="Detailed post payload returned by the backend.")
+
+
 class PostSummary(BaseModel):
     """Summary information for a post."""
 
