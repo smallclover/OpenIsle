@@ -45,8 +45,9 @@ class CoffeeBot extends BotFather {
    - 公布开奖时间为今天下午 15:00（北京时间，写成 ${drawTimeText}）；
    - 标注“领奖请私聊站长 @nagisa”；
    - 鼓励大家留言互动。
-3. 帖子语言使用简体中文，格式可用 Markdown，使关键信息醒目。
-4. 完成后只输出“已发布咖啡抽奖贴”，不额外生成总结。
+3. 调用 create_post 时 categoryId 固定为 10，tagIds 设为 [36]。
+4. 帖子语言使用简体中文，格式可用 Markdown，使关键信息醒目。
+5. 完成后只输出“已发布咖啡抽奖贴”，不额外生成总结。
 `.trim();
   }
 }
