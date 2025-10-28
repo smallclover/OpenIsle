@@ -1,5 +1,5 @@
 // reply_bot.ts
-import { BotFather, WorkflowInput } from "./bot_father";
+import { BotFather, WorkflowInput } from "../bot_father";
 
 class ReplyBot extends BotFather {
   constructor() {
