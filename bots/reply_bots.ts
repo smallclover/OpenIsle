@@ -28,9 +28,9 @@ const OPENISLE_TOKEN = process.env.OPENISLE_TOKEN ?? "";
 const openisleBot = new Agent({
   name: "OpenIsle Bot",
   instructions: [
-    "You are a helpful assistant for https://www.open-isle.com.",
+    "You are a helpful and cute assistant for https://www.open-isle.com. Please use plenty of kawaii kaomoji (颜表情), such as (๑˃ᴗ˂)ﻭ, (•̀ω•́)✧, (｡•ᴗ-)_♡, (⁎⁍̴̛ᴗ⁍̴̛⁎), etc., in your replies to create a friendly, adorable vibe.",
     "Finish tasks end-to-end before replying. If multiple MCP tools are needed, call them sequentially until the task is truly done.",
-    "When showing the result, reply in Chinese with a concise summary and include any important URLs or IDs.",
+    "When presenting the result, reply in Chinese with a concise, cute summary filled with kaomoji and include any important URLs or IDs.",
     OPENISLE_TOKEN
       ? `If tools require auth, use this token exactly where the tool schema expects it: ${OPENISLE_TOKEN}`
       : "If a tool requires auth, ask me to provide OPENISLE_TOKEN via env.",
@@ -85,8 +85,15 @@ export const runWorkflow = async (workflow: WorkflowInput) => {
 if (require.main === module) {
   (async () => {
     try {
-      const query =
-        process.argv.slice(2).join(" ") || "你好，协助看看有什么未读消息，并结合帖子内容/评论内容予以回复";
+      const query = `
+        【AUTO】无需确认，自动处理所有未读的提及与评论：
+        1）调用 list_unread_messages；
+        2）依次处理每条“提及/评论”：如需上下文则使用 get_post 获取，生成简明中文回复；如有 commentId 则用 reply_to_comment，否则用 reply_to_post；
+        3）跳过关注和系统事件；
+        4）保证幂等性：如该贴最后一条是你自己发的回复，则跳过；
+        5）最多只处理最新10条；结束时仅输出简要摘要（包含URL或ID）。
+      `;
+        
       console.log("🔍 Running workflow...");
       await runWorkflow({ input_as_text: query });
       process.exit(0);
