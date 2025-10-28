@@ -15,7 +15,7 @@ export abstract class BotFather {
     "mark_notifications_read", // 标记通知为已读
 
     // third-party MCP tools
-    "weather_mcp_server", // 天气 MCP 工具
+    "get_current_weather", // 天气 MCP 工具
   ];
 
   protected readonly openisleToken = (process.env.OPENISLE_TOKEN ?? "").trim();
