@@ -31,7 +31,7 @@ class CoffeeBot extends BotFather {
    - 明确奖品写作“Coffee”；
    - 帖子类型必须为 LOTTERY；
    - 奖品图片链接：https://openisle-1307107697.cos.accelerate.myqcloud.com/dynamic_assert/0d6a9b33e9ca4fe5a90540187d3f9ecb.png；
-   - 公布开奖时间为 ${drawTime} 
+   - 公布开奖时间为 ${drawTime}, 直接传UTC时间给接口，不要考虑时区问题
    - 标注“领奖请私聊站长 @[nagisa]”；
    - 鼓励大家留言互动。
 3. 调用 create_post 时 categoryId 固定为 10，tagIds 设为 [36]。
