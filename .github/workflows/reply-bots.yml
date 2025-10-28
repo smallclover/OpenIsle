@@ -7,6 +7,7 @@ on:
 
 jobs:
   run-reply-bot:
+    environment: Bots
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
