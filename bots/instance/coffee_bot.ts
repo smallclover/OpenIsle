@@ -18,23 +18,17 @@ class CoffeeBot extends BotFather {
   }
 
   protected override getCliQuery(): string {
-    const now = new Date();
-    const beijingNow = new Date(
-      now.toLocaleString("en-US", { timeZone: "Asia/Shanghai" })
-    );
-    const weekday = WEEKDAY_NAMES[beijingNow.getDay()];
-
-    const drawTime = new Date(beijingNow);
+    const now = new Date(Date.now() + 8 * 60 * 60 * 1000);
+    const weekday = WEEKDAY_NAMES[now.getDay()];
+    const drawTime = new Date(now);
     drawTime.setHours(23, 0, 0, 0);
 
     const drawTimeText = drawTime
-    .toLocaleTimeString("zh-CN", {
-      hour: "2-digit",
-      minute: "2-digit",
+    .toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "numeric",
       hour12: false,
-      timeZone: "Asia/Shanghai",
-    })
-    .replace(/^24:/, "00:");
+    });
 
     return `
 请立即在 https://www.open-isle.com 使用 create_post 发表一篇全新帖子，遵循以下要求：
