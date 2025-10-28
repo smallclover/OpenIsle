@@ -25,7 +25,7 @@ class CoffeeBot extends BotFather {
     const weekday = WEEKDAY_NAMES[beijingNow.getDay()];
 
     const drawTime = new Date(beijingNow);
-    drawTime.setHours(15, 0, 0, 0);
+    drawTime.setHours(23, 0, 0, 0);
 
     const drawTimeText = drawTime
     .toLocaleTimeString("zh-CN", {
@@ -36,14 +36,13 @@ class CoffeeBot extends BotFather {
     })
     .replace(/^24:/, "00:");
 
-    console.log("drawTimeText: ", drawTimeText);
-
     return `
 请立即在 https://www.open-isle.com 使用 create_post 发表一篇全新帖子，遵循以下要求：
 1. 标题固定为「大家星期${weekday}早安--抽一杯咖啡」。
 2. 正文包含：
    - 亲切的早安问候；
    - 明确奖品写作“Coffee”；
+   - 帖子类型必须为 LOTTERY；
    - 奖品图片链接：https://openisle-1307107697.cos.accelerate.myqcloud.com/dynamic_assert/0d6a9b33e9ca4fe5a90540187d3f9ecb.png；
    - 公布开奖时间为今天晚上 ${drawTimeText} 北京时间
    - 标注“领奖请私聊站长 @[nagisa]”；
