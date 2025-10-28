@@ -19,10 +19,10 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm install --no-save @openai/agents ts-node typescript
+        run: npm install --no-save @openai/agents tsx typescript
 
       - name: Run reply bot
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENISLE_TOKEN: ${{ secrets.OPENISLE_TOKEN }}
-        run: npx ts-node --esm bots/reply_bots.ts
+        run: npx tsx bots/reply_bots.ts
