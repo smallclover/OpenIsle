@@ -11,6 +11,7 @@ export abstract class BotFather {
     "get_post",
     "list_unread_messages",
     "mark_notifications_read",
+    "create_post",
   ];
 
   protected readonly mcp = hostedMcpTool({
