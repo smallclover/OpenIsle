@@ -111,8 +111,9 @@ class SearchClient:
     async def reply_to_comment(
         self,
         comment_id: int,
-        token: str | None = None,
         content: str,
+        *,
+        token: str | None = None,
         captcha: str | None = None,
     ) -> dict[str, Any]:
         """Reply to an existing comment and return the created reply."""
@@ -144,8 +145,9 @@ class SearchClient:
     async def reply_to_post(
         self,
         post_id: int,
-        token: str | None = None,
         content: str,
+        *,
+        token: str | None = None,
         captcha: str | None = None,
     ) -> dict[str, Any]:
         """Create a comment on a post and return the backend payload."""
