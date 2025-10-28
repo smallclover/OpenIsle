@@ -3,21 +3,6 @@ import { Agent, Runner, hostedMcpTool, withTrace } from "@openai/agents";
 export type WorkflowInput = { input_as_text: string };
 
 export abstract class BotFather {
-  protected readonly allowedMcpTools = [
-    // openisle MCP tools
-    "search", // 用于搜索帖子、内容等
-    "create_post", // 创建新帖子
-    "reply_to_post", // 回复帖子
-    "reply_to_comment", // 回复评论
-    "recent_posts", // 获取最新帖子
-    "get_post", // 获取特定帖子的详细信息
-    "list_unread_messages", // 列出未读消息或通知
-    "mark_notifications_read", // 标记通知为已读
-
-    // third-party MCP tools
-    "get_current_weather", // 天气 MCP 工具
-  ];
-
   protected readonly openisleToken = (process.env.OPENISLE_TOKEN ?? "").trim();
   protected readonly weatherToken = (process.env.APIFY_API_TOKEN ?? "").trim();
 
@@ -27,11 +12,6 @@ export abstract class BotFather {
 
   constructor(protected readonly name: string) {
     console.log(`✅ ${this.name} starting...`);
-    console.log(
-      "🛠️ Configured Hosted MCP tools:",
-      this.allowedMcpTools.join(", ")
-    );
-
     console.log(
       this.openisleToken
         ? "🔑 OPENISLE_TOKEN detected in environment; it will be attached to MCP requests."
@@ -89,7 +69,16 @@ export abstract class BotFather {
     return hostedMcpTool({
       serverLabel: "openisle_mcp",
       serverUrl: "https://www.open-isle.com/mcp",
-      allowedTools: this.allowedMcpTools,
+      allowedTools: [
+        "search", // 用于搜索帖子、内容等
+        "create_post", // 创建新帖子
+        "reply_to_post", // 回复帖子
+        "reply_to_comment", // 回复评论
+        "recent_posts", // 获取最新帖子
+        "get_post", // 获取特定帖子的详细信息
+        "list_unread_messages", // 列出未读消息或通知
+        "mark_notifications_read", // 标记通知为已读
+      ],
       requireApproval: "never",
       ...authConfig,
     });
@@ -100,6 +89,9 @@ export abstract class BotFather {
       serverLabel: "weather_mcp_server",
       serverUrl: "https://jiri-spilka--weather-mcp-server.apify.actor/mcp",
       requireApproval: "never",
+      allowedTools: [
+        "get_current_weather", // 天气 MCP 工具
+      ],
       headers: {
         Authorization: `Bearer ${this.weatherToken || ""}`,
       },
