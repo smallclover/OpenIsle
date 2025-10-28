@@ -69,7 +69,6 @@ export abstract class BotFather {
     const token = this.openisleToken;
     const authConfig = token
       ? {
-          authorization: `Bearer ${token}`,
           headers: {
             Authorization: `Bearer ${token}`,
           },
