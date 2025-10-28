@@ -26,4 +26,4 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENISLE_TOKEN: ${{ secrets.OPENISLE_TOKEN }}
-        run: npx tsx bots/reply_bots.ts
+        run: npx tsx bots/instance/reply_bot.ts
