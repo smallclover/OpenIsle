@@ -52,6 +52,37 @@ search_client = SearchClient(
 )
 
 
+def _extract_authorization_token(ctx: Context | None) -> str | None:
+    """Return the Bearer token from the incoming MCP request headers."""
+
+    if ctx is None:
+        return None
+
+    try:
+        request_context = ctx.request_context
+    except ValueError:
+        return None
+
+    request = getattr(request_context, "request", None)
+    if request is None:
+        return None
+
+    headers = getattr(request, "headers", None)
+    if headers is None:
+        return None
+
+    authorization = headers.get("authorization")
+    if not authorization:
+        return None
+
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer":
+        return None
+
+    stripped = token.strip()
+    return stripped or None
+
+
 @asynccontextmanager
 async def lifespan(_: FastMCP):
     """Lifecycle hook that disposes shared resources when the server stops."""
@@ -68,8 +99,9 @@ app = FastMCP(
     name="openisle-mcp",
     instructions=(
         "Use this server to search OpenIsle content, create new posts, reply to posts and "
-        "comments with an authentication token, retrieve details for a specific post, list "
-        "posts created within a recent time window, and review unread notification messages."
+        "comments using the Authorization header or configured access token, retrieve details "
+        "for a specific post, list posts created within a recent time window, and review "
+        "unread notification messages."
     ),
     host=settings.host,
     port=settings.port,
@@ -130,7 +162,10 @@ async def search(
 
 @app.tool(
     name="reply_to_post",
-    description="Create a comment on a post using an authentication token.",
+    description=(
+        "Create a comment on a post using the request Authorization header or the configured "
+        "access token."
+    ),
     structured_output=True,
 )
 async def reply_to_post(
@@ -149,15 +184,6 @@ async def reply_to_post(
             description="Optional captcha solution if the backend requires it.",
         ),
     ] = None,
-    token: Annotated[
-        str | None,
-        PydanticField(
-            default=None,
-            description=(
-                "Optional JWT bearer token. When omitted the configured access token is used."
-            ),
-        ),
-    ] = None,
     ctx: Context | None = None,
 ) -> CommentCreateResult:
     """Create a comment on a post and return the backend payload."""
@@ -166,11 +192,9 @@ async def reply_to_post(
     if not sanitized_content:
         raise ValueError("Reply content must not be empty.")
 
-    sanitized_token = token.strip() if isinstance(token, str) else None
-    if sanitized_token == "":
-        sanitized_token = None
-
     sanitized_captcha = captcha.strip() if isinstance(captcha, str) else None
+
+    request_token = _extract_authorization_token(ctx)
 
     try:
         logger.info(
@@ -180,20 +204,20 @@ async def reply_to_post(
         )
         raw_comment = await search_client.reply_to_post(
             post_id,
-            sanitized_token,
-            sanitized_content,
-            sanitized_captcha,
+            token=request_token,
+            content=sanitized_content,
+            captcha=sanitized_captcha,
         )
     except httpx.HTTPStatusError as exc:  # pragma: no cover - network errors
         status_code = exc.response.status_code
         if status_code == 401:
             message = (
                 "Authentication failed while replying to post "
-                f"{post_id}. Please verify the token."
+                f"{post_id}. Please verify the Authorization header or configured token."
             )
         elif status_code == 403:
             message = (
-                "The provided token is not authorized to reply to post "
+                "The provided Authorization token is not authorized to reply to post "
                 f"{post_id}."
             )
         elif status_code == 404:
@@ -239,7 +263,10 @@ async def reply_to_post(
 
 @app.tool(
     name="reply_to_comment",
-    description="Reply to an existing comment using an authentication token.",
+    description=(
+        "Reply to an existing comment using the request Authorization header or the configured "
+        "access token."
+    ),
     structured_output=True,
 )
 async def reply_to_comment(
@@ -258,15 +285,6 @@ async def reply_to_comment(
             description="Optional captcha solution if the backend requires it.",
         ),
     ] = None,
-    token: Annotated[
-        str | None,
-        PydanticField(
-            default=None,
-            description=(
-                "Optional JWT bearer token. When omitted the configured access token is used."
-            ),
-        ),
-    ] = None,
     ctx: Context | None = None,
 ) -> CommentReplyResult:
     """Create a reply for a comment and return the backend payload."""
@@ -275,9 +293,9 @@ async def reply_to_comment(
     if not sanitized_content:
         raise ValueError("Reply content must not be empty.")
 
-    sanitized_token = token.strip() if isinstance(token, str) else None
-
     sanitized_captcha = captcha.strip() if isinstance(captcha, str) else None
+
+    request_token = _extract_authorization_token(ctx)
 
     try:
         logger.info(
@@ -287,20 +305,20 @@ async def reply_to_comment(
         )
         raw_comment = await search_client.reply_to_comment(
             comment_id,
-            sanitized_token,
-            sanitized_content,
-            sanitized_captcha,
+            token=request_token,
+            content=sanitized_content,
+            captcha=sanitized_captcha,
         )
     except httpx.HTTPStatusError as exc:  # pragma: no cover - network errors
         status_code = exc.response.status_code
         if status_code == 401:
             message = (
                 "Authentication failed while replying to comment "
-                f"{comment_id}. Please verify the token."
+                f"{comment_id}. Please verify the Authorization header or configured token."
             )
         elif status_code == 403:
             message = (
-                "The provided token is not authorized to reply to comment "
+                "The provided Authorization token is not authorized to reply to comment "
                 f"{comment_id}."
             )
         else:
@@ -344,7 +362,10 @@ async def reply_to_comment(
 
 @app.tool(
     name="create_post",
-    description="Publish a new post using an authentication token.",
+    description=(
+        "Publish a new post using the request Authorization header or the configured access "
+        "token."
+    ),
     structured_output=True,
 )
 async def create_post(
@@ -466,15 +487,6 @@ async def create_post(
             description="Captcha solution if the backend requires one to create posts.",
         ),
     ] = None,
-    token: Annotated[
-        str | None,
-        PydanticField(
-            default=None,
-            description=(
-                "Optional JWT bearer token. When omitted the configured access token is used."
-            ),
-        ),
-    ] = None,
     ctx: Context | None = None,
 ) -> PostCreateResult:
     """Create a new post in OpenIsle and return the detailed backend payload."""
@@ -486,10 +498,6 @@ async def create_post(
     sanitized_content = content.strip()
     if not sanitized_content:
         raise ValueError("Post content must not be empty.")
-
-    sanitized_token = token.strip() if isinstance(token, str) else None
-    if sanitized_token == "":
-        sanitized_token = None
 
     sanitized_category_id: int | None = None
     if category_id is not None:
@@ -635,7 +643,7 @@ async def create_post(
 
     try:
         logger.info("Creating post with title='%s'", sanitized_title)
-        raw_post = await search_client.create_post(payload, token=sanitized_token)
+        raw_post = await search_client.create_post(payload, token=_extract_authorization_token(ctx))
     except httpx.HTTPStatusError as exc:  # pragma: no cover - network errors
         status_code = exc.response.status_code
         if status_code == 400:
@@ -643,9 +651,12 @@ async def create_post(
                 "Post creation failed due to invalid input or captcha verification errors."
             )
         elif status_code == 401:
-            message = "Authentication failed while creating the post. Please verify the token."
+            message = (
+                "Authentication failed while creating the post. Please verify the "
+                "Authorization header or configured token."
+            )
         elif status_code == 403:
-            message = "The provided token is not authorized to create posts."
+            message = "The provided Authorization token is not authorized to create posts."
         else:
             message = (
                 "OpenIsle backend returned HTTP "
@@ -741,24 +752,15 @@ async def get_post(
         int,
         PydanticField(ge=1, description="Identifier of the post to retrieve."),
     ],
-    token: Annotated[
-        str | None,
-        PydanticField(
-            default=None,
-            description="Optional JWT bearer token to view the post as an authenticated user.",
-        ),
-    ] = None,
     ctx: Context | None = None,
 ) -> PostDetail:
     """Fetch post details from the backend and validate the response."""
 
-    sanitized_token = token.strip() if isinstance(token, str) else None
-    if sanitized_token == "":
-        sanitized_token = None
-
     try:
         logger.info("Fetching post details for post_id=%s", post_id)
-        raw_post = await search_client.get_post(post_id, sanitized_token)
+        raw_post = await search_client.get_post(
+            post_id, _extract_authorization_token(ctx)
+        )
     except httpx.HTTPStatusError as exc:  # pragma: no cover - network errors
         status_code = exc.response.status_code
         if status_code == 404:
@@ -766,7 +768,7 @@ async def get_post(
         elif status_code == 401:
             message = "Authentication failed while retrieving the post."
         elif status_code == 403:
-            message = "The provided token is not authorized to view this post."
+            message = "The provided Authorization token is not authorized to view this post."
         else:
             message = (
                 "OpenIsle backend returned HTTP "
@@ -823,20 +825,9 @@ async def list_unread_messages(
             description="Number of unread notifications to include per page.",
         ),
     ] = 30,
-    token: Annotated[
-        str | None,
-        PydanticField(
-            default=None,
-            description=(
-                "Optional JWT bearer token. When omitted the configured access token is used."
-            ),
-        ),
-    ] = None,
     ctx: Context | None = None,
 ) -> UnreadNotificationsResponse:
     """Retrieve unread notifications and return structured data."""
-
-    sanitized_token = token.strip() if isinstance(token, str) else None
 
     try:
         logger.info(
@@ -847,7 +838,7 @@ async def list_unread_messages(
         raw_notifications = await search_client.list_unread_notifications(
             page=page,
             size=size,
-            token=sanitized_token,
+            token=_extract_authorization_token(ctx),
         )
     except httpx.HTTPStatusError as exc:  # pragma: no cover - network errors
         message = (
@@ -906,29 +897,18 @@ async def mark_notifications_read(
             description="Notification identifiers that should be marked as read.",
         ),
     ],
-    token: Annotated[
-        str | None,
-        PydanticField(
-            default=None,
-            description=(
-                "Optional JWT bearer token. When omitted the configured access token is used."
-            ),
-        ),
-    ] = None,
     ctx: Context | None = None,
 ) -> NotificationCleanupResult:
     """Mark the supplied notifications as read and report the processed identifiers."""
-
-    sanitized_token = token.strip() if isinstance(token, str) else None
-    if sanitized_token == "":
-        sanitized_token = None
 
     try:
         logger.info(
             "Marking %d notifications as read",  # pragma: no branch - logging
             len(ids),
         )
-        await search_client.mark_notifications_read(ids, token=sanitized_token)
+        await search_client.mark_notifications_read(
+            ids, token=_extract_authorization_token(ctx)
+        )
     except httpx.HTTPStatusError as exc:  # pragma: no cover - network errors
         message = (
             "OpenIsle backend returned HTTP "
