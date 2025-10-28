@@ -4,20 +4,25 @@ export type WorkflowInput = { input_as_text: string };
 
 export abstract class BotFather {
   protected readonly allowedMcpTools = [
-    "search",
-    "create_post",
-    "reply_to_post",
-    "reply_to_comment",
-    "recent_posts",
-    "get_post",
-    "list_unread_messages",
-    "mark_notifications_read",
-    "create_post",
+    // openisle MCP tools
+    "search", // 用于搜索帖子、内容等
+    "create_post", // 创建新帖子
+    "reply_to_post", // 回复帖子
+    "reply_to_comment", // 回复评论
+    "recent_posts", // 获取最新帖子
+    "get_post", // 获取特定帖子的详细信息
+    "list_unread_messages", // 列出未读消息或通知
+    "mark_notifications_read", // 标记通知为已读
+
+    // third-party MCP tools
+    "weather_mcp_server", // 天气 MCP 工具
   ];
 
   protected readonly openisleToken = (process.env.OPENISLE_TOKEN ?? "").trim();
+  protected readonly weatherToken = (process.env.APIFY_API_TOKEN ?? "").trim();
 
   protected readonly mcp = this.createHostedMcpTool();
+  protected readonly weatherMcp = this.createWeatherMcpTool();
   protected readonly agent: Agent;
 
   constructor(protected readonly name: string) {
@@ -33,10 +38,16 @@ export abstract class BotFather {
         : "🔓 OPENISLE_TOKEN not set; authenticated MCP tools may be unavailable."
     );
 
+    console.log(
+      this.weatherToken
+        ? "☁️ APIFY_API_TOKEN detected; weather MCP server will be available."
+        : "🌥️ APIFY_API_TOKEN not set; weather updates will be unavailable."
+    );
+
     this.agent = new Agent({
       name: this.name,
       instructions: this.buildInstructions(),
-      tools: [this.mcp],
+      tools: [this.mcp, this.weatherMcp],
       model: "gpt-4o",
       modelSettings: {
         temperature: 0.7,
@@ -81,6 +92,17 @@ export abstract class BotFather {
       allowedTools: this.allowedMcpTools,
       requireApproval: "never",
       ...authConfig,
+    });
+  }
+
+  private createWeatherMcpTool(): ReturnType<typeof hostedMcpTool> {
+    return hostedMcpTool({
+      serverLabel: "weather_mcp_server",
+      serverUrl: "https://jiri-spilka--weather-mcp-server.apify.actor/mcp",
+      requireApproval: "never",
+      headers: {
+        Authorization: `Bearer ${this.weatherToken || ""}`,
+      },
     });
   }
 
