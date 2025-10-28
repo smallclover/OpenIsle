@@ -22,7 +22,7 @@ class CoffeeBot extends BotFather {
     const now = new Date(Date.now() + 8 * 60 * 60 * 1000);
     const weekday = WEEKDAY_NAMES[now.getDay()];
     const drawTime = new Date(now);
-    drawTime.setHours(23, 0, 0, 0);
+    drawTime.setHours(15, 0, 0, 0);
 
     return `
 请立即在 https://www.open-isle.com 使用 create_post 发表一篇帖子，遵循以下要求：
