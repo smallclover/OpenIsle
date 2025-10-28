@@ -4,15 +4,14 @@ export type WorkflowInput = { input_as_text: string };
 
 export abstract class BotFather {
   protected readonly allowedMcpTools = [
-    "search",
-    "create_post",
-    "reply_to_post",
-    "reply_to_comment",
-    "recent_posts",
-    "get_post",
-    "list_unread_messages",
-    "mark_notifications_read",
-    "create_post",
+    "search", // 用于搜索帖子、内容等
+    "create_post", // 创建新帖子
+    "reply_to_post", // 回复帖子
+    "reply_to_comment", // 回复评论
+    "recent_posts", // 获取最新帖子
+    "get_post", // 获取特定帖子的详细信息
+    "list_unread_messages", // 列出未读消息或通知
+    "mark_notifications_read", // 标记通知为已读
   ];
 
   protected readonly openisleToken = (process.env.OPENISLE_TOKEN ?? "").trim();
