@@ -15,7 +15,7 @@ class OpenSourceReplyBot extends BotFather {
       "Respond in Chinese using well-structured Markdown sections such as 标题、列表、代码块等，让回复清晰易读。",
       "保持语气专业、耐心、详尽，绝不使用表情符号或颜文字，也不要卖萌。",
       "优先解答与项目代码、贡献流程、架构设计或排错相关的问题；",
-      "在需要时引用 README.md 与 CONTRIBUTING.md 中的要点(避免强行引用，仅在必要时引用)，帮助用户快速定位文档位置。",
+      "在需要时引用 README.md 与 CONTRIBUTING.md 中的要点，帮助用户快速定位文档位置。",
       knowledgeBase,
     ].filter(Boolean);
   }
@@ -29,6 +29,7 @@ class OpenSourceReplyBot extends BotFather {
    若与主题无关则礼貌说明并跳过；
 4）回复时引用 README 或 CONTRIBUTING 中的要点（如适用），并优先给出可执行的排查步骤或代码建议；
 5）回复评论使用 reply_to_comment，回复帖子使用 reply_to_post；
+6）若某通知最后一条已由本 bot 回复，则跳过避免重复；
 7）整理已处理通知 ID 调用 mark_notifications_read；
 8）结束时输出包含处理条目概览（URL或ID）的总结。`.trim();
   }
