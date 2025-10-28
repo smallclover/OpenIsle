@@ -44,15 +44,10 @@ export abstract class BotFather {
         : "🌥️ APIFY_API_TOKEN not set; weather updates will be unavailable."
     );
 
-    let availableTools = [this.mcp];
-    if (this.weatherMcp) {
-      availableTools.push(this.weatherMcp);
-    }
-
     this.agent = new Agent({
       name: this.name,
       instructions: this.buildInstructions(),
-      tools: availableTools,
+      tools: [this.mcp, this.weatherMcp],
       model: "gpt-4o",
       modelSettings: {
         temperature: 0.7,
@@ -100,17 +95,13 @@ export abstract class BotFather {
     });
   }
 
-  private createWeatherMcpTool(): ReturnType<typeof hostedMcpTool> | null {
-    if (!this.weatherToken) {
-      return null;
-    }
-
+  private createWeatherMcpTool(): ReturnType<typeof hostedMcpTool> {
     return hostedMcpTool({
       serverLabel: "weather_mcp_server",
       serverUrl: "https://jiri-spilka--weather-mcp-server.apify.actor/mcp",
       requireApproval: "never",
       headers: {
-        Authorization: `Bearer ${this.weatherToken}`,
+        Authorization: `Bearer ${this.weatherToken || ""}`,
       },
     });
   }
