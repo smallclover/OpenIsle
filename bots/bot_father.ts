@@ -15,14 +15,9 @@ export abstract class BotFather {
     "create_post",
   ];
 
-  protected readonly mcp = hostedMcpTool({
-    serverLabel: "openisle_mcp",
-    serverUrl: "https://www.open-isle.com/mcp",
-    allowedTools: this.allowedMcpTools,
-    requireApproval: "never",
-  });
+  protected readonly openisleToken = (process.env.OPENISLE_TOKEN ?? "").trim();
 
-  protected readonly openisleToken = process.env.OPENISLE_TOKEN ?? "";
+  protected readonly mcp = this.createHostedMcpTool();
   protected readonly agent: Agent;
 
   constructor(protected readonly name: string) {
@@ -34,8 +29,8 @@ export abstract class BotFather {
 
     console.log(
       this.openisleToken
-        ? "🔑 OPENISLE_TOKEN detected in environment."
-        : "🔓 OPENISLE_TOKEN not set; agent will request it if required."
+        ? "🔑 OPENISLE_TOKEN detected in environment; it will be attached to MCP requests."
+        : "🔓 OPENISLE_TOKEN not set; authenticated MCP tools may be unavailable."
     );
 
     this.agent = new Agent({
@@ -66,11 +61,28 @@ export abstract class BotFather {
       "You are a helpful assistant for https://www.open-isle.com.",
       "Finish tasks end-to-end before replying. If multiple MCP tools are needed, call them sequentially until the task is truly done.",
       "When presenting the result, reply in Chinese with a concise summary and include any important URLs or IDs.",
-      this.openisleToken
-        ? `If tools require auth, use this token exactly where the tool schema expects it: ${this.openisleToken}`
-        : "If a tool requires auth, ask me to provide OPENISLE_TOKEN via env.",
       "After finishing replies, call mark_notifications_read with all processed notification IDs to keep the inbox clean.",
     ];
+  }
+
+  private createHostedMcpTool() {
+    const token = this.openisleToken;
+    const authConfig = token
+      ? {
+          authorization: `Bearer ${token}`,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      : {};
+
+    return hostedMcpTool({
+      serverLabel: "openisle_mcp",
+      serverUrl: "https://www.open-isle.com/mcp",
+      allowedTools: this.allowedMcpTools,
+      requireApproval: "never",
+      ...authConfig,
+    });
   }
 
   protected getAdditionalInstructions(): string[] {
