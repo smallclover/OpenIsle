@@ -27,6 +27,17 @@ class CoffeeBot extends BotFather {
     const drawTime = new Date(beijingNow);
     drawTime.setHours(15, 0, 0, 0);
 
+    const drawTimeText = drawTime
+    .toLocaleTimeString("zh-CN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Shanghai",
+    })
+    .replace(/^24:/, "00:");
+
+    console.log("drawTimeText: ", drawTimeText);
+
     return `
 请立即在 https://www.open-isle.com 使用 create_post 发表一篇全新帖子，遵循以下要求：
 1. 标题固定为「大家星期${weekday}早安--抽一杯咖啡」。
@@ -34,7 +45,7 @@ class CoffeeBot extends BotFather {
    - 亲切的早安问候；
    - 明确奖品写作“Coffee”；
    - 奖品图片链接：https://openisle-1307107697.cos.accelerate.myqcloud.com/dynamic_assert/0d6a9b33e9ca4fe5a90540187d3f9ecb.png；
-   - 公布开奖时间为今天晚上 23:00 北京时间
+   - 公布开奖时间为今天晚上 ${drawTimeText} 北京时间
    - 标注“领奖请私聊站长 @[nagisa]”；
    - 鼓励大家留言互动。
 3. 调用 create_post 时 categoryId 固定为 10，tagIds 设为 [36]。
