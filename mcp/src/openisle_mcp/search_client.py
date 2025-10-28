@@ -66,7 +66,8 @@ class SearchClient:
         resolved = self._resolve_token(token)
         if resolved is None:
             raise ValueError(
-                "Authenticated request requires an access token but none was provided."
+                "Authenticated request requires an access token. Provide a Bearer token "
+                "via the MCP Authorization header or configure a default token for the server."
             )
         return resolved
 
@@ -110,7 +111,7 @@ class SearchClient:
     async def reply_to_comment(
         self,
         comment_id: int,
-        token: str,
+        token: str | None = None,
         content: str,
         captcha: str | None = None,
     ) -> dict[str, Any]:
@@ -143,7 +144,7 @@ class SearchClient:
     async def reply_to_post(
         self,
         post_id: int,
-        token: str,
+        token: str | None = None,
         content: str,
         captcha: str | None = None,
     ) -> dict[str, Any]:
