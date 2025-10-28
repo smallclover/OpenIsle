@@ -4,6 +4,7 @@ export type WorkflowInput = { input_as_text: string };
 
 export abstract class BotFather {
   protected readonly allowedMcpTools = [
+    // openisle MCP tools
     "search", // 用于搜索帖子、内容等
     "create_post", // 创建新帖子
     "reply_to_post", // 回复帖子
@@ -12,6 +13,9 @@ export abstract class BotFather {
     "get_post", // 获取特定帖子的详细信息
     "list_unread_messages", // 列出未读消息或通知
     "mark_notifications_read", // 标记通知为已读
+
+    // third-party MCP tools
+    "weather_mcp_server", // 天气 MCP 工具
   ];
 
   protected readonly openisleToken = (process.env.OPENISLE_TOKEN ?? "").trim();
@@ -40,12 +44,15 @@ export abstract class BotFather {
         : "🌥️ APIFY_API_TOKEN not set; weather updates will be unavailable."
     );
 
-    const tools = this.weatherMcp ? [this.mcp, this.weatherMcp] : [this.mcp];
+    let availableTools = [this.mcp];
+    if (this.weatherMcp) {
+      availableTools.push(this.weatherMcp);
+    }
 
     this.agent = new Agent({
       name: this.name,
       instructions: this.buildInstructions(),
-      tools,
+      tools: availableTools,
       model: "gpt-4o",
       modelSettings: {
         temperature: 0.7,
