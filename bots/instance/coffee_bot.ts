@@ -1,0 +1,62 @@
+import { BotFather, WorkflowInput } from "../bot_father";
+
+const WEEKDAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"] as const;
+
+class CoffeeBot extends BotFather {
+  constructor() {
+    super("Coffee Bot");
+  }
+
+  protected override getAdditionalInstructions(): string[] {
+    return [
+      "You are responsible for 发布每日抽奖早安贴。",
+      "创建帖子时，确保标题、奖品信息、开奖时间以及领奖方式完全符合 CLI 查询提供的细节。",
+      "正文需亲切友好，简洁明了，鼓励社区成员互动。",
+      "开奖说明需明确告知中奖者需私聊站长 @nagisa 领取奖励。",
+      "确保只发布一个帖子，避免重复调用 create_post。",
+    ];
+  }
+
+  protected override getCliQuery(): string {
+    const now = new Date();
+    const beijingNow = new Date(
+      now.toLocaleString("en-US", { timeZone: "Asia/Shanghai" })
+    );
+    const weekday = WEEKDAY_NAMES[beijingNow.getDay()];
+
+    const drawTime = new Date(beijingNow);
+    drawTime.setHours(15, 0, 0, 0);
+    const drawTimeText = drawTime
+      .toLocaleTimeString("zh-CN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: "Asia/Shanghai",
+      })
+      .replace(/^24:/, "00:");
+
+    return `
+请立即在 https://www.open-isle.com 使用 create_post 发表一篇全新帖子，遵循以下要求：
+1. 标题固定为「大家星期${weekday}早安--抽一杯咖啡」。
+2. 正文包含：
+   - 亲切的早安问候；
+   - 明确奖品写作“Coffee x 1”；
+   - 公布开奖时间为今天下午 15:00（北京时间，写成 ${drawTimeText}）；
+   - 标注“领奖请私聊站长 @nagisa”；
+   - 鼓励大家留言互动。
+3. 帖子语言使用简体中文，格式可用 Markdown，使关键信息醒目。
+4. 完成后只输出“已发布咖啡抽奖贴”，不额外生成总结。
+`.trim();
+  }
+}
+
+const coffeeBot = new CoffeeBot();
+
+export const runWorkflow = async (workflow: WorkflowInput) => {
+  return coffeeBot.runWorkflow(workflow);
+};
+
+if (require.main === module) {
+  coffeeBot.runCli();
+}
+

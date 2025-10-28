@@ -5,6 +5,7 @@ export type WorkflowInput = { input_as_text: string };
 export abstract class BotFather {
   protected readonly allowedMcpTools = [
     "search",
+    "create_post",
     "reply_to_post",
     "reply_to_comment",
     "recent_posts",
