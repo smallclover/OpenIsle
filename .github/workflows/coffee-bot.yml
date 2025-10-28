@@ -26,4 +26,5 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENISLE_TOKEN: ${{ secrets.OPENISLE_TOKEN }}
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
         run: npx tsx bots/instance/coffee_bot.ts
