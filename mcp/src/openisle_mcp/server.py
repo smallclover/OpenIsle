@@ -17,6 +17,7 @@ from .schemas import (
     CommentData,
     CommentReplyResult,
     NotificationData,
+    NotificationCleanupResult,
     UnreadNotificationsResponse,
     PostDetail,
     PostSummary,
@@ -165,6 +166,8 @@ async def reply_to_post(
         raise ValueError("Reply content must not be empty.")
 
     sanitized_token = token.strip() if isinstance(token, str) else None
+    if sanitized_token == "":
+        sanitized_token = None
 
     sanitized_captcha = captcha.strip() if isinstance(captcha, str) else None
 
@@ -549,6 +552,79 @@ async def list_unread_messages(
         size=size,
         total=total,
         notifications=notifications,
+    )
+
+
+@app.tool(
+    name="mark_notifications_read",
+    description="Mark specific notification messages as read to remove them from the unread list.",
+    structured_output=True,
+)
+async def mark_notifications_read(
+    ids: Annotated[
+        list[int],
+        PydanticField(
+            min_length=1,
+            description="Notification identifiers that should be marked as read.",
+        ),
+    ],
+    token: Annotated[
+        str | None,
+        PydanticField(
+            default=None,
+            description=(
+                "Optional JWT bearer token. When omitted the configured access token is used."
+            ),
+        ),
+    ] = None,
+    ctx: Context | None = None,
+) -> NotificationCleanupResult:
+    """Mark the supplied notifications as read and report the processed identifiers."""
+
+    sanitized_token = token.strip() if isinstance(token, str) else None
+    if sanitized_token == "":
+        sanitized_token = None
+
+    try:
+        logger.info(
+            "Marking %d notifications as read",  # pragma: no branch - logging
+            len(ids),
+        )
+        await search_client.mark_notifications_read(ids, token=sanitized_token)
+    except httpx.HTTPStatusError as exc:  # pragma: no cover - network errors
+        message = (
+            "OpenIsle backend returned HTTP "
+            f"{exc.response.status_code} while marking notifications as read."
+        )
+        if ctx is not None:
+            await ctx.error(message)
+        raise ValueError(message) from exc
+    except httpx.RequestError as exc:  # pragma: no cover - network errors
+        message = f"Unable to reach OpenIsle backend notification service: {exc}."
+        if ctx is not None:
+            await ctx.error(message)
+        raise ValueError(message) from exc
+
+    processed_ids: list[int] = []
+    for value in ids:
+        if isinstance(value, bool):
+            raise ValueError("Notification identifiers must be integers, not booleans.")
+        converted = int(value)
+        if converted <= 0:
+            raise ValueError("Notification identifiers must be positive integers.")
+        processed_ids.append(converted)
+    if ctx is not None:
+        await ctx.info(
+            f"Marked {len(processed_ids)} notifications as read.",
+        )
+    logger.debug(
+        "Successfully marked notifications as read: ids=%s",
+        processed_ids,
+    )
+
+    return NotificationCleanupResult(
+        processed_ids=processed_ids,
+        total_marked=len(processed_ids),
     )
 
 

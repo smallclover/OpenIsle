@@ -358,3 +358,15 @@ class UnreadNotificationsResponse(BaseModel):
         default_factory=list,
         description="Unread notifications returned by the backend.",
     )
+
+
+class NotificationCleanupResult(BaseModel):
+    """Structured response returned after marking notifications as read."""
+
+    processed_ids: list[int] = Field(
+        default_factory=list,
+        description="Identifiers that were marked as read in the backend.",
+    )
+    total_marked: int = Field(
+        description="Total number of notifications successfully marked as read.",
+    )
