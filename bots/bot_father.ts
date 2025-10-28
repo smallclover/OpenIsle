@@ -16,8 +16,10 @@ export abstract class BotFather {
   ];
 
   protected readonly openisleToken = (process.env.OPENISLE_TOKEN ?? "").trim();
+  protected readonly weatherToken = (process.env.APIFY_API_TOKEN ?? "").trim();
 
   protected readonly mcp = this.createHostedMcpTool();
+  protected readonly weatherMcp = this.createWeatherMcpTool();
   protected readonly agent: Agent;
 
   constructor(protected readonly name: string) {
@@ -33,10 +35,18 @@ export abstract class BotFather {
         : "🔓 OPENISLE_TOKEN not set; authenticated MCP tools may be unavailable."
     );
 
+    console.log(
+      this.weatherToken
+        ? "☁️ APIFY_API_TOKEN detected; weather MCP server will be available."
+        : "🌥️ APIFY_API_TOKEN not set; weather updates will be unavailable."
+    );
+
+    const tools = this.weatherMcp ? [this.mcp, this.weatherMcp] : [this.mcp];
+
     this.agent = new Agent({
       name: this.name,
       instructions: this.buildInstructions(),
-      tools: [this.mcp],
+      tools,
       model: "gpt-4o",
       modelSettings: {
         temperature: 0.7,
@@ -81,6 +91,21 @@ export abstract class BotFather {
       allowedTools: this.allowedMcpTools,
       requireApproval: "never",
       ...authConfig,
+    });
+  }
+
+  private createWeatherMcpTool(): ReturnType<typeof hostedMcpTool> | null {
+    if (!this.weatherToken) {
+      return null;
+    }
+
+    return hostedMcpTool({
+      serverLabel: "weather_mcp_server",
+      serverUrl: "https://jiri-spilka--weather-mcp-server.apify.actor/mcp",
+      requireApproval: "never",
+      headers: {
+        Authorization: `Bearer ${this.weatherToken}`,
+      },
     });
   }
 

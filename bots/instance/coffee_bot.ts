@@ -14,6 +14,7 @@ class CoffeeBot extends BotFather {
       "正文需亲切友好，简洁明了，鼓励社区成员互动。",
       "开奖说明需明确告知中奖者需私聊站长 @nagisa 领取奖励。",
       "确保只发布一个帖子，避免重复调用 create_post。",
+      "使用标签为 weather_mcp_server 的 MCP 工具获取北京、上海、广州、深圳当天的天气信息，并把结果写入早安问候之后。",
     ];
   }
 
@@ -28,6 +29,7 @@ class CoffeeBot extends BotFather {
 1. 标题固定为「大家星期${weekday}早安--抽一杯咖啡」。
 2. 正文包含：
    - 亲切的早安问候；
+   - 早安问候后立即列出北京、上海、广州、深圳当天的天气信息，每行格式为“城市：天气描述，最低温~最高温”；天气需调用 weather_mcp_server 获取；
    - 明确奖品写作“Coffee”；
    - 帖子类型必须为 LOTTERY；
    - 奖品图片链接：https://openisle-1307107697.cos.accelerate.myqcloud.com/dynamic_assert/0d6a9b33e9ca4fe5a90540187d3f9ecb.png；
