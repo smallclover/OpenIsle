@@ -253,6 +253,53 @@ class SearchClient:
         )
         return [self._ensure_dict(entry) for entry in payload]
 
+    async def mark_notifications_read(
+        self,
+        ids: list[int],
+        *,
+        token: str | None = None,
+    ) -> None:
+        """Mark the provided notifications as read for the authenticated user."""
+
+        if not ids:
+            raise ValueError(
+                "At least one notification identifier must be provided to mark as read."
+            )
+
+        sanitized_ids: list[int] = []
+        for value in ids:
+            if isinstance(value, bool):
+                raise ValueError("Notification identifiers must be integers, not booleans.")
+            try:
+                converted = int(value)
+            except (TypeError, ValueError) as exc:  # pragma: no cover - defensive
+                raise ValueError(
+                    "Notification identifiers must be integers."
+                ) from exc
+            if converted <= 0:
+                raise ValueError(
+                    "Notification identifiers must be positive integers."
+                )
+            sanitized_ids.append(converted)
+
+        client = self._get_client()
+        resolved_token = self._require_token(token)
+        logger.debug(
+            "Marking %d notifications as read: ids=%s",
+            len(sanitized_ids),
+            sanitized_ids,
+        )
+        response = await client.post(
+            "/api/notifications/read",
+            json={"ids": sanitized_ids},
+            headers=self._build_headers(token=resolved_token, include_json=True),
+        )
+        response.raise_for_status()
+        logger.info(
+            "Successfully marked %d notifications as read.",
+            len(sanitized_ids),
+        )
+
     async def aclose(self) -> None:
         """Dispose of the underlying HTTP client."""
 
