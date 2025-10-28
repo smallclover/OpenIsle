@@ -74,7 +74,7 @@ class SearchClient:
     def _build_headers(
         self,
         *,
-        token: str | None = None,
+        token: str
         accept: str = "application/json",
         include_json: bool = False,
     ) -> dict[str, str]:
@@ -111,7 +111,7 @@ class SearchClient:
     async def reply_to_comment(
         self,
         comment_id: int,
-        token: str | None = None,
+        token: str 
         content: str,
         captcha: str | None = None,
     ) -> dict[str, Any]:
@@ -144,7 +144,7 @@ class SearchClient:
     async def reply_to_post(
         self,
         post_id: int,
-        token: str | None = None,
+        token: str 
         content: str,
         captcha: str | None = None,
     ) -> dict[str, Any]:
@@ -178,7 +178,7 @@ class SearchClient:
         self,
         payload: dict[str, Any],
         *,
-        token: str | None = None,
+        token: str
     ) -> dict[str, Any]:
         """Create a new post and return the detailed backend payload."""
 
@@ -198,7 +198,7 @@ class SearchClient:
         )
         response.raise_for_status()
         body = self._ensure_dict(response.json())
-        logger.info("Post creation succeeded with id=%s", body.get("id"))
+        logger.info("Post creation succeeded with id=%s, token=%s", body.get("id"), token)
         return body
 
     async def recent_posts(self, minutes: int) -> list[dict[str, Any]]:
@@ -249,7 +249,7 @@ class SearchClient:
         *,
         page: int = 0,
         size: int = 30,
-        token: str | None = None,
+        token: str 
     ) -> list[dict[str, Any]]:
         """Return unread notifications for the authenticated user."""
 
@@ -285,7 +285,7 @@ class SearchClient:
         self,
         ids: list[int],
         *,
-        token: str | None = None,
+        token: str 
     ) -> None:
         """Mark the provided notifications as read for the authenticated user."""
 
