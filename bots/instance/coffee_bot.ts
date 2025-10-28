@@ -41,6 +41,7 @@ class CoffeeBot extends BotFather {
 2. 正文包含：
    - 亲切的早安问候；
    - 明确奖品写作“Coffee x 1”；
+   - 奖品图片链接：https://openisle-1307107697.cos.accelerate.myqcloud.com/dynamic_assert/0d6a9b33e9ca4fe5a90540187d3f9ecb.png；
    - 公布开奖时间为今天下午 15:00（北京时间，写成 ${drawTimeText}）；
    - 标注“领奖请私聊站长 @nagisa”；
    - 鼓励大家留言互动。
