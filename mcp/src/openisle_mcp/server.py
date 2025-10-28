@@ -509,6 +509,8 @@ async def create_post(
             raise ValueError("Category identifier must be an integer.") from exc
         if sanitized_category_id <= 0:
             raise ValueError("Category identifier must be a positive integer.")
+    if sanitized_category_id is None:
+        raise ValueError("A category identifier is required to create a post.")
 
     sanitized_tag_ids: list[int] | None = None
     if tag_ids is not None:
@@ -525,6 +527,10 @@ async def create_post(
             sanitized_tag_ids.append(converted)
         if not sanitized_tag_ids:
             sanitized_tag_ids = None
+    if not sanitized_tag_ids:
+        raise ValueError("At least one tag identifier is required to create a post.")
+    if len(sanitized_tag_ids) > 2:
+        raise ValueError("At most two tag identifiers can be provided for a post.")
 
     sanitized_post_type = post_type.strip() if isinstance(post_type, str) else None
     if sanitized_post_type == "":
