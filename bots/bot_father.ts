@@ -1,4 +1,4 @@
-import { Agent, Runner, hostedMcpTool, withTrace } from "@openai/agents";
+import { Agent, Runner, hostedMcpTool, withTrace, webSearchTool } from "@openai/agents";
 
 export type WorkflowInput = { input_as_text: string };
 
@@ -6,8 +6,9 @@ export abstract class BotFather {
   protected readonly openisleToken = (process.env.OPENISLE_TOKEN ?? "").trim();
   protected readonly weatherToken = (process.env.APIFY_API_TOKEN ?? "").trim();
 
-  protected readonly mcp = this.createHostedMcpTool();
+  protected readonly openisleMcp = this.createHostedMcpTool();
   protected readonly weatherMcp = this.createWeatherMcpTool();
+  protected readonly webSearchPreview = this.createWebSearchPreviewTool();
   protected readonly agent: Agent;
 
   constructor(protected readonly name: string) {
@@ -27,7 +28,11 @@ export abstract class BotFather {
     this.agent = new Agent({
       name: this.name,
       instructions: this.buildInstructions(),
-      tools: [this.mcp, this.weatherMcp],
+      tools: [
+        this.openisleMcp, 
+        this.weatherMcp, 
+        this.webSearchPreview
+      ],
       model: "gpt-4o",
       modelSettings: {
         temperature: 0.7,
@@ -54,6 +59,19 @@ export abstract class BotFather {
       "When presenting the result, reply in Chinese with a concise summary and include any important URLs or IDs.",
       "After finishing replies, call mark_notifications_read with all processed notification IDs to keep the inbox clean.",
     ];
+  }
+
+  private createWebSearchPreviewTool() {
+    return webSearchTool({
+      userLocation: {
+        type: "approximate",
+        country: undefined,
+        region: undefined,
+        city: undefined,
+        timezone: undefined
+      },
+      searchContextSize: "medium"
+    })
   }
 
   private createHostedMcpTool() {
