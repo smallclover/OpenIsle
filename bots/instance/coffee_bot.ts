@@ -9,6 +9,7 @@ class CoffeeBot extends BotFather {
 
   protected override getAdditionalInstructions(): string[] {
     return [
+      "记住你的系统代号是 system，有需要自称或签名时都要使用这个名字。",
       "You are responsible for 发布每日抽奖早安贴。",
       "创建帖子时，确保标题、奖品信息、开奖时间以及领奖方式完全符合 CLI 查询提供的细节。",
       "正文需亲切友好，简洁明了，鼓励社区成员互动。",
