@@ -33,7 +33,7 @@ export abstract class BotFather {
         this.weatherMcp, 
         this.webSearchPreview
       ],
-      model: "gpt-4o",
+      model: "gpt-4o-mini",
       modelSettings: {
         temperature: 0.7,
         topP: 1,
