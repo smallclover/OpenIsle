@@ -45,7 +45,7 @@ class DailyNewsBot extends BotFather {
 请立即在 https://www.open-isle.com 使用 create_post 发布一篇名为「OpenIsle 每日新闻速递｜${dateLabel}」的帖子，并遵循以下要求：
 1. 发布类型为 NORMAL，categoryId = ${categoryId}，tagIds = ${tagIdsText}。
 2. 正文以简洁问候开头, 不用再重复标题
-3. 使用 web_search 工具按以下顺序收集资讯，并在正文中以 Markdown 小节呈现：
+3. 使用 web_search 工具按以下顺序收集资讯，并在正文中以 Markdown 小节呈现， 需要调用3次web_search：
    - 「全球区块链与加密」：汇总 CoinDesk 今天所有重点新闻, 列出至少5条
    - 「国际新闻速览」：汇总 Reuters 今天重点头条，关注宏观经济、市场波动或政策变化。列出至少5条
    - 「AI 行业快讯」：检索今天全球 AI 领域的重要发布或事件（例如 OpenAI、Google、Meta、国内大模型厂商等）。列出至少5条
