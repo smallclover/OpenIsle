@@ -29,11 +29,11 @@ export abstract class BotFather {
       name: this.name,
       instructions: this.buildInstructions(),
       tools: [
-        this.openisleMcp, 
-        this.weatherMcp, 
+        this.openisleMcp,
+        this.weatherMcp,
         this.webSearchPreview
       ],
-      model: "gpt-4o-mini",
+      model: this.getModel(),
       modelSettings: {
         temperature: 0.7,
         topP: 1,
@@ -118,6 +118,10 @@ export abstract class BotFather {
 
   protected getAdditionalInstructions(): string[] {
     return [];
+  }
+
+  protected getModel(): string {
+    return "gpt-4o-mini";
   }
 
   protected createRunner(): Runner {

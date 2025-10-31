@@ -7,6 +7,10 @@ class DailyNewsBot extends BotFather {
     super("Daily News Bot");
   }
 
+  protected override getModel(): string {
+    return "gpt-4o";
+  }
+
   protected override getAdditionalInstructions(): string[] {
     return [
       "You are DailyNewsBot，专职在 OpenIsle 发布每日新闻速递。",
