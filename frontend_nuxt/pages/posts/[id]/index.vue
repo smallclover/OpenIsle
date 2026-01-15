@@ -533,7 +533,7 @@ const {
     } catch (err) {}
   },
   {
-    server: false,
+    server: true,
     lazy: false,
   },
 )
