@@ -57,6 +57,9 @@ cd OpenIsle
      --profile dev up -d --force-recreate
    ```
 
+   数据初始化sql会创建几个帐户供大家测试使用
+   > username:admin/user1/user2 password:123456
+
 3. 查看服务状态：
    ```shell
    docker compose -f docker/docker-compose.yaml --env-file .env ps
