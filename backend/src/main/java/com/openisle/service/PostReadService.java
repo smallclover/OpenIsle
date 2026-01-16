@@ -7,7 +7,10 @@ import com.openisle.repository.PostReadRepository;
 import com.openisle.repository.PostRepository;
 import com.openisle.repository.UserRepository;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -41,6 +44,14 @@ public class PostReadService {
           postReadRepository.save(pr);
         }
       );
+  }
+
+  public List<PostRead> getRecentReadsByUser(String username, int limit) {
+    User user = userRepository
+      .findByUsername(username)
+      .orElseThrow(() -> new com.openisle.exception.NotFoundException("User not found"));
+    Pageable pageable = PageRequest.of(0, limit);
+    return postReadRepository.findByUserOrderByLastReadAtDesc(user, pageable);
   }
 
   public long countReads(String username) {

@@ -34,6 +34,7 @@ public class UserController {
   private final TagService tagService;
   private final SubscriptionService subscriptionService;
   private final LevelService levelService;
+  private final PostReadService postReadService;
   private final JwtService jwtService;
   private final UserMapper userMapper;
   private final TagMapper tagMapper;
@@ -52,6 +53,9 @@ public class UserController {
 
   @Value("${app.user.tags-limit:50}")
   private int defaultTagsLimit;
+
+  @Value("${app.user.read-posts-limit:50}")
+  private int defaultReadPostsLimit;
 
   @GetMapping("/me")
   @SecurityRequirement(name = "JWT")
@@ -209,6 +213,33 @@ public class UserController {
       .stream()
       .map(userMapper::toCommentInfoDto)
       .collect(java.util.stream.Collectors.toList());
+  }
+
+  @GetMapping("/{identifier}/read-posts")
+  @SecurityRequirement(name = "JWT")
+  @Operation(summary = "User read posts", description = "Get post read history (self only)")
+  @ApiResponse(
+    responseCode = "200",
+    description = "Post read history",
+    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PostReadDto.class)))
+  )
+  public ResponseEntity<java.util.List<PostReadDto>> userReadPosts(
+    @PathVariable("identifier") String identifier,
+    @RequestParam(value = "limit", required = false) Integer limit,
+    Authentication auth
+  ) {
+    User user = userService.findByIdentifier(identifier).orElseThrow();
+    if (auth == null || !auth.getName().equals(user.getUsername())) {
+      return ResponseEntity.status(403).body(java.util.List.of());
+    }
+    int l = limit != null ? limit : defaultReadPostsLimit;
+    return ResponseEntity.ok(
+      postReadService
+        .getRecentReadsByUser(user.getUsername(), l)
+        .stream()
+        .map(userMapper::toPostReadDto)
+        .collect(java.util.stream.Collectors.toList())
+    );
   }
 
   @GetMapping("/{identifier}/hot-posts")

@@ -3,6 +3,7 @@ package com.openisle.mapper;
 import com.openisle.dto.*;
 import com.openisle.model.Comment;
 import com.openisle.model.Post;
+import com.openisle.model.PostRead;
 import com.openisle.model.User;
 import com.openisle.service.*;
 import java.util.stream.Collectors;
@@ -113,6 +114,13 @@ public class UserMapper {
       pc.setContent(comment.getParent().getContent());
       dto.setParentComment(pc);
     }
+    return dto;
+  }
+
+  public PostReadDto toPostReadDto(PostRead read) {
+    PostReadDto dto = new PostReadDto();
+    dto.setPost(toMetaDto(read.getPost()));
+    dto.setLastReadAt(read.getLastReadAt());
     return dto;
   }
 }

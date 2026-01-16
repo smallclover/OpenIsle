@@ -191,14 +191,25 @@
               >
                 评论和回复
               </div>
+              <div
+                v-if="isMine"
+                :class="['timeline-tab-item', { selected: timelineFilter === 'reads' }]"
+                @click="timelineFilter = 'reads'"
+              >
+                浏览记录
+              </div>
             </div>
             <BasePlaceholder
-              v-if="filteredTimelineItems.length === 0"
-              text="暂无时间线"
+              v-if="
+                timelineFilter === 'reads'
+                  ? readPosts.length === 0
+                  : filteredTimelineItems.length === 0
+              "
+              :text="timelineFilter === 'reads' ? '暂无浏览记录' : '暂无时间线'"
               icon="inbox"
             />
             <div class="timeline-list">
-              <BaseTimeline :items="filteredTimelineItems">
+              <BaseTimeline v-if="timelineFilter !== 'reads'" :items="filteredTimelineItems">
                 <template #item="{ item }">
                   <template v-if="item.type === 'post'">
                     <TimelinePostItem :item="item" />
@@ -212,6 +223,11 @@
                   <template v-else-if="item.type === 'tag'">
                     <TimelineTagItem :item="item" />
                   </template>
+                </template>
+              </BaseTimeline>
+              <BaseTimeline v-else :items="readPosts">
+                <template #item="{ item }">
+                  <TimelineReadItem :item="item" />
                 </template>
               </BaseTimeline>
             </div>
@@ -276,6 +292,7 @@ import BaseTabs from '~/components/BaseTabs.vue'
 import LevelProgress from '~/components/LevelProgress.vue'
 import TimelineCommentGroup from '~/components/TimelineCommentGroup.vue'
 import TimelinePostItem from '~/components/TimelinePostItem.vue'
+import TimelineReadItem from '~/components/TimelineReadItem.vue'
 import TimelineTagItem from '~/components/TimelineTagItem.vue'
 import BaseUserAvatar from '~/components/BaseUserAvatar.vue'
 import UserList from '~/components/UserList.vue'
@@ -299,12 +316,15 @@ const hotReplies = ref([])
 const hotTags = ref([])
 const favoritePosts = ref([])
 const timelineItems = ref([])
+const readPosts = ref([])
 const timelineFilter = ref('all')
 const filteredTimelineItems = computed(() => {
   if (timelineFilter.value === 'articles') {
     return timelineItems.value.filter((item) => item.type === 'post')
   } else if (timelineFilter.value === 'comments') {
     return timelineItems.value.filter((item) => item.type === 'comment' || item.type === 'reply')
+  } else if (timelineFilter.value === 'reads') {
+    return []
   }
   return timelineItems.value
 })
@@ -477,6 +497,27 @@ const fetchTimeline = async () => {
   timelineItems.value = combineDiscussionItems(mapped)
 }
 
+const fetchReadHistory = async () => {
+  if (!isMine.value) {
+    readPosts.value = []
+    return
+  }
+  const token = getToken()
+  if (!token) {
+    readPosts.value = []
+    return
+  }
+  const res = await fetch(`${API_BASE_URL}/api/users/${username}/read-posts?limit=50`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (res.ok) {
+    const data = await res.json()
+    readPosts.value = data.map((r) => ({ ...r, icon: 'file-text' }))
+  } else {
+    readPosts.value = []
+  }
+}
+
 const fetchFollowUsers = async () => {
   const [followerRes, followingRes] = await Promise.all([
     fetch(`${API_BASE_URL}/api/users/${username}/followers`),
@@ -505,6 +546,12 @@ const loadSummary = async () => {
 const loadTimeline = async () => {
   tabLoading.value = true
   await fetchTimeline()
+  tabLoading.value = false
+}
+
+const loadReadHistory = async () => {
+  tabLoading.value = true
+  await fetchReadHistory()
   tabLoading.value = false
 }
 
@@ -624,14 +671,37 @@ onMounted(init)
 
 watch(selectedTab, async (val) => {
   // navigateTo({ query: { ...route.query, tab: val } }, { replace: true })
-  if (val === 'timeline' && timelineItems.value.length === 0) {
-    await loadTimeline()
+  if (val === 'timeline') {
+    if (timelineFilter.value === 'reads') {
+      if (readPosts.value.length === 0) {
+        await loadReadHistory()
+      }
+    } else if (timelineItems.value.length === 0) {
+      await loadTimeline()
+    }
   } else if (val === 'following' && followers.value.length === 0 && followings.value.length === 0) {
     await loadFollow()
   } else if (val === 'favorites' && favoritePosts.value.length === 0) {
     await loadFavorites()
   } else if (val === 'achievements' && medals.value.length === 0) {
     await loadAchievements()
+  }
+})
+
+watch(timelineFilter, async (val) => {
+  if (selectedTab.value !== 'timeline') return
+  if (val === 'reads') {
+    if (readPosts.value.length === 0) {
+      await loadReadHistory()
+    }
+  } else if (timelineItems.value.length === 0) {
+    await loadTimeline()
+  }
+})
+
+watch(isMine, (val) => {
+  if (!val && timelineFilter.value === 'reads') {
+    timelineFilter.value = 'all'
   }
 })
 </script>
