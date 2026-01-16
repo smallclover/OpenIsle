@@ -118,7 +118,6 @@ public class UserService {
    * @param user
    */
   public void sendVerifyMail(User user, VerifyType verifyType) {
-    // 缓存验证码
     String code = genCode();
     String key;
     String subject;
@@ -133,8 +132,9 @@ public class UserService {
       subject = "请填写验证码以重置密码(有效期为5分钟)";
     }
 
-    redisTemplate.opsForValue().set(key, code, 5, TimeUnit.MINUTES); // 五分钟后验证码过期
     emailService.sendEmail(user.getEmail(), subject, content);
+    // 邮件发送成功后再缓存验证码，避免发送失败时用户收不到但验证被要求
+    redisTemplate.opsForValue().set(key, code, 5, TimeUnit.MINUTES); // 五分钟后验证码过期
   }
 
   /**

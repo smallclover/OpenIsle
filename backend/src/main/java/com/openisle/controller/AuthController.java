@@ -2,6 +2,7 @@ package com.openisle.controller;
 
 import com.openisle.config.CachingConfig;
 import com.openisle.dto.*;
+import com.openisle.exception.EmailSendException;
 import com.openisle.exception.FieldException;
 import com.openisle.model.RegisterMode;
 import com.openisle.model.User;
@@ -19,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -83,6 +85,17 @@ public class AuthController {
             "INVITE_APPROVED"
           )
         );
+      } catch (EmailSendException e) {
+        return ResponseEntity
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(
+            Map.of(
+              "error",
+              "邮件发送失败: " + e.getMessage(),
+              "reason_code",
+              "EMAIL_SEND_FAILED"
+            )
+          );
       } catch (FieldException e) {
         return ResponseEntity.badRequest().body(
           Map.of("field", e.getField(), "error", e.getMessage())
@@ -97,7 +110,20 @@ public class AuthController {
       registerModeService.getRegisterMode()
     );
     // 发送确认邮件
-    userService.sendVerifyMail(user, VerifyType.REGISTER);
+    try {
+      userService.sendVerifyMail(user, VerifyType.REGISTER);
+    } catch (EmailSendException e) {
+      return ResponseEntity
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(
+          Map.of(
+            "error",
+            "邮件发送失败: " + e.getMessage(),
+            "reason_code",
+            "EMAIL_SEND_FAILED"
+          )
+        );
+    }
     if (!user.isApproved()) {
       notificationService.createRegisterRequestNotifications(user, user.getRegisterReason());
     }
@@ -169,14 +195,28 @@ public class AuthController {
     }
     User user = userOpt.get();
     if (!user.isVerified()) {
-      user = userService.register(
-        user.getUsername(),
-        user.getEmail(),
-        user.getPassword(),
-        user.getRegisterReason(),
-        registerModeService.getRegisterMode()
-      );
-      userService.sendVerifyMail(user, VerifyType.REGISTER);
+      user =
+        userService.register(
+          user.getUsername(),
+          user.getEmail(),
+          user.getPassword(),
+          user.getRegisterReason(),
+          registerModeService.getRegisterMode()
+        );
+      try {
+        userService.sendVerifyMail(user, VerifyType.REGISTER);
+      } catch (EmailSendException e) {
+        return ResponseEntity
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(
+            Map.of(
+              "error",
+              "Failed to send verification email: " + e.getMessage(),
+              "reason_code",
+              "EMAIL_SEND_FAILED"
+            )
+          );
+      }
       return ResponseEntity.badRequest().body(
         Map.of(
           "error",
@@ -663,7 +703,20 @@ public class AuthController {
     if (userOpt.isEmpty()) {
       return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
     }
-    userService.sendVerifyMail(userOpt.get(), VerifyType.RESET_PASSWORD);
+    try {
+      userService.sendVerifyMail(userOpt.get(), VerifyType.RESET_PASSWORD);
+    } catch (EmailSendException e) {
+      return ResponseEntity
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(
+          Map.of(
+            "error",
+            "邮件发送失败: " + e.getMessage(),
+            "reason_code",
+            "EMAIL_SEND_FAILED"
+          )
+        );
+    }
     return ResponseEntity.ok(Map.of("message", "Verification code sent"));
   }
 

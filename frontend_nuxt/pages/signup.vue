@@ -139,8 +139,7 @@ const sendVerification = async () => {
         inviteToken: inviteToken.value,
       }),
     })
-    isWaitingForEmailSent.value = false
-    const data = await res.json()
+    const data = await res.json().catch(() => ({}))
     if (res.ok) {
       emailStep.value = 1
       toast.success('验证码已发送，请查看邮箱')
@@ -149,10 +148,14 @@ const sendVerification = async () => {
       if (data.field === 'email') emailError.value = data.error
       if (data.field === 'password') passwordError.value = data.error
     } else {
-      toast.error(data.error || '发送失败')
+      const msg = data.error || data.message || res.statusText || '发送失败'
+      const reason = data.reason_code ? ` (${data.reason_code})` : ''
+      toast.error(`${res.status} ${msg}${reason}`)
     }
   } catch (e) {
-    toast.error('发送失败')
+    toast.error(`发送失败: ${e.message}`)
+  } finally {
+    isWaitingForEmailSent.value = false
   }
 }
 

@@ -7,6 +7,7 @@ import com.openisle.repository.NotificationRepository;
 import com.openisle.repository.ReactionRepository;
 import com.openisle.repository.UserRepository;
 import com.openisle.service.EmailSender;
+import com.openisle.exception.EmailSendException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -17,6 +18,7 @@ import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 /** Service for creating and retrieving notifications. */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationService {
 
   private final NotificationRepository notificationRepository;
@@ -108,7 +111,11 @@ public class NotificationService {
         post.getId(),
         comment.getId()
       );
-      emailSender.sendEmail(user.getEmail(), "有人回复了你", url);
+      try {
+        emailSender.sendEmail(user.getEmail(), "有人回复了你", url);
+      } catch (EmailSendException e) {
+        log.warn("Failed to send notification email to {}: {}", user.getEmail(), e.getMessage());
+      }
       sendCustomPush(user, "有人回复了你", url);
     } else if (type == NotificationType.REACTION && comment != null) {
       //                long count = reactionRepository.countReceived(comment.getAuthor().getUsername());

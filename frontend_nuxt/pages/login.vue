@@ -58,12 +58,15 @@ const submitLogin = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: username.value, password: password.value }),
     })
-    const data = await res.json()
+    const data = await res.json().catch(() => ({}))
     if (res.ok && data.token) {
       setToken(data.token)
       toast.success('登录成功')
       registerPush()
       await navigateTo('/', { replace: true })
+    } else if (data.reason_code === 'EMAIL_SEND_FAILED') {
+      const msg = data.error || data.message || res.statusText || '登录失败'
+      toast.error(`${res.status} ${msg} (${data.reason_code})`)
     } else if (data.reason_code === 'NOT_VERIFIED') {
       toast.info('当前邮箱未验证，已经为您重新发送验证码')
       await navigateTo(
@@ -76,10 +79,12 @@ const submitLogin = async () => {
     } else if (data.reason_code === 'NOT_APPROVED') {
       await navigateTo({ path: '/signup-reason', query: { token: data.token } }, { replace: true })
     } else {
-      toast.error(data.error || '登录失败')
+      const msg = data.error || data.message || res.statusText || '登录失败'
+      const reason = data.reason_code ? ` (${data.reason_code})` : ''
+      toast.error(`${res.status} ${msg}${reason}`)
     }
   } catch (e) {
-    toast.error('登录失败')
+    toast.error(`登录失败: ${e.message}`)
   } finally {
     isWaitingForLogin.value = false
   }

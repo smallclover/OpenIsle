@@ -19,6 +19,7 @@ import com.openisle.repository.TagRepository;
 import com.openisle.repository.UserRepository;
 import com.openisle.search.SearchIndexEventPublisher;
 import com.openisle.service.EmailSender;
+import com.openisle.exception.EmailSendException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -663,11 +664,15 @@ public class PostService {
             w.getEmail() != null &&
             !w.getDisabledEmailNotificationTypes().contains(NotificationType.LOTTERY_WIN)
           ) {
-            emailSender.sendEmail(
-              w.getEmail(),
-              "你中奖了",
-              "恭喜你在抽奖贴 \"" + lp.getTitle() + "\" 中获奖"
-            );
+            try {
+              emailSender.sendEmail(
+                w.getEmail(),
+                "你中奖了",
+                "恭喜你在抽奖贴 \"" + lp.getTitle() + "\" 中获奖"
+              );
+            } catch (EmailSendException e) {
+              log.warn("Failed to send lottery win email to {}: {}", w.getEmail(), e.getMessage());
+            }
           }
           notificationService.createNotification(
             w,
@@ -693,11 +698,19 @@ public class PostService {
               .getDisabledEmailNotificationTypes()
               .contains(NotificationType.LOTTERY_DRAW)
           ) {
-            emailSender.sendEmail(
-              lp.getAuthor().getEmail(),
-              "抽奖已开奖",
-              "您的抽奖贴 \"" + lp.getTitle() + "\" 已开奖"
-            );
+            try {
+              emailSender.sendEmail(
+                lp.getAuthor().getEmail(),
+                "抽奖已开奖",
+                "您的抽奖贴 \"" + lp.getTitle() + "\" 已开奖"
+              );
+            } catch (EmailSendException e) {
+              log.warn(
+                "Failed to send lottery draw email to {}: {}",
+                lp.getAuthor().getEmail(),
+                e.getMessage()
+              );
+            }
           }
           notificationService.createNotification(
             lp.getAuthor(),

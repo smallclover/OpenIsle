@@ -6,10 +6,12 @@ import com.openisle.model.User;
 import com.openisle.repository.NotificationRepository;
 import com.openisle.repository.UserRepository;
 import com.openisle.service.EmailSender;
+import com.openisle.exception.EmailSendException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
+@Slf4j
 public class AdminUserController {
 
   private final UserRepository userRepository;
@@ -35,11 +38,15 @@ public class AdminUserController {
     user.setApproved(true);
     userRepository.save(user);
     markRegisterRequestNotificationsRead(user);
-    emailSender.sendEmail(
-      user.getEmail(),
-      "您的注册已审核通过",
-      "🎉您的注册已经审核通过, 点击以访问网站: " + websiteUrl
-    );
+    try {
+      emailSender.sendEmail(
+        user.getEmail(),
+        "您的注册已审核通过",
+        "🎉您的注册已经审核通过, 点击以访问网站: " + websiteUrl
+      );
+    } catch (EmailSendException e) {
+      log.warn("Failed to send approve email to {}: {}", user.getEmail(), e.getMessage());
+    }
     return ResponseEntity.ok().build();
   }
 
@@ -52,11 +59,15 @@ public class AdminUserController {
     user.setApproved(false);
     userRepository.save(user);
     markRegisterRequestNotificationsRead(user);
-    emailSender.sendEmail(
-      user.getEmail(),
-      "您的注册已被管理员拒绝",
-      "您的注册被管理员拒绝, 点击链接可以重新填写理由申请: " + websiteUrl
-    );
+    try {
+      emailSender.sendEmail(
+        user.getEmail(),
+        "您的注册已被管理员拒绝",
+        "您的注册被管理员拒绝, 点击链接可以重新填写理由申请: " + websiteUrl
+      );
+    } catch (EmailSendException e) {
+      log.warn("Failed to send reject email to {}: {}", user.getEmail(), e.getMessage());
+    }
     return ResponseEntity.ok().build();
   }
 
