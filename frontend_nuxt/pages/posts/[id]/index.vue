@@ -1395,10 +1395,6 @@ onMounted(async () => {
   font-weight: bold;
 }
 
-.reaction-action.copy-link:hover {
-  background-color: #e2e2e2;
-}
-
 .comment-editor-wrapper {
   position: relative;
 }
