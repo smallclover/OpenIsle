@@ -19,6 +19,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   List<Post> findByStatusOrderByCreatedAtDesc(PostStatus status, Pageable pageable);
   List<Post> findByStatusOrderByViewsDesc(PostStatus status);
   List<Post> findByStatusOrderByViewsDesc(PostStatus status, Pageable pageable);
+  List<Post> findByStatusOrderByPinnedAtDescViewsDesc(PostStatus status, Pageable pageable);
+  List<Post> findByStatusOrderByPinnedAtDescLastReplyAtDesc(PostStatus status, Pageable pageable);
   List<Post> findByStatusAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
     PostStatus status,
     LocalDateTime createdAt
@@ -39,6 +41,16 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     PostStatus status
   );
   List<Post> findByCategoryInAndStatusOrderByCreatedAtDesc(
+    List<Category> categories,
+    PostStatus status,
+    Pageable pageable
+  );
+  List<Post> findByCategoryInAndStatusOrderByPinnedAtDescViewsDesc(
+    List<Category> categories,
+    PostStatus status,
+    Pageable pageable
+  );
+  List<Post> findByCategoryInAndStatusOrderByPinnedAtDescLastReplyAtDesc(
     List<Category> categories,
     PostStatus status,
     Pageable pageable
@@ -133,6 +145,26 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   );
 
   @Query(
+    "SELECT p FROM Post p JOIN p.tags t WHERE t IN :tags AND p.status = :status GROUP BY p.id HAVING COUNT(DISTINCT t.id) = :tagCount ORDER BY p.pinnedAt DESC, p.views DESC"
+  )
+  List<Post> findByAllTagsOrderByPinnedAtDescViewsDesc(
+    @Param("tags") List<Tag> tags,
+    @Param("status") PostStatus status,
+    @Param("tagCount") long tagCount,
+    Pageable pageable
+  );
+
+  @Query(
+    "SELECT p FROM Post p JOIN p.tags t WHERE t IN :tags AND p.status = :status GROUP BY p.id HAVING COUNT(DISTINCT t.id) = :tagCount ORDER BY p.pinnedAt DESC, p.lastReplyAt DESC"
+  )
+  List<Post> findByAllTagsOrderByPinnedAtDescLastReplyAtDesc(
+    @Param("tags") List<Tag> tags,
+    @Param("status") PostStatus status,
+    @Param("tagCount") long tagCount,
+    Pageable pageable
+  );
+
+  @Query(
     "SELECT p FROM Post p JOIN p.tags t WHERE p.category IN :categories AND t IN :tags AND p.status = :status GROUP BY p.id HAVING COUNT(DISTINCT t.id) = :tagCount"
   )
   List<Post> findByCategoriesAndAllTags(
@@ -167,6 +199,28 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     value = "SELECT p FROM Post p JOIN p.tags t WHERE p.category IN :categories AND t IN :tags AND p.status = :status GROUP BY p.id HAVING COUNT(DISTINCT t.id) = :tagCount ORDER BY p.views DESC"
   )
   List<Post> findByCategoriesAndAllTagsOrderByViewsDesc(
+    @Param("categories") List<Category> categories,
+    @Param("tags") List<Tag> tags,
+    @Param("status") PostStatus status,
+    @Param("tagCount") long tagCount,
+    Pageable pageable
+  );
+
+  @Query(
+    "SELECT p FROM Post p JOIN p.tags t WHERE p.category IN :categories AND t IN :tags AND p.status = :status GROUP BY p.id HAVING COUNT(DISTINCT t.id) = :tagCount ORDER BY p.pinnedAt DESC, p.views DESC"
+  )
+  List<Post> findByCategoriesAndAllTagsOrderByPinnedAtDescViewsDesc(
+    @Param("categories") List<Category> categories,
+    @Param("tags") List<Tag> tags,
+    @Param("status") PostStatus status,
+    @Param("tagCount") long tagCount,
+    Pageable pageable
+  );
+
+  @Query(
+    "SELECT p FROM Post p JOIN p.tags t WHERE p.category IN :categories AND t IN :tags AND p.status = :status GROUP BY p.id HAVING COUNT(DISTINCT t.id) = :tagCount ORDER BY p.pinnedAt DESC, p.lastReplyAt DESC"
+  )
+  List<Post> findByCategoriesAndAllTagsOrderByPinnedAtDescLastReplyAtDesc(
     @Param("categories") List<Category> categories,
     @Param("tags") List<Tag> tags,
     @Param("status") PostStatus status,
