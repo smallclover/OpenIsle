@@ -339,6 +339,7 @@ public class PostService {
     post.setCategory(category);
     post.setTags(new HashSet<>(tags));
     post.setStatus(publishMode == PublishMode.REVIEW ? PostStatus.PENDING : PostStatus.PUBLISHED);
+    post.setLastReplyAt(LocalDateTime.now());
 
     // 什么都没设置的情况下，默认为ALL
     if (Objects.isNull(postVisibleScopeType)) {
@@ -809,9 +810,10 @@ public class PostService {
     boolean hasTags = tagIds != null && !tagIds.isEmpty();
 
     java.util.List<Post> posts;
+    Pageable pageable = buildPageable(page, pageSize);
 
     if (!hasCategories && !hasTags) {
-      posts = postRepository.findByStatusOrderByViewsDesc(PostStatus.PUBLISHED);
+      posts = postRepository.findByStatusOrderByPinnedAtDescViewsDesc(PostStatus.PUBLISHED, pageable);
     } else if (hasCategories) {
       java.util.List<Category> categories = categoryRepository.findAllById(categoryIds);
       if (categories.isEmpty()) {
@@ -822,16 +824,18 @@ public class PostService {
         if (tags.isEmpty()) {
           return java.util.List.of();
         }
-        posts = postRepository.findByCategoriesAndAllTagsOrderByViewsDesc(
+        posts = postRepository.findByCategoriesAndAllTagsOrderByPinnedAtDescViewsDesc(
           categories,
           tags,
           PostStatus.PUBLISHED,
-          tags.size()
+          tags.size(),
+          pageable
         );
       } else {
-        posts = postRepository.findByCategoryInAndStatusOrderByViewsDesc(
+        posts = postRepository.findByCategoryInAndStatusOrderByPinnedAtDescViewsDesc(
           categories,
-          PostStatus.PUBLISHED
+          PostStatus.PUBLISHED,
+          pageable
         );
       }
     } else {
@@ -839,10 +843,15 @@ public class PostService {
       if (tags.isEmpty()) {
         return java.util.List.of();
       }
-      posts = postRepository.findByAllTagsOrderByViewsDesc(tags, PostStatus.PUBLISHED, tags.size());
+      posts = postRepository.findByAllTagsOrderByPinnedAtDescViewsDesc(
+        tags,
+        PostStatus.PUBLISHED,
+        tags.size(),
+        pageable
+      );
     }
 
-    return paginate(sortByPinnedAndViews(posts), page, pageSize);
+    return posts;
   }
 
   public List<Post> listPostsByLatestReply(Integer page, Integer pageSize) {
@@ -859,9 +868,13 @@ public class PostService {
     boolean hasTags = tagIds != null && !tagIds.isEmpty();
 
     java.util.List<Post> posts;
+    Pageable pageable = buildPageable(page, pageSize);
 
     if (!hasCategories && !hasTags) {
-      posts = postRepository.findByStatusOrderByCreatedAtDesc(PostStatus.PUBLISHED);
+      posts = postRepository.findByStatusOrderByPinnedAtDescLastReplyAtDesc(
+        PostStatus.PUBLISHED,
+        pageable
+      );
     } else if (hasCategories) {
       java.util.List<Category> categories = categoryRepository.findAllById(categoryIds);
       if (categories.isEmpty()) {
@@ -872,16 +885,18 @@ public class PostService {
         if (tags.isEmpty()) {
           return java.util.List.of();
         }
-        posts = postRepository.findByCategoriesAndAllTagsOrderByCreatedAtDesc(
+        posts = postRepository.findByCategoriesAndAllTagsOrderByPinnedAtDescLastReplyAtDesc(
           categories,
           tags,
           PostStatus.PUBLISHED,
-          tags.size()
+          tags.size(),
+          pageable
         );
       } else {
-        posts = postRepository.findByCategoryInAndStatusOrderByCreatedAtDesc(
+        posts = postRepository.findByCategoryInAndStatusOrderByPinnedAtDescLastReplyAtDesc(
           categories,
-          PostStatus.PUBLISHED
+          PostStatus.PUBLISHED,
+          pageable
         );
       }
     } else {
@@ -889,14 +904,15 @@ public class PostService {
       if (tags.isEmpty()) {
         return new ArrayList<>();
       }
-      posts = postRepository.findByAllTagsOrderByCreatedAtDesc(
+      posts = postRepository.findByAllTagsOrderByPinnedAtDescLastReplyAtDesc(
         tags,
         PostStatus.PUBLISHED,
-        tags.size()
+        tags.size(),
+        pageable
       );
     }
 
-    return paginate(sortByPinnedAndLastReply(posts), page, pageSize);
+    return posts;
   }
 
   public List<Post> listPostsByCategories(
@@ -1392,6 +1408,13 @@ public class PostService {
         )
       )
       .toList();
+  }
+
+  private Pageable buildPageable(Integer page, Integer pageSize) {
+    if (page == null || pageSize == null) {
+      return Pageable.unpaged();
+    }
+    return PageRequest.of(page, pageSize);
   }
 
   private List<Post> paginate(List<Post> posts, Integer page, Integer pageSize) {

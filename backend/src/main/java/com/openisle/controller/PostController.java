@@ -217,11 +217,7 @@ public class PostController {
     //            userVisitService.recordVisit(auth.getName());
     //        }
 
-    return postService
-      .defaultListPosts(ids, tids, page, pageSize)
-      .stream()
-      .map(postMapper::toSummaryDto)
-      .collect(Collectors.toList());
+    return postMapper.toListDtos(postService.defaultListPosts(ids, tids, page, pageSize));
   }
 
   @GetMapping("/recent")
@@ -269,11 +265,7 @@ public class PostController {
     //            userVisitService.recordVisit(auth.getName());
     //        }
 
-    return postService
-      .listPostsByViews(ids, tids, page, pageSize)
-      .stream()
-      .map(postMapper::toSummaryDto)
-      .collect(Collectors.toList());
+    return postMapper.toListDtos(postService.listPostsByViews(ids, tids, page, pageSize));
   }
 
   @GetMapping("/latest-reply")
@@ -305,8 +297,7 @@ public class PostController {
     //            userVisitService.recordVisit(auth.getName());
     //        }
 
-    List<Post> posts = postService.listPostsByLatestReply(ids, tids, page, pageSize);
-    return posts.stream().map(postMapper::toSummaryDto).collect(Collectors.toList());
+    return postMapper.toListDtos(postService.listPostsByLatestReply(ids, tids, page, pageSize));
   }
 
   @GetMapping("/featured")
@@ -333,10 +324,6 @@ public class PostController {
     //        if (auth != null) {
     //            userVisitService.recordVisit(auth.getName());
     //        }
-    return postService
-      .listFeaturedPosts(ids, tids, page, pageSize)
-      .stream()
-      .map(postMapper::toSummaryDto)
-      .collect(Collectors.toList());
+    return postMapper.toListDtos(postService.listFeaturedPosts(ids, tids, page, pageSize));
   }
 }

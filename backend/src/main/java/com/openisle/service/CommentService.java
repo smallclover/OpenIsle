@@ -21,8 +21,12 @@ import com.openisle.service.NotificationService;
 import com.openisle.service.PointService;
 import com.openisle.service.SubscriptionService;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -313,6 +317,37 @@ public class CommentService {
     java.util.List<User> list = new java.util.ArrayList<>(set);
     java.util.List<User> result = list.subList(0, Math.min(limit, list.size()));
     log.debug("getParticipants returning {} users for post {}", result.size(), postId);
+    return result;
+  }
+
+  public Map<Long, List<User>> getParticipantsForPosts(List<Post> posts, int limit) {
+    if (posts == null || posts.isEmpty()) {
+      return Map.of();
+    }
+    Map<Long, LinkedHashSet<User>> map = new HashMap<>();
+    List<Long> postIds = new ArrayList<>(posts.size());
+    for (Post post : posts) {
+      postIds.add(post.getId());
+      LinkedHashSet<User> set = new LinkedHashSet<>();
+      set.add(post.getAuthor());
+      map.put(post.getId(), set);
+    }
+    for (Object[] row : commentRepository.findDistinctAuthorsByPostIds(postIds)) {
+      Long postId = (Long) row[0];
+      User author = (User) row[1];
+      LinkedHashSet<User> set = map.get(postId);
+      if (set != null) {
+        set.add(author);
+      }
+    }
+    Map<Long, List<User>> result = new HashMap<>(map.size());
+    for (Map.Entry<Long, LinkedHashSet<User>> entry : map.entrySet()) {
+      List<User> list = new ArrayList<>(entry.getValue());
+      if (list.size() > limit) {
+        list = list.subList(0, limit);
+      }
+      result.put(entry.getKey(), list);
+    }
     return result;
   }
 

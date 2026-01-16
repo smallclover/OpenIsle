@@ -26,6 +26,13 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
   );
 
   @org.springframework.data.jpa.repository.Query(
+    "SELECT DISTINCT c.post.id, c.author FROM Comment c WHERE c.post.id IN :postIds"
+  )
+  java.util.List<Object[]> findDistinctAuthorsByPostIds(
+    @org.springframework.data.repository.query.Param("postIds") java.util.List<Long> postIds
+  );
+
+  @org.springframework.data.jpa.repository.Query(
     "SELECT MAX(c.createdAt) FROM Comment c WHERE c.post = :post"
   )
   java.time.LocalDateTime findLastCommentTime(

@@ -48,6 +48,38 @@ public class PostMapper {
     return dto;
   }
 
+  public List<PostSummaryDto> toListDtos(List<Post> posts) {
+    if (posts == null || posts.isEmpty()) {
+      return List.of();
+    }
+    Map<Long, List<User>> participantsMap = commentService.getParticipantsForPosts(posts, 5);
+    return posts
+      .stream()
+      .map(post -> {
+        PostSummaryDto dto = new PostSummaryDto();
+        applyListFields(post, dto);
+        List<User> participants = participantsMap.get(post.getId());
+        if (participants != null) {
+          dto.setParticipants(
+            participants.stream().map(userMapper::toAuthorDto).collect(Collectors.toList())
+          );
+        } else {
+          dto.setParticipants(List.of());
+        }
+        dto.setReactions(List.of());
+        return dto;
+      })
+      .collect(Collectors.toList());
+  }
+
+  public PostSummaryDto toListDto(Post post) {
+    PostSummaryDto dto = new PostSummaryDto();
+    applyListFields(post, dto);
+    dto.setParticipants(List.of());
+    dto.setReactions(List.of());
+    return dto;
+  }
+
   public PostDetailDto toDetailDto(Post post, String viewer) {
     PostDetailDto dto = new PostDetailDto();
     applyCommon(post, dto);
@@ -59,6 +91,25 @@ public class PostMapper {
     dto.setComments(comments);
     dto.setSubscribed(viewer != null && subscriptionService.isPostSubscribed(viewer, post.getId()));
     return dto;
+  }
+
+  private void applyListFields(Post post, PostSummaryDto dto) {
+    dto.setId(post.getId());
+    dto.setTitle(post.getTitle());
+    dto.setContent(post.getContent());
+    dto.setCreatedAt(post.getCreatedAt());
+    dto.setAuthor(userMapper.toAuthorDto(post.getAuthor()));
+    dto.setCategory(categoryMapper.toDto(post.getCategory()));
+    dto.setTags(post.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList()));
+    dto.setViews(post.getViews());
+    dto.setCommentCount(post.getCommentCount());
+    dto.setStatus(post.getStatus());
+    dto.setPinnedAt(post.getPinnedAt());
+    dto.setLastReplyAt(post.getLastReplyAt());
+    dto.setRssExcluded(post.getRssExcluded() == null || post.getRssExcluded());
+    dto.setClosed(post.isClosed());
+    dto.setVisibleScope(post.getVisibleScope());
+    dto.setType(post.getType());
   }
 
   private void applyCommon(Post post, PostSummaryDto dto) {
