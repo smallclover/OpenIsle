@@ -30,62 +30,62 @@ services:
       - dev_local_backend
       - prod
 
-  # OpenSearch Service
-  opensearch:
-    user: "1000:1000"
-    build:
-      context: .
-      dockerfile: opensearch.Dockerfile
-    container_name: ${COMPOSE_PROJECT_NAME}-opensearch
-    environment:
-      - cluster.name=os-single
-      - node.name=os-node-1
-      - discovery.type=single-node
-      - bootstrap.memory_lock=true
-      - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
-      - DISABLE_SECURITY_PLUGIN=true
-      - cluster.blocks.create_index=false
-    ulimits:
-      memlock: { soft: -1, hard: -1 }
-      nofile: { soft: 65536, hard: 65536 }
-    volumes:
-      - opensearch-data:/usr/share/opensearch/data
-      - opensearch-snapshots:/snapshots
-    ports:
-      - "${OPENSEARCH_PORT:-9200}:9200"
-      - "${OPENSEARCH_METRICS_PORT:-9600}:9600"
-    restart: unless-stopped
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - curl -fsS http://127.0.0.1:9200/_cluster/health >/dev/null
-      interval: 10s
-      timeout: 5s
-      retries: 30
-      start_period: 60s
-    networks:
-      - openisle-network
-    profiles:
-      - dev
-      - dev_local_backend
+  # # OpenSearch Service
+  # opensearch:
+  #   user: "1000:1000"
+  #   build:
+  #     context: .
+  #     dockerfile: opensearch.Dockerfile
+  #   container_name: ${COMPOSE_PROJECT_NAME}-opensearch
+  #   environment:
+  #     - cluster.name=os-single
+  #     - node.name=os-node-1
+  #     - discovery.type=single-node
+  #     - bootstrap.memory_lock=true
+  #     - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
+  #     - DISABLE_SECURITY_PLUGIN=true
+  #     - cluster.blocks.create_index=false
+  #   ulimits:
+  #     memlock: { soft: -1, hard: -1 }
+  #     nofile: { soft: 65536, hard: 65536 }
+  #   volumes:
+  #     - opensearch-data:/usr/share/opensearch/data
+  #     - opensearch-snapshots:/snapshots
+  #   ports:
+  #     - "${OPENSEARCH_PORT:-9200}:9200"
+  #     - "${OPENSEARCH_METRICS_PORT:-9600}:9600"
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test:
+  #       - CMD-SHELL
+  #       - curl -fsS http://127.0.0.1:9200/_cluster/health >/dev/null
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 30
+  #     start_period: 60s
+  #   networks:
+  #     - openisle-network
+  #   profiles:
+  #     - dev
+  #     - dev_local_backend
 
-  dashboards:
-    image: opensearchproject/opensearch-dashboards:3.0.0
-    container_name: ${COMPOSE_PROJECT_NAME}-os-dashboards
-    environment:
-      OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
-      DISABLE_SECURITY_DASHBOARDS_PLUGIN: "true"
-    ports:
-      - "${OPENSEARCH_DASHBOARDS_PORT:-5601}:5601"
-    depends_on:
-      - opensearch
-    restart: unless-stopped
-    networks:
-      - openisle-network
-    profiles:
-      - dev
-      - dev_local_backend
-      - prod
+  # dashboards:
+  #   image: opensearchproject/opensearch-dashboards:3.0.0
+  #   container_name: ${COMPOSE_PROJECT_NAME}-os-dashboards
+  #   environment:
+  #     OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
+  #     DISABLE_SECURITY_DASHBOARDS_PLUGIN: "true"
+  #   ports:
+  #     - "${OPENSEARCH_DASHBOARDS_PORT:-5601}:5601"
+  #   depends_on:
+  #     - opensearch
+  #   restart: unless-stopped
+  #   networks:
+  #     - openisle-network
+  #   profiles:
+  #     - dev
+  #     - dev_local_backend
+  #     - prod
 
   rabbitmq:
     image: rabbitmq:3.13-management
@@ -200,7 +200,6 @@ services:
       - openisle-network
     profiles:
       - dev
-      - dev_local_backend
       - prod
 
 
